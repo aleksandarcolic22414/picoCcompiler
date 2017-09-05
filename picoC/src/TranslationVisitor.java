@@ -11,67 +11,63 @@ import java.util.List;
  *
  * @author aleksandar
  */
-public class TranslationVisitor extends picoCBaseVisitor<Integer> 
+public class TranslationVisitor extends picoCBaseVisitor<String> 
 {
 
     @Override
-    public Integer visitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
-    {
-        visit(ctx.main());
-        return 0;
+    public String visitAdd(picoCParser.AddContext ctx) {
+        System.out.println("Context: visitAdd Val: " + ctx.getText());
+        visit(ctx.simpleExpression(0));
+        visit(ctx.simpleExpression(1));
+        return null;
     }
 
     @Override
-    public Integer visitMain(picoCParser.MainContext ctx) 
-    {
-        Writers.emitText("\tglobal main");
-        Writers.emitText("main:");
-        Writers.emitInstruction(Constants.FUNCTION_ENTRY);
-        visit(ctx.functionBody());
-        Writers.emitInstruction(Constants.FUNCTION_EXIT);
-        return 0;
+    public String visitSub(picoCParser.SubContext ctx) {
+        System.out.println("Context: visitSub Val: " + ctx.getText());
+        visit(ctx.simpleExpression(0));
+        visit(ctx.simpleExpression(1));
+        return null;
     }
-
-    @Override
-    public Integer visitFunctionBody(picoCParser.FunctionBodyContext ctx) 
-    {
-        visit(ctx.statements());
-        return 0;
-    }
-
-    /* Not well implemented yet. :) */
-    @Override
-    public Integer visitStatements(picoCParser.StatementsContext ctx) 
-    {
-        List<picoCParser.StatementContext> statementList = ctx.statement();
-        for (picoCParser.StatementContext statement : statementList) {
-            statement.declaration();
-        }
-        visit(ctx.statement(0));
-        return 0;
-    }
-
-    
     
     @Override
-    public Integer visitStatement(picoCParser.StatementContext ctx) 
-    {
-        return super.visitStatement(ctx); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    
-    
-    @Override
-    public Integer visitInitialization(picoCParser.InitializationContext ctx) 
-    {
-        return 0;
+    public String visitMul(picoCParser.MulContext ctx) {
+        System.out.println("Context: visitMul Val: " + ctx.getText());
+        visit(ctx.simpleExpression(0));
+        visit(ctx.simpleExpression(1));
+        return null;
     }
 
     @Override
-    public Integer visitReturnStat(picoCParser.ReturnStatContext ctx) 
-    {
-        return 0;
+    public String visitDiv(picoCParser.DivContext ctx) {
+        System.out.println("Context: visitDiv Val: " + ctx.getText());
+        visit(ctx.simpleExpression(0));
+        visit(ctx.simpleExpression(1));
+        return null;
     }
+
+    @Override
+    public String visitId(picoCParser.IdContext ctx) {
+        System.out.println("Context: visitID Val: " + ctx.getText());
+        return null;
+    }
+    
+    
+    
+
+    @Override
+    public String visitInt(picoCParser.IntContext ctx) {
+        System.out.println("Context: visitInt Val: " + ctx.getText());
+        return null;
+    }
+
+    @Override
+    public String visitParens(picoCParser.ParensContext ctx) {
+        visit(ctx.simpleExpression());
+        return null;
+    }
+    
+    
     
     
     

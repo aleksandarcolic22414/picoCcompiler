@@ -36,7 +36,9 @@ public class Main
             System.out.println(tree.toStringTree(parser));
             
             ParseTreeWalker walker = new ParseTreeWalker();
-            TranslationListener listener = new TranslationListener(parser);
+            TranslationVisitor visitor = new TranslationVisitor();
+            TranslationListener listener = new TranslationListener(parser, visitor);
+            
             walker.walk(listener, tree);
             
         } catch (FileNotFoundException ex) {

@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -17,11 +18,12 @@ import java.util.logging.Logger;
 public class TranslationListener extends picoCBaseListener 
 {
     picoCParser parser;
+    TranslationVisitor visitor;
     
-    
-    public TranslationListener(picoCParser parser) 
+    public TranslationListener(picoCParser parser, TranslationVisitor visitor) 
     {
         this.parser = parser;
+        this.visitor = visitor;
     }
 
     
@@ -46,7 +48,7 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterMain(picoCParser.MainContext ctx) 
     {
-        Writers.emitText("\tglobal main");
+        Writers.emitText("    global main");
         Writers.emitText("main:");
         Writers.emitInstruction(Constants.FUNCTION_ENTRY);
     }
@@ -108,6 +110,11 @@ public class TranslationListener extends picoCBaseListener
         
     }
 
+    @Override
+    public void enterExpression(picoCParser.ExpressionContext ctx) {
+        visitor.visit(ctx.simpleExpression());
+    }
+    
     /* Special printf context that differs from standard function.
         Registers needs to be configured for gcc printf implementation. */
     private void specialPrintfFunction
@@ -146,5 +153,6 @@ public class TranslationListener extends picoCBaseListener
             
         Writers.emitPrintfCall();
     }
+
 
 }

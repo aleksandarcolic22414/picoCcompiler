@@ -40,7 +40,7 @@ public class Writers
     public static void emitInstruction(String instruction)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(instruction);
         TEXT_SEGMENT.append("\n");
     }
@@ -48,9 +48,9 @@ public class Writers
     public static void emitInstruction(String instruction, String arg1)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append("\n");
     }
@@ -58,9 +58,9 @@ public class Writers
     public static void emitInstruction(String instruction, String arg1, String arg2)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append(",");
         TEXT_SEGMENT.append(arg2);
@@ -71,9 +71,9 @@ public class Writers
     (String instruction, String arg1, String arg2, String arg3)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("\t");
+        TEXT_SEGMENT.append("    ");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append(",");
         TEXT_SEGMENT.append(arg2);
@@ -113,7 +113,7 @@ public class Writers
     {
         /* Do analyse of literalValue for special characters! */
         DATA_SEGMENT.append(literalName);
-        DATA_SEGMENT.append(":\tdb ");
+        DATA_SEGMENT.append(":    db ");
         DATA_SEGMENT.append(literalValue);
         DATA_SEGMENT.append(", 0\n");
     }

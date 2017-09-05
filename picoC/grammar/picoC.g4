@@ -19,8 +19,8 @@ statements: (statement ';')*
 statement:  declaration 
          |  initialization
          |  functionCall
-         |  comment 
          |  returnStat
+         |  expression
          ;
 
 declaration:  TYPE ID ;
@@ -43,9 +43,16 @@ argument: ID
         | INT
         ;
 
-comment: SINGLE_LINE_COMMENT 
-       | MULTY_LINE_COMMENT 
-       ;
+expression: simpleExpression;
+
+simpleExpression:  simpleExpression '*' simpleExpression    #Mul
+                |  simpleExpression '/' simpleExpression    #Div
+                |  simpleExpression '+' simpleExpression    #Add
+                |  simpleExpression '-' simpleExpression    #Sub
+                |  ID                                       #Id
+                |  INT                                      #Int
+                |  '(' simpleExpression ')'                 #Parens          
+                ;
 
 TYPE    : 'int'  ;
 ID      : [a-zA-Z]+ ; 

@@ -1,7 +1,5 @@
 int main()
 {
-    printf("AAAAAAA\nAAAAAA: %d\n", 2500800);
-
-    return 200;
+    5+5*3-2/1*(25);
 }
 
