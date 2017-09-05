@@ -45,13 +45,11 @@ argument: ID
 
 expression: simpleExpression;
 
-simpleExpression:  simpleExpression '*' simpleExpression    #Mul
-                |  simpleExpression '/' simpleExpression    #Div
-                |  simpleExpression '+' simpleExpression    #Add
-                |  simpleExpression '-' simpleExpression    #Sub
-                |  ID                                       #Id
-                |  INT                                      #Int
-                |  '(' simpleExpression ')'                 #Parens          
+simpleExpression:  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
+                |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
+                |  ID                                                #Id
+                |  INT                                               #Int
+                |  '(' simpleExpression ')'                          #Parens              
                 ;
 
 TYPE    : 'int'  ;
@@ -71,3 +69,8 @@ MULTY_LINE_COMMENT
 
 SINGLE_LINE_COMMENT
     :   '//' .*? '\r'? '\n' ->skip ; // match anything after // until newline
+
+MUL : '*' ;
+DIV : '/' ;
+ADD : '+' ;
+SUB : '-' ;

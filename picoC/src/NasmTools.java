@@ -10,7 +10,19 @@
  */
 public class NasmTools 
 {
-
+    /* For integer computation e%x (%=(a,b,c,d)) register are used.
+        Even in complex integer computaton, no more than 4 registers can 
+        be used, but esi and edi registers are available still... */
+    public static String freeRegisters[] = 
+        {
+         "eax", "ebx", 
+         "ecx", "edx", 
+         "esi", "edi"
+        };
+    
+    /* Top of freeRegisters stack */
+    private static int freeRegistersTop = -1;
+    
     /* Function converts C-style string into nasm-style byte array.
         It's limited version that only replaces line feed chars.
         Other conversions are about to be implemented. */
@@ -40,12 +52,24 @@ public class NasmTools
         System.out.println(new String(destination).trim());
         return new String(destination).trim();
     }
-// 
-//    public static void main(String[] args) 
-//    {
-//        String s = "\"%d\n\"";
-//        String d = NasmTools.convertStringToNasmStringLiteral(s);
-//        System.out.println(d);
-//        System.out.println(d.trim().length());
-//    }
+
+    public static String getNextFreeTemp() 
+    {
+        return freeRegisters[++freeRegistersTop];
+    }
+
+    static void free(String source) {
+        if (freeRegistersTop > 0)
+            --freeRegistersTop;
+        else System.err.println("freeRegisters stack empty!");
+    }
+
+    public static boolean isTakenRegisterEDX() {
+        return freeRegistersTop >= 3;
+    }
+
+    public static boolean isTakenRegisterEAX() {
+        return freeRegistersTop >= 0;
+    }
+    
 }

@@ -111,7 +111,10 @@ public class TranslationListener extends picoCBaseListener
     }
 
     @Override
-    public void enterExpression(picoCParser.ExpressionContext ctx) {
+    public void enterExpression(picoCParser.ExpressionContext ctx) 
+    {
+        /* Set rax to 0 for further computation */
+        Writers.emitInstruction("xor", "rax", "rax");
         visitor.visit(ctx.simpleExpression());
     }
     
