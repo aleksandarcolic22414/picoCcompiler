@@ -1,17 +1,14 @@
-
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  *
  * @author aleksandar
  */
 public class TranslationVisitor extends picoCBaseVisitor<String> 
 {
+
+    @Override
+    public String visitExpression(picoCParser.ExpressionContext ctx) {
+        return visit(ctx.simpleExpression());
+    }
 
     @Override
     public String visitAddSub(picoCParser.AddSubContext ctx) 
@@ -60,16 +57,24 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     fake = true;
                     NasmTools.getNextFreeTemp();
                 }
+                /* Always true -> */
                 if (NasmTools.isTakenRegisterEAX() && NasmTools.isTakenRegisterEDX()) {
                     s1 = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", s1, "eax");  /* save eax value into s1 */
-                 
+                    
                     s2 = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", s2, "edx");  /* save edx value into s2 */
                     
+                    
                     Writers.emitInstruction("mov", "eax", left); /* setting eax and edx for div */
                     Writers.emitInstruction("cdq");
-                    Writers.emitInstruction("idiv", right);
+                    
+                    /* If right operand od division is edx, than eax needs
+                        to be divided by moved edx, witch is s2 */
+                    if (!right.equals("edx"))
+                        Writers.emitInstruction("idiv", right);
+                    else
+                        Writers.emitInstruction("idiv", s2);
                     
                     Writers.emitInstruction("mov", left, "eax"); /* restoring values */
                     Writers.emitInstruction("mov", "eax", s1);
@@ -100,9 +105,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return nextFreeTemp;
     }
     
-    
-    
-
     @Override
     public String visitInt(picoCParser.IntContext ctx) 
     {

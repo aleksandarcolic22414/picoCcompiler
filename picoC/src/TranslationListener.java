@@ -53,33 +53,20 @@ public class TranslationListener extends picoCBaseListener
         Writers.emitInstruction(Constants.FUNCTION_ENTRY);
     }
 
-    @Override
-    public void exitMain(picoCParser.MainContext ctx) 
-    {
-        Writers.emitInstruction(Constants.FUNCTION_EXIT);
-    }
-
-    /* Similar to main */
-    @Override
-    public void enterFunctionBody(picoCParser.FunctionBodyContext ctx) 
-    {
-        
-    }
-
-    /* Similar to main */
-    @Override
-    public void exitFunctionBody(picoCParser.FunctionBodyContext ctx) 
-    {
-        
-    }
-
     /* Just done for numbers. ID's are about to be done... */
     @Override
     public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
     {
-        String val = ctx.INT().getText();
-        Writers.emitInstruction("mov", "eax", val);
+        String reg = visitor.visitExpression(ctx.expression());
+        Writers.emitInstruction("mov", "eax", reg);
     }
+
+    @Override
+    public void exitReturnStat(picoCParser.ReturnStatContext ctx) {
+        Writers.emitInstruction(Constants.FUNCTION_EXIT);
+    }
+    
+    
 
     @Override
     public void enterFunctionCall(picoCParser.FunctionCallContext ctx) 
@@ -113,9 +100,12 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterExpression(picoCParser.ExpressionContext ctx) 
     {
+        /* This is commented for testing. */
         /* Set rax to 0 for further computation */
-        Writers.emitInstruction("xor", "rax", "rax");
-        visitor.visit(ctx.simpleExpression());
+        System.out.println("Ulaz u enterExpression"); 
+                
+        /* Writers.emitInstruction("xor", "rax", "rax");
+        visitor.visit(ctx.simpleExpression()); */
     }
     
     /* Special printf context that differs from standard function.

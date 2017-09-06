@@ -1,13 +1,24 @@
 grammar picoC;
 
-compilationUnit:    main;
+/* TODO: main would go into standard function declarations */
+compilationUnit : externDeclarations
+                | main
+                | functionDeclaration
+                ;
 
+externDeclarations : ;
+ 
 main:   'int' 'main' '(' parameterList? ')' functionBody
     ;
 
+functionDeclaration : MEMORY_CLASS functionName '(' parameterList ')' functionBody 
+                    | 'void' functionName '(' parameterList ')' functionBody 
+                    ;
+
 parameterList:  parameter (',' parameter)*
-            ;
-parameter:   TYPE ID
+             ;
+
+parameter:  MEMORY_CLASS ID
          ;
 
 functionBody: '{' statements '}'
@@ -23,13 +34,13 @@ statement:  declaration
          |  expression
          ;
 
-declaration:  TYPE ID ;
+declaration:  MEMORY_CLASS ID ;
 
-initialization: TYPE ID '=' INT
+initialization: MEMORY_CLASS ID '=' INT
               | ID '=' INT ;
 
-returnStat: 'return' INT
-          | 'return' ID ;
+returnStat: 'return' expression 
+          ;
 
 
 functionCall: functionName '(' argumentList? ')' ;
@@ -52,7 +63,8 @@ simpleExpression:  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                 |  '(' simpleExpression ')'                          #Parens              
                 ;
 
-TYPE    : 'int'  ;
+MEMORY_CLASS : 'int'  
+             ;
 ID      : [a-zA-Z]+ ; 
 INT     : [0-9]+ ;
 WS      : [ \t\r\n]+ -> skip;
