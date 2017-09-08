@@ -7,49 +7,72 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
 
     @Override
     public String visitExpression(picoCParser.ExpressionContext ctx) {
+        /* Writers.emitInstruction("xor", "eax", "eax");
+            doesn't need to be done, because for expression
+            the first instruction is  always "mov", and eax register shoud be saved
+            before enterance if it hold some significant value. */
         return visit(ctx.simpleExpression());
     }
 
     @Override
     public String visitAddSub(picoCParser.AddSubContext ctx) 
     {
-        String left = visit(ctx.simpleExpression(0));
-        String right = visit(ctx.simpleExpression(1));
-        if (ctx.op.getType() == picoCParser.ADD)
-            Writers.emitInstruction("add", left, right);
-        else if (ctx.op.getType() == picoCParser.SUB)
-            Writers.emitInstruction("sub", left, right);    
+        String leftExpr = visit(ctx.simpleExpression(0));
+        String rightExpr = visit(ctx.simpleExpression(1));
+        String nextFreeTemp;
+        String operation = NasmTools.getOperation(ctx.op.getType());
         
-        NasmTools.free(right);
-        return left;
+        /* If left operand is not register, then it needs to be moved to one.
+            It's moved to eax, but first eax is saved on stack. */
+        if (!NasmTools.isRegister(leftExpr)) {
+            nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, "eax");
+            Writers.emitInstruction("mov", "eax", leftExpr);
+            Writers.emitInstruction(operation, "eax", rightExpr);
+            Writers.emitInstruction("mov", leftExpr, "eax");
+            Writers.emitInstruction("mov", "eax", nextFreeTemp);
+            NasmTools.free(nextFreeTemp);
+        } else
+            Writers.emitInstruction(operation, leftExpr, rightExpr);
+        NasmTools.free(rightExpr);
+        return leftExpr;
     }
 
     @Override
     public String visitMulDiv(picoCParser.MulDivContext ctx) 
     {
         boolean fake = false;
-        String left = visit(ctx.simpleExpression(0));
-        String right = visit(ctx.simpleExpression(1));
+        String leftExpr = visit(ctx.simpleExpression(0));
+        String rightExpr = visit(ctx.simpleExpression(1));
         String nextFreeTemp;
         String s1, s2;
         if (ctx.op.getType() == picoCParser.MUL) {
-            Writers.emitInstruction("imul", left, right);
+            /* Chech wheather leftExpr is register. If it's not then it needs to be
+                moved to one and then multiplied */
+            if (!NasmTools.isRegister(leftExpr)) {
+                nextFreeTemp = NasmTools.getNextFreeTemp();
+                Writers.emitInstruction("mov", nextFreeTemp, "eax");
+                Writers.emitInstruction("mov", "eax", leftExpr);
+                Writers.emitInstruction("imul", "eax", rightExpr);
+                Writers.emitInstruction("mov", leftExpr, "eax");
+                Writers.emitInstruction("mov", "eax", nextFreeTemp);
+                NasmTools.free(nextFreeTemp);
+            } else
+                Writers.emitInstruction("imul", leftExpr, rightExpr);
         } else if (ctx.op.getType() == picoCParser.DIV) {
-            /* TODO: Are about to be implementerd */;
-            /* If left operand is eax, than it needs to be divided in usual way */
-            if (left.equals("eax")) {
-                if (NasmTools.isTakenRegisterEDX()) {
+            if (leftExpr.equals("eax")) {
+                if (NasmTools.isTakenRegisterEDX()) { /* Never true, but stil */
                     nextFreeTemp = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", nextFreeTemp, "edx");
                     Writers.emitInstruction("cdq");
-                    Writers.emitInstruction("idiv", right);
+                    Writers.emitInstruction("idiv", rightExpr);
                     Writers.emitInstruction("mov", "edx", nextFreeTemp);
                     NasmTools.free(nextFreeTemp);
                 } else {
                     Writers.emitInstruction("cdq");
-                    Writers.emitInstruction("idiv", right);
+                    Writers.emitInstruction("idiv", rightExpr);
                 }
-            } else {    /* left operand is not eax */
+            } else {    /* leftExpr operand is not eax */
                 /* edx needs to be fakely taken, so that getNextFreeTemp
                     would not save some register in edx, because it is needed
                     for remainder of division. */
@@ -66,17 +89,17 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     Writers.emitInstruction("mov", s2, "edx");  /* save edx value into s2 */
                     
                     
-                    Writers.emitInstruction("mov", "eax", left); /* setting eax and edx for div */
+                    Writers.emitInstruction("mov", "eax", leftExpr); /* setting eax and edx for div */
                     Writers.emitInstruction("cdq");
                     
                     /* If right operand od division is edx, than eax needs
                         to be divided by moved edx, witch is s2 */
-                    if (!right.equals("edx"))
-                        Writers.emitInstruction("idiv", right);
+                    if (!rightExpr.equals("edx"))
+                        Writers.emitInstruction("idiv", rightExpr);
                     else
                         Writers.emitInstruction("idiv", s2);
                     
-                    Writers.emitInstruction("mov", left, "eax"); /* restoring values */
+                    Writers.emitInstruction("mov", leftExpr, "eax"); /* restoring values */
                     Writers.emitInstruction("mov", "eax", s1);
                     Writers.emitInstruction("mov", "edx", s2);
                     NasmTools.free(s2);
@@ -87,8 +110,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                 }
             }
         }
-        NasmTools.free(right); /* right is cleared anyway */
-        return left;    /* left register is returned */
+        NasmTools.free(rightExpr); /* right is cleared anyway */
+        return leftExpr;    /* leftExpr register is returned */
     }
 
     
