@@ -1,19 +1,20 @@
 grammar picoC;
 
 /* TODO: main would go into standard function declarations */
-compilationUnit : externDeclarations
-                | main
-                | functionDeclaration
+compilationUnit : translationUnit? EOF
                 ;
 
-externDeclarations : ;
- 
-main:   'int' 'main' '(' parameterList? ')' functionBody
-    ;
+translationUnit : externalDeclaration
+                | translationUnit externalDeclaration
+                ;
 
-functionDeclaration : MEMORY_CLASS functionName '(' parameterList ')' functionBody 
-                    | 'void' functionName '(' parameterList ')' functionBody 
+externalDeclaration : functionDefinition
+                    | declaration
+                    | ';'
                     ;
+
+functionDefinition : MEMORY_CLASS functionName '(' parameterList? ')' functionBody 
+                   ;
 
 parameterList:  parameter (',' parameter)*
              ;
@@ -64,8 +65,9 @@ simpleExpression:  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                 ;
 
 MEMORY_CLASS : 'int'  
+             | 'void'
              ;
-ID      : [a-zA-Z]+ ; 
+ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
 INT     : [0-9]+ ;
 WS      : [ \t\r\n]+ -> skip;
 

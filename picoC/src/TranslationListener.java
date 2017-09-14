@@ -1,9 +1,10 @@
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -19,11 +20,15 @@ public class TranslationListener extends picoCBaseListener
 {
     picoCParser parser;
     TranslationVisitor visitor;
+    /* List that contains informations about all functions
+        that are beeing compiled */
+    Map<String, FunctionsAnalyser> functions;
     
     public TranslationListener(picoCParser parser, TranslationVisitor visitor) 
     {
         this.parser = parser;
         this.visitor = visitor;
+        functions = new HashMap<>();
     }
 
     
@@ -44,7 +49,7 @@ public class TranslationListener extends picoCBaseListener
         }
         
     }
-    
+    /* This is serviced in enterFunctionDeclaration 
     @Override
     public void enterMain(picoCParser.MainContext ctx) 
     {
@@ -53,16 +58,19 @@ public class TranslationListener extends picoCBaseListener
         Writers.emitInstruction(Constants.FUNCTION_ENTRY);
     }
 
+    */
+    
     /* Just done for numbers. ID's are about to be done... */
     @Override
     public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
     {
-        String reg = visitor.visitExpression(ctx.expression());
-        Writers.emitInstruction("mov", "eax", reg);
+        String res = visitor.visitExpression(ctx.expression());
+        Writers.emitInstruction("mov", "eax", res);
     }
 
     @Override
-    public void exitReturnStat(picoCParser.ReturnStatContext ctx) {
+    public void exitReturnStat(picoCParser.ReturnStatContext ctx) 
+    {
         Writers.emitInstruction(Constants.FUNCTION_EXIT);
     }
     
@@ -88,7 +96,6 @@ public class TranslationListener extends picoCBaseListener
             if (argumentList != null)
                 System.out.println("Argumenti: " + argumentList.toString());
         }
-        
     }
 
     @Override
@@ -147,5 +154,42 @@ public class TranslationListener extends picoCBaseListener
         Writers.emitPrintfCall();
     }
 
+    @Override
+    public void enterFunctionDefinition
+    (picoCParser.FunctionDefinitionContext ctx) 
+    {
+        String name = ctx.functionName().getText();
+        /* Chech weather function is already defined */
+        if (functions.containsKey(name)) {
+            String error = "Multiple definitions of " + name;
+            System.err.println(error);
+            CompilationControler.errorOcured(error);
+        } else {
+            /* Setup text segment for function definition */
+            Writers.emitFunctionSetup(name);
+            FunctionsAnalyser fa = new FunctionsAnalyser(name);
+            functions.put(name, fa);       /* Add function to collection */
+            FunctionsAnalyser.inProcess = name;  /* Change function that is processed */
+        }
+    }
 
+    @Override
+    public void exitFunctionDefinition
+    (picoCParser.FunctionDefinitionContext ctx) 
+    {
+        /* Instead of true, chech wheater return statement ocurs somewhere */
+        if (true)
+            Writers.emitText(Constants.FUNCTION_EXIT);
+        FunctionsAnalyser.inProcess = null;
+    }
+
+    @Override
+    public void enterDeclaration(picoCParser.DeclarationContext ctx) 
+    {
+        
+    }
+
+    
+    
+    
 }

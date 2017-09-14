@@ -65,7 +65,7 @@ public class NasmTools
         return s;
     }
 
-    /* Funtion free cleans up memory location that is used for computations. 
+    /* Funtion cleans up memory location that is used for computations. 
         That can be register or some value on stack. */
     public static void free(String source) 
     {
@@ -115,7 +115,8 @@ public class NasmTools
     }
 
     /* Really stupid check */
-    public static boolean isRegister(String left) {
+    public static boolean isRegister(String left) 
+    {
         boolean isRegister;
         isRegister = ( 
                 left.equals("rax") 
@@ -151,7 +152,8 @@ public class NasmTools
 
     /* Returns text representation of operation.
         Numbers are taken from generated token numbers. */
-    public static String getOperation(int op) {
+    public static String getOperation(int op) 
+    {
         switch (op) {
             case picoCParser.ADD:
                 return "add";

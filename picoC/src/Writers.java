@@ -13,7 +13,7 @@ public class Writers
     public static StringBuilder DATA_SEGMENT;
     public static StringBuilder BSS_SEGMENT;
 
-
+    
     FileWriter out;
     BufferedWriter buff;
     
@@ -22,7 +22,6 @@ public class Writers
         TEXT_SEGMENT = new StringBuilder(Constants.ENTER_TEXT_SEGMENT);
         DATA_SEGMENT = new StringBuilder(Constants.ENTER_DATA_SEGMENT);
         BSS_SEGMENT = new StringBuilder(Constants.ENTER_BSS_SEGMENT);
-        
     }
     
     public Writers() throws IOException 
@@ -116,6 +115,13 @@ public class Writers
         DATA_SEGMENT.append(":    db ");
         DATA_SEGMENT.append(literalValue);
         DATA_SEGMENT.append(", 0\n");
+    }
+    
+    /* Set text segment for function definition */
+    static void emitFunctionSetup(String name) {
+        Writers.emitText("\tglobal    " + name);
+        Writers.emitText(name + ":");
+        Writers.emitText(Constants.FUNCTION_ENTRY);
     }
     
     /* Function sets format argument for printf function.

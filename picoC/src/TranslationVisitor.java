@@ -110,7 +110,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                 }
             }
         }
-        NasmTools.free(rightExpr); /* right is cleared anyway */
+        NasmTools.free(rightExpr); /* rightExpr is cleared anyway */
         return leftExpr;    /* leftExpr register is returned */
     }
 
@@ -121,11 +121,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     {
         System.out.println("Context: visitInt Val: " + ctx.getText());
         /* TODO: Determine displacement of variable ID */
-        String val = ctx.ID().getText();
-        String nextFreeTemp = NasmTools.getNextFreeTemp();
-        Writers.emitInstruction("mov", nextFreeTemp, val);
         
-        return nextFreeTemp;
+        
+        return null;
     }
     
     @Override
