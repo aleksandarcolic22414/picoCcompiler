@@ -65,7 +65,7 @@ public class TranslationListener extends picoCBaseListener
     public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
     {
         String res = visitor.visitExpression(ctx.expression());
-        Writers.emitInstruction("mov", "eax", res);
+        Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
     }
 
     @Override

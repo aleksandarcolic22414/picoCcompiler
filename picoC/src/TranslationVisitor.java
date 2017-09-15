@@ -25,15 +25,18 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* If left operand is not register, then it needs to be moved to one.
             It's moved to eax, but first eax is saved on stack. */
         if (!NasmTools.isRegister(leftExpr)) {
+            /* Testing nextFreeTemp2 */
             nextFreeTemp = NasmTools.getNextFreeTemp();
             Writers.emitInstruction("mov", nextFreeTemp, "eax");
             Writers.emitInstruction("mov", "eax", leftExpr);
             Writers.emitInstruction(operation, "eax", rightExpr);
             Writers.emitInstruction("mov", leftExpr, "eax");
             Writers.emitInstruction("mov", "eax", nextFreeTemp);
+            /* Testing free */
             NasmTools.free(nextFreeTemp);
         } else
             Writers.emitInstruction(operation, leftExpr, rightExpr);
+        /* Testing free */
         NasmTools.free(rightExpr);
         return leftExpr;
     }
@@ -46,45 +49,56 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String rightExpr = visit(ctx.simpleExpression(1));
         String nextFreeTemp;
         String s1, s2;
+        String fakelyTaken = null;
         if (ctx.op.getType() == picoCParser.MUL) {
             /* Chech wheather leftExpr is register. If it's not then it needs to be
                 moved to one and then multiplied */
             if (!NasmTools.isRegister(leftExpr)) {
+                /* Testing getNextFreeTemp */
                 nextFreeTemp = NasmTools.getNextFreeTemp();
                 Writers.emitInstruction("mov", nextFreeTemp, "eax");
                 Writers.emitInstruction("mov", "eax", leftExpr);
                 Writers.emitInstruction("imul", "eax", rightExpr);
                 Writers.emitInstruction("mov", leftExpr, "eax");
                 Writers.emitInstruction("mov", "eax", nextFreeTemp);
+                /* Testing free */
                 NasmTools.free(nextFreeTemp);
             } else
                 Writers.emitInstruction("imul", leftExpr, rightExpr);
         } else if (ctx.op.getType() == picoCParser.DIV) {
             if (leftExpr.equals("eax")) {
                 if (NasmTools.isTakenRegisterEDX()) { /* Never true, but stil */
+                    /* Testing getNextFreeTemp */
                     nextFreeTemp = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", nextFreeTemp, "edx");
                     Writers.emitInstruction("cdq");
                     Writers.emitInstruction("idiv", rightExpr);
                     Writers.emitInstruction("mov", "edx", nextFreeTemp);
+                    /* Testing free */
                     NasmTools.free(nextFreeTemp);
                 } else {
                     Writers.emitInstruction("cdq");
                     Writers.emitInstruction("idiv", rightExpr);
                 }
             } else {    /* leftExpr operand is not eax */
-                /* edx needs to be fakely taken, so that getNextFreeTemp
+                /* edx needs to be fakely taken, so that getNextFreeTemp3
                     would not save some register in edx, because it is needed
                     for remainder of division. */
+                
+                /* Testing isTakenRegisterEDX */
                 if (!NasmTools.isTakenRegisterEDX()) {
                     fake = true;
-                    NasmTools.getNextFreeTemp();
+                /* Testing getNextFreeTemp */
+                    fakelyTaken = NasmTools.getNextFreeTemp();
                 }
                 /* Always true -> */
+                
+                /* Testing isTakenRegisterEAX && EDX2 */
                 if (NasmTools.isTakenRegisterEAX() && NasmTools.isTakenRegisterEDX()) {
+                    /* Testing getNextFreeTemp */
                     s1 = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", s1, "eax");  /* save eax value into s1 */
-                    
+                    /* Testing getNextFreeTemp */
                     s2 = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", s2, "edx");  /* save edx value into s2 */
                     
@@ -102,14 +116,17 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     Writers.emitInstruction("mov", leftExpr, "eax"); /* restoring values */
                     Writers.emitInstruction("mov", "eax", s1);
                     Writers.emitInstruction("mov", "edx", s2);
+                    /* Testing free */
                     NasmTools.free(s2);
                     NasmTools.free(s1);
                 }
+                /* Testing free */
                 if (fake == true) {
-                    NasmTools.free("fake!");                    
+                    NasmTools.free(fakelyTaken);                    
                 }
             }
         }
+        /* Testing free */
         NasmTools.free(rightExpr); /* rightExpr is cleared anyway */
         return leftExpr;    /* leftExpr register is returned */
     }
@@ -131,6 +148,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     {
         System.out.println("Context: visitInt Val: " + ctx.getText());
         String val = ctx.INT().getText();
+        /* Testing getNextFreeTemp */
         String nextFreeTemp = NasmTools.getNextFreeTemp();
         Writers.emitInstruction("mov", nextFreeTemp, val);
         

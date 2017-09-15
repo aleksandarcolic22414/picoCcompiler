@@ -131,7 +131,7 @@ public class Writers
     {
         /* Get nasm-style string from c-style string */
         String strLitNasmVal = NasmTools.convertStringToNasmStringLiteral(strFormat);
-        /* Get next free literal name */
+        /* Get next free3 literal name */
         String dataLiteralName = Writers.defineStringLiteral(strLitNasmVal);
         System.out.println("Converted format: " + strLitNasmVal);
         /* Put literal name as argument into rdi register */
@@ -147,7 +147,7 @@ public class Writers
             case STRING_LITERAL:
                 strlitVal = NasmTools.convertStringToNasmStringLiteral(argVal); /* Get nasm-style string */
                 System.out.println("Converted litval: " + strlitVal);
-                dataLiteralName = Writers.defineStringLiteral(strlitVal); /* Get next free name */
+                dataLiteralName = Writers.defineStringLiteral(strlitVal); /* Get next free3 name */
                 Writers.emitInstruction("mov", "rsi", dataLiteralName); /* place it into rsi */
                 break;
             case INT:
