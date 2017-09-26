@@ -9,7 +9,12 @@ ANTLR predstavlja alat za generisanje parsera i lexera na osnovu zadate gramatik
 
 Ukratko objasnjenje postupka za prevodjenje koda:
 
-ANTLR omogucava automatsko pravljenje visitor i listener class-a.
+Na osnovu zadate gramatike, ANTLR pravi klase Parser i Lexer.
+Parseru je potrebno proslediti stream tokena od kojih on pravi sintaksno stablo za navedeno pravilo iz gramatike.
+
+Sledece dve klase se koriste za ugradnju akcija u kontekstne cvorove stabla:
+
+ANTLR omogucava automatsko pravljenje Visitor i Listener class-a.
 
 Visitor klasa se koristi za eksplicitno obilazenje nekog dela parsnog stabla, odnosno
 obilazenje odredjenog pravila u izgenerisanom parsnom stablu.
