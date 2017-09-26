@@ -132,15 +132,23 @@ public class NasmTools
     TODO: Get real displacement when stack frame is not empty! */
     private static String getStackDisplacement() 
     {
+        /* Get function analyser */
+        FunctionsAnalyser fa; 
+        fa = TranslationListener.functions.get(FunctionsAnalyser.getInProcess());
+        /* Calculate taken memory on stack */
+        int taken = fa.getStackVariablesDisplacement();
+        
         /* Make room for integer */
         Writers.emitInstruction(
                 "sub", "rsp", Integer.toString(Constants.SIZE_OF_INT));
-        /* First free3 location is ebp-4. So every next is calculated by
+        /* First free location is ebp-4. So every next is calculated by
             multipliing pushedRegisters and sizeof(int).
-            Here is also needed to determine how much space is already
-            taken on stack!!! So real calculation would go something like:
-            disp = taken + sizeof(var) + sizeof(var) * pushedRegisters */
-        int disp = Constants.SIZE_OF_INT + Constants.SIZE_OF_INT * pushedRegistersOnStack;
+            Also taken must be added consider already taken place on stack. */
+        int disp = 
+                taken + 
+                Constants.SIZE_OF_INT + 
+                Constants.SIZE_OF_INT * pushedRegistersOnStack;
+        
         ++pushedRegistersOnStack;
         /* [rbp - displacement] is returned casted to dword
             TODO: Determine witch cast should be used  */
@@ -200,15 +208,15 @@ public class NasmTools
                 return null;
         }
     }
-    /* Return next free3 register if there is one. If there is no free3 registers
+    /* Return next free register if there is one. If there is no free3 registers
         function returns first free3 stack memory */
     public static String getNextFreeTemp() 
     {
         int register = -1;
         /* If all registers are taken */
-        if (flags == ((1 << 14) - 1)) 
+        if (flags == ((1 << NUMBER_OF_REGISTERS) - 1)) 
             return getStackDisplacement();
-        /* Look for first free3 register */
+        /* Look for first free register */
         
         for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
             if ((flags & (1 << i)) == 0) {
@@ -274,8 +282,26 @@ public class NasmTools
         return null;
     }
     
-    private static int stringToRegister(String source) {
+    private static int stringToRegister(String source) 
+    {
         return registersMap.get(source);
+    }
+
+    public static int getSize(MemoryClassEnumeration typeSpecifier) 
+    {
+        switch (typeSpecifier) {
+            case INT:
+                return Constants.SIZE_OF_INT;
+            case VOID:
+                return -1;
+            default:
+                return 0;
+        }
+    }
+
+    static void freeAllRegisters() {
+        /* Clear flags regiser */
+        flags = 0x0;
     }
     
 }

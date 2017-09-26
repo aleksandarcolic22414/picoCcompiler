@@ -31,4 +31,8 @@ public class DataSegment
         stringLiteralList.add(nextStrLit);
         return nextStrLit;
     }
+
+    static void DeclareExtern(picoCParser.DeclarationContext ctx) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

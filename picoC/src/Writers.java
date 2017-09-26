@@ -154,7 +154,12 @@ public class Writers
                 Writers.emitInstruction("mov", "rsi", argVal); /* Place INT into rsi */
                 break;
             case ID:
-                /* Implement variable argument. */
+                String var;
+                var = TranslationListener. /* listener */
+                        curFuncAna. /* current function context */
+                            getLocalVariables().    /* Function variables */
+                                get(argVal).getStackPosition();  /* var->varStackDisplacement */
+                Writers.emitInstruction("mov", "esi", var);
                 break;
             default:
                 break;
@@ -166,6 +171,16 @@ public class Writers
     {
         Writers.emitInstruction("mov", "rax", "0");
         Writers.emitInstruction("call", "printf");
+    }
+    
+    static void emitLabelReturn(String inProcess) {
+        Writers.emitText("");
+        Writers.emitText(inProcess + "Exit:");
+    }
+    
+    static void emitJumpToExit(String inProcess) {
+        String exit = inProcess + "Exit";
+        Writers.emitInstruction("jmp", exit);
     }
     
     /* Function flushes all 3 string builders into output file. */

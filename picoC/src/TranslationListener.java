@@ -22,7 +22,10 @@ public class TranslationListener extends picoCBaseListener
     TranslationVisitor visitor;
     /* List that contains informations about all functions
         that are beeing compiled */
-    Map<String, FunctionsAnalyser> functions;
+    public static Map<String, FunctionsAnalyser> functions;
+    
+    /* Curent function context.  */
+    public static FunctionsAnalyser curFuncAna;
     
     public TranslationListener(picoCParser parser, TranslationVisitor visitor) 
     {
@@ -31,12 +34,6 @@ public class TranslationListener extends picoCBaseListener
         functions = new HashMap<>();
     }
 
-    
-    @Override
-    public void enterCompilationUnit(picoCParser.CompilationUnitContext ctx) 
-    {
-        
-    }
 
     @Override
     public void exitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
@@ -60,7 +57,7 @@ public class TranslationListener extends picoCBaseListener
 
     */
     
-    /* Just done for numbers. ID's are about to be done... */
+    /* Set return value to eax register */
     @Override
     public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
     {
@@ -68,13 +65,12 @@ public class TranslationListener extends picoCBaseListener
         Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
     }
 
+    /* Emit unconditional jump to the end of the function */
     @Override
     public void exitReturnStat(picoCParser.ReturnStatContext ctx) 
     {
-        Writers.emitInstruction(Constants.FUNCTION_EXIT);
+        Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
     }
-    
-    
 
     @Override
     public void enterFunctionCall(picoCParser.FunctionCallContext ctx) 
@@ -159,6 +155,11 @@ public class TranslationListener extends picoCBaseListener
     (picoCParser.FunctionDefinitionContext ctx) 
     {
         String name = ctx.functionName().getText();
+        
+        String memoryClass = ctx.typeSpecifier().getText();
+        MemoryClassEnumeration memclass;
+        memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
+        
         /* Chech weather function is already defined */
         if (functions.containsKey(name)) {
             String error = "Multiple definitions of " + name;
@@ -167,9 +168,16 @@ public class TranslationListener extends picoCBaseListener
         } else {
             /* Setup text segment for function definition */
             Writers.emitFunctionSetup(name);
+            /* Create new function analyser object, and set it's type specifier
+                to some type */
             FunctionsAnalyser fa = new FunctionsAnalyser(name);
+            fa.setMemoryClass(memclass);
+            
             functions.put(name, fa);       /* Add function to collection */
-            FunctionsAnalyser.inProcess = name;  /* Change function that is processed */
+            
+            FunctionsAnalyser.setFunctionInProcess(true); /* Walker in function context */
+            FunctionsAnalyser.setInProcess(name); /* Change function that is processed */
+            curFuncAna = fa;
         }
     }
 
@@ -177,16 +185,76 @@ public class TranslationListener extends picoCBaseListener
     public void exitFunctionDefinition
     (picoCParser.FunctionDefinitionContext ctx) 
     {
-        /* Instead of true, chech wheater return statement ocurs somewhere */
-        if (true)
-            Writers.emitText(Constants.FUNCTION_EXIT);
-        FunctionsAnalyser.inProcess = null;
+        Writers.emitLabelReturn(curFuncAna.getFunctionName());
+        Writers.emitText(Constants.FUNCTION_EXIT);
+        FunctionsAnalyser.setFunctionInProcess(false);
+        FunctionsAnalyser.setInProcess(null);
     }
 
     @Override
     public void enterDeclaration(picoCParser.DeclarationContext ctx) 
     {
+        /* Extern variable declaration */
+        if (!FunctionsAnalyser.isFunctionInProcess()) {
+            DataSegment.DeclareExtern(ctx);
+            return ;
+        } 
+        /* Variable name */
+        String name = ctx.ID().getText();
         
+        /* Function analyser declaration */
+        FunctionsAnalyser fa = curFuncAna;
+        
+        /* Chech if variable is already declared */
+        if (fa.getLocalVariables().containsKey(name)) {
+            CompilationControler.errorOcured("Multiple declaration of " + name);
+            return ;    
+        }
+        
+        /* Get variable's memory class  */
+        MemoryClassEnumeration typeSpecifier;
+        typeSpecifier = FunctionsAnalyser.getMemoryClass(ctx.typeSpecifier().getText());
+        
+        /* Get stack position */
+        String stackPosition = fa.declareNew(typeSpecifier);
+        
+        /* Create new variable object */
+        Variable var = new Variable(name, stackPosition, false, typeSpecifier);
+        
+        /* Insert new variable in function analyser */
+        fa.getLocalVariables().put(name, var);
+        
+        /* Size in bytes */
+        int varSize = NasmTools.getSize(typeSpecifier);
+        
+        /* Emit assembly declaration */
+        Writers.emitInstruction("sub", "rsp", Integer.toString(varSize));
+    }
+
+    @Override
+    public void enterAssignment(picoCParser.AssignmentContext ctx) {
+        /* Get id value */
+        String id = ctx.ID().getText();
+        /* Get variable context */
+        Variable var;
+        /* Check if it is declared */
+        if ((var = curFuncAna.getLocalVariables().get(id)) == null) {
+            CompilationControler.errorOcured("Variable +" + id + "not declared");
+            return ;
+        }
+        /* Register where expression is calculated */
+        String res = visitor.visitExpression(ctx.expression());
+        
+        var.setInitialized(true);
+        /* Emit assign.
+            getStackPosition returns position of var on stack */
+        Writers.emitInstruction("mov", var.getStackPosition(), res);
+        NasmTools.free(res);
+    }
+
+    @Override
+    public void exitStatement(picoCParser.StatementContext ctx) {
+        NasmTools.freeAllRegisters();
     }
 
     

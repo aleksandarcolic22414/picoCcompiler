@@ -1,6 +1,5 @@
 grammar picoC;
 
-/* TODO: main would go into standard function declarations */
 compilationUnit : translationUnit? EOF
                 ;
 
@@ -9,64 +8,66 @@ translationUnit : externalDeclaration
                 ;
 
 externalDeclaration : functionDefinition
-                    | declaration
+                    | declaration ';'
+                    | assignment ';'
                     | ';'
                     ;
 
-functionDefinition : MEMORY_CLASS functionName '(' parameterList? ')' functionBody 
+functionDefinition : typeSpecifier functionName '(' parameterList? ')' functionBody 
                    ;
 
-parameterList:  parameter (',' parameter)*
-             ;
+typeSpecifier : 'int'   
+              | 'void'
+              ;
 
-parameter:  MEMORY_CLASS ID
-         ;
+parameterList :  parameter (',' parameter)*
+              ;
 
-functionBody: '{' statements '}'
-            ;
-
-statements: (statement ';')* 
+parameter :  typeSpecifier ID
           ;
 
-statement:  declaration 
-         |  initialization
-         |  functionCall
-         |  returnStat
-         |  expression
-         ;
+functionBody : '{' statements '}'
+             ;
 
-declaration:  MEMORY_CLASS ID ;
+statements : (statement ';')* 
+           ;
 
-initialization: MEMORY_CLASS ID '=' INT
-              | ID '=' INT ;
-
-returnStat: 'return' expression 
+statement :  declaration 
+          |  assignment  
+          |  functionCall
+          |  returnStat
+          |  expression
+          |  assignment
           ;
 
+declaration : typeSpecifier ID ;
 
-functionCall: functionName '(' argumentList? ')' ;
+assignment : ID '=' expression ;
 
-functionName: ID ;
+returnStat : 'return' expression? 
+           ;
 
-argumentList: argument (',' argument)* ;
 
-argument: ID    
-        | STRING_LITERAL
-        | INT
-        ;
+functionCall : functionName '(' argumentList? ')' ;
 
-expression: simpleExpression;
+functionName : ID ;
 
-simpleExpression:  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
-                |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
-                |  ID                                                #Id
-                |  INT                                               #Int
-                |  '(' simpleExpression ')'                          #Parens              
-                ;
+argumentList : argument (',' argument)* ;
 
-MEMORY_CLASS : 'int'  
-             | 'void'
-             ;
+argument : ID    
+         | STRING_LITERAL
+         | INT
+         ;
+
+expression : simpleExpression;
+
+simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
+                 |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
+                 |  ID                                                #Id
+                 |  INT                                               #Int
+                 |  '(' simpleExpression ')'                          #Parens              
+                 ;
+
 ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
 INT     : [0-9]+ ;
 WS      : [ \t\r\n]+ -> skip;
@@ -88,3 +89,10 @@ MUL : '*' ;
 DIV : '/' ;
 ADD : '+' ;
 SUB : '-' ;
+
+/* Type specifiers */
+
+fragment
+VOIDTYPE : 'void' ;
+fragment
+INTTYPE  : 'int'  ;

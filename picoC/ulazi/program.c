@@ -1,25 +1,21 @@
 int main()
-   
-	return (((2+2*2)+2)/2+2)/2 * 8/(12/2-6/(1+12/(4+8/(3+2/(1+4/(1+3))))));
+{   
+    int a;
+    int b;
+    a = 5 + 3;
+    b = a + 5;
+    int c;
+    c = a + b*5 + 12/2 + 25;
+    printf("Value of a = %d\n", a);
+    printf("Value of b = %d\n", b);
+    printf("Value of c = %d\n", c);
 }
 
 
 /*
 int main()
-{                                  3 * 2
+{
 	return (((2+2*2)+2)/2+2)/2 * 8/(12/2-6/(1+12/(4+8/(3+2/(1+4/(1+3))))));
         rezultat je 6.
 }
-levo je 24. desno je 4.
-*/
-
-/*  
-Ucin haos:
-
-
-int main()
-{
-    return (((1+2*2)+2)*2+2)*2 * 1*(2*8-2*(1+3*(1+1)));
-}
-
 */

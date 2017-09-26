@@ -8,7 +8,7 @@
  *
  * @author aleksandar
  */
-public enum TokenEnumeration 
-{
-    ID, STRING_LITERAL, INT;
+public enum MemoryClassEnumeration {
+    INT,
+    VOID
 }
