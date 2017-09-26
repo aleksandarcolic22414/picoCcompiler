@@ -4,8 +4,11 @@ Projekat predstavlja minijaturnu verziju C kompajlera.
 Funkcionise tako sto izvorni fajl, napisan u C programskom jeziku, prevodi u asemblerski jezik.
 Asemblerski jezik koji se ovde koristi je NASM (Netwide Assembler).
 
-Za parsiranje teksta se koristi ANTLR alat.
+Za parsiranje teksta se koristi ANTLR (Another Tool For Language Recognition) alat.
 ANTLR predstavlja alat za generisanje parsera i lexera na osnovu zadate gramatike.
+
+Jezik je odredjen kontekstno-slobodnom gramatikom koja se iskazuje 
+pomocu Prosirene Backus-Naur--ove forme (Extended Backus–Naur Form (EBNF)).
 
 Ukratko objasnjenje postupka za prevodjenje koda:
 
