@@ -11,7 +11,10 @@ ANTLR je top-down parser koji automatski generise parser i lexer.
 Takodje, generise sintaksna i apstraktno-sintaksna stabla koja sluze za samo prevodjenje.
 Jezik je odredjen kontekstno-slobodnom gramatikom koja se iskazuje 
 pomocu Prosirene Backus-Naur--ove forme (Extended Backus–Naur Form (EBNF)).
-ANTLR podrzava levu i desnu direkttnu rekurziju, ali ne podrzava levu indirektnu rekurziju.
+ANTLR podrzava levu i desnu direktnu rekurziju, ali ne podrzava levu indirektnu rekurziju.
+
+Takodje podrzava mehanizam oporavka za ulazni kod koji nije u skladu sa zadatom gramatikom, sto dalje omogucava
+laksu obradu gresaka.
 
 Ukratko objasnjenje postupka za prevodjenje koda:
 
