@@ -7,8 +7,11 @@ Asemblerski jezik koji se ovde koristi je NASM (Netwide Assembler).
 Za parsiranje teksta se koristi ANTLR (Another Tool For Language Recognition) alat.
 ANTLR predstavlja alat za generisanje parsera i lexera na osnovu zadate gramatike.
 
+ANTLR je top-down parser koji automatski generise parser i lexer.
+Takodje, generise sintaksna i apstraktno-sintaksna stabla koja sluze za samo prevodjenje.
 Jezik je odredjen kontekstno-slobodnom gramatikom koja se iskazuje 
 pomocu Prosirene Backus-Naur--ove forme (Extended Backus–Naur Form (EBNF)).
+ANTLR podrzava levu i desnu direkttnu rekurziju, ali ne podrzava levu indirektnu rekurziju.
 
 Ukratko objasnjenje postupka za prevodjenje koda:
 
