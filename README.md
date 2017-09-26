@@ -1,0 +1,32 @@
+# picoCcompiler
+
+Projekat predstavlja minijaturnu verziju C kompajlera.
+Funkcionise tako sto izvorni fajl, napisan u C programskom jeziku, prevodi u asemblerski jezik.
+Asemblerski jezik koji se ovde koristi je NASM (Netwide Assembler).
+
+Za parsiranje teksta se koristi ANTLR alat.
+ANTLR predstavlja alat za generisanje parsera i lexera na osnovu zadate gramatike.
+
+Ukratko objasnjenje postupka za prevodjenje koda:
+
+ANTLR omogucava automatsko pravljenje visitor i listener class-a.
+
+Visitor klasa se koristi za eksplicitno obilazenje nekog dela parsnog stabla, odnosno
+obilazenje odredjenog pravila u izgenerisanom parsnom stablu.
+
+Listener klasa omogucava ugradnju akcija u svaki cvor parsnog stabla.
+Funkcionise tako sto svaki cvor u stablu osluskuje, odnosno ocekuje odredjeni dogadjaj.
+Taj dogadjaj je obilazak tog (kontekstnog) cvora. Obilazak celog stabla se vrsi pomocu klase Walker.
+
+Walker klasa je pomocnik listener klase. Kada se napravi "setac", on po default-u
+obilazi stablo In-order obilaskom. Prvo se obilazi levo podstablo, zatim trenutni cvor i na kraju desno podstablo.
+Kada walker stigne do nekog kontekstnog cvora, tada se aktivira osluskivac za to 
+pravilo (koji je napravljen u klasi listener).
+ 
+U klasi listener se naprave odredjene akcije koje se izvrsavaju kada walker aktivira pravilo.
+Ovaj mehanizam omogucava jednostavnu ugradju akcija za prevodjenje.
+
+Nekada je potrebno obici pravilo u stablu na nacin koji se razlikuje od standardnog (bez cekanja da walker aktivira akciju). 
+
+Zato klasa visitor omogucava kretanje po parsnom stablu, odnosno obilazak kontekstnih cvorova na proizvoljan nacin.
+
