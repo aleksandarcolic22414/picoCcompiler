@@ -61,7 +61,8 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
     {
-        String res = visitor.visitExpression(ctx.expression());
+        /* Used to be visitor.visitExpression(ctx.expression()); */
+        String res = visitor.visit(ctx.expression());
         Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
     }
 
@@ -105,7 +106,7 @@ public class TranslationListener extends picoCBaseListener
     {
         /* This is commented for testing. */
         /* Set rax to 0 for further computation */
-        System.out.println("Ulaz u enterExpression"); 
+        //System.out.println("enterExpression"); 
                 
         /* Writers.emitInstruction("xor", "rax", "rax");
         visitor.visit(ctx.simpleExpression()); */
@@ -194,38 +195,46 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterDeclaration(picoCParser.DeclarationContext ctx) 
     {
+        System.out.println("enterDeclaration");
         /* Extern variable declaration */
         if (!FunctionsAnalyser.isFunctionInProcess()) {
             DataSegment.DeclareExtern(ctx);
             return ;
-        } 
+        }
+        
         /* Variable name */
-        String name = ctx.ID().getText();
+        String name = null;
         
-        /* Function analyser declaration */
-        FunctionsAnalyser fa = curFuncAna;
-        
+        if (ctx.assignment() == null)
+            name = ctx.ID().getText();
+        else
+            name = ctx.assignment().ID().getText();
         /* Chech if variable is already declared */
-        if (fa.getLocalVariables().containsKey(name)) {
+        if (curFuncAna.getLocalVariables().containsKey(name)) {
             CompilationControler.errorOcured("Multiple declaration of " + name);
             return ;    
         }
         
         /* Get variable's memory class  */
         MemoryClassEnumeration typeSpecifier;
-        typeSpecifier = FunctionsAnalyser.getMemoryClass(ctx.typeSpecifier().getText());
+        typeSpecifier = curFuncAna.getCurrentDeclaratorType();
         
         /* Get stack position */
-        String stackPosition = fa.declareNew(typeSpecifier);
+        String stackPosition = curFuncAna.declareNew(typeSpecifier);
         
         /* Create new variable object */
         Variable var = new Variable(name, stackPosition, false, typeSpecifier);
         
         /* Insert new variable in function analyser */
-        fa.getLocalVariables().put(name, var);
+        curFuncAna.getLocalVariables().put(name, var);
         
         /* Size in bytes */
         int varSize = NasmTools.getSize(typeSpecifier);
+        
+        if (varSize == -1) {
+            CompilationControler.errorOcured("Void variable not alowed!");
+            return;
+        }
         
         /* Emit assembly declaration */
         Writers.emitInstruction("sub", "rsp", Integer.toString(varSize));
@@ -233,6 +242,7 @@ public class TranslationListener extends picoCBaseListener
 
     @Override
     public void enterAssignment(picoCParser.AssignmentContext ctx) {
+        System.out.println("enterAssignment");
         /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -243,7 +253,7 @@ public class TranslationListener extends picoCBaseListener
             return ;
         }
         /* Register where expression is calculated */
-        String res = visitor.visitExpression(ctx.expression());
+        String res = visitor.visit(ctx.expression());
         
         var.setInitialized(true);
         /* Emit assign.
@@ -251,13 +261,5 @@ public class TranslationListener extends picoCBaseListener
         Writers.emitInstruction("mov", var.getStackPosition(), res);
         NasmTools.free(res);
     }
-
-    @Override
-    public void exitStatement(picoCParser.StatementContext ctx) {
-        NasmTools.freeAllRegisters();
-    }
-
-    
-    
     
 }

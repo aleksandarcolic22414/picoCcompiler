@@ -36,6 +36,9 @@ public class FunctionsAnalyser
     /* Wheather function has return statement */
     private boolean hasReturn = false;
     
+    /* Represents memory class for declarationList */
+    private MemoryClassEnumeration currentDeclaratorType = MemoryClassEnumeration.VOID;
+    
     public FunctionsAnalyser(String functionName) {
         this.localVariables = new HashMap<>();
         this.functionName = functionName;
@@ -114,6 +117,16 @@ public class FunctionsAnalyser
         return hasReturn;
     }
 
+    public MemoryClassEnumeration getCurrentDeclaratorType() {
+        return currentDeclaratorType;
+    }
+
+    public void setCurrentDeclaratorType(MemoryClassEnumeration currentDeclaratorType) {
+        this.currentDeclaratorType = currentDeclaratorType;
+    }
+
+    
+    
     public static MemoryClassEnumeration getMemoryClass(String memclass)
     {
         switch (memclass) {

@@ -8,10 +8,16 @@ translationUnit : externalDeclaration
                 ;
 
 externalDeclaration : functionDefinition
-                    | declaration ';'
+                    | declarationList ';'
                     | assignment ';'
                     | ';'
                     ;
+
+declarationList : typeSpecifier declaration (',' declaration)*;
+
+declaration : ID
+	    | assignment
+	    ;
 
 functionDefinition : typeSpecifier functionName '(' parameterList? ')' functionBody 
                    ;
@@ -32,17 +38,12 @@ functionBody : '{' statements '}'
 statements : (statement ';')* 
            ;
 
-statement :  declaration 
-          |  assignment  
-          |  functionCall
-          |  returnStat
-          |  expression
-          |  assignment
+statement :  declarationList        
+          |  functionCall       
+          |  returnStat         
+          |  expression         
+          |  assignment         
           ;
-
-declaration : typeSpecifier ID ;
-
-assignment : ID '=' expression ;
 
 returnStat : 'return' expression? 
            ;
@@ -66,7 +67,10 @@ simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                  |  ID                                                #Id
                  |  INT                                               #Int
                  |  '(' simpleExpression ')'                          #Parens              
+                 |  assignment                                        #Assign  
                  ;
+
+assignment : ID '=' expression ;
 
 ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
 INT     : [0-9]+ ;

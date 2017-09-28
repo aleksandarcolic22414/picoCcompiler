@@ -158,37 +158,7 @@ public class NasmTools
     /* Really stupid check */
     public static boolean isRegister(String left) 
     {
-        boolean isRegister;
-        isRegister = ( 
-                left.equals("rax") 
-                ||
-                left.equals("rbx") 
-                ||
-                left.equals("rcx") 
-                ||
-                left.equals("rdx") 
-                ||
-                left.equals("eax") 
-                ||
-                left.equals("ebx") 
-                ||
-                left.equals("ecx") 
-                ||
-                left.equals("edx") 
-                ||
-                left.equals("rsi") 
-                ||
-                left.equals("rdi") 
-                ||
-                left.equals("esi") 
-                ||
-                left.equals("edi")
-                ||
-                left.equals("rbp")
-                ||
-                left.equals("rsp")
-            );
-        return isRegister;
+        return registersMap.containsKey(left);
     }
 
     /* Returns text representation of operation.

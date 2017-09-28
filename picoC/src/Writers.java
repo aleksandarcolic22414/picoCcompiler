@@ -155,7 +155,7 @@ public class Writers
                 break;
             case ID:
                 String var;
-                var = TranslationListener. /* listener */
+                var = TranslationVisitor. /* listener */
                         curFuncAna. /* current function context */
                             getLocalVariables().    /* Function variables */
                                 get(argVal).getStackPosition();  /* var->varStackDisplacement */
@@ -190,7 +190,6 @@ public class Writers
         buff.write(TEXT_SEGMENT.toString());
         buff.write(BSS_SEGMENT.toString());
         buff.flush();
-        System.out.println("Compilation succesful!");
     }    
     
 }

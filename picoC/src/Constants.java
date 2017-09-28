@@ -7,6 +7,8 @@ public class Constants
 {
     /* Represents int size in bytes */
     public static final int SIZE_OF_INT = 4;
+    /* Represents pointer size in bytes */
+    public static final int POINTER_SIZE = 8;
     /* path to Desktop for testing puropse. */
     /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */
     public static final String PATH_TO_OUTPUT_FILE = 
