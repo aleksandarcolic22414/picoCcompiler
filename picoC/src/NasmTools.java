@@ -134,7 +134,7 @@ public class NasmTools
     {
         /* Get function analyser */
         FunctionsAnalyser fa; 
-        fa = TranslationListener.functions.get(FunctionsAnalyser.getInProcess());
+        fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
         /* Calculate taken memory on stack */
         int taken = fa.getStackVariablesDisplacement();
         

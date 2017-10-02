@@ -1,3 +1,6 @@
+
+import org.antlr.v4.runtime.Token;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -17,17 +20,25 @@ public class CompilationControler {
     public static int warnings = 0;
     
     /* Handle errors */
-    public static void errorOcured(String error) 
+    public static void errorOcured(Token token, String functionName, String error) 
     {
         ++errors;
-        System.err.println("Error: " + error);
+        int line = token.getLine();
+        int pos = token.getStartIndex();
+        System.err.println
+            ("Error in function " + functionName + ": line: " + line + 
+                    " pos: " + pos + ": " + error + ";");
     }
     
     /* Handle warnings */
-    public static void warningOcured(String warning)
+    public static void warningOcured(Token token, String functionName, String warning)
     {
         ++warnings;
-        System.err.println("Warning: " + warning);
+        int line = token.getLine();
+        int pos = token.getStartIndex();
+        System.err.println
+            ("Warning in function " + functionName + ": line: " + line + 
+                    " pos: " + pos + ": " + warning + ";");
     }        
     
 }

@@ -35,11 +35,12 @@ public class Main
             ParseTree tree = parser.compilationUnit();
             System.out.println(tree.toStringTree(parser));
             
-//            ParseTreeWalker walker = new ParseTreeWalker();
+            ParseTreeWalker walker = new ParseTreeWalker();
             TranslationVisitor visitor = new TranslationVisitor();
-//            TranslationListener listener = new TranslationListener(parser, visitor);
+            TranslationListener listener = new TranslationListener();
+            
+            walker.walk(listener, tree);
             visitor.visit(tree);
-//            walker.walk(listener, tree);
             
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);

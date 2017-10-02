@@ -1,10 +1,7 @@
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -22,244 +19,101 @@ public class TranslationListener extends picoCBaseListener
     TranslationVisitor visitor;
     /* List that contains informations about all functions
         that are beeing compiled */
-    public static Map<String, FunctionsAnalyser> functions;
+    public static Map<String, FunctionsAnalyser> lisFuncAna;
     
     /* Curent function context.  */
-    public static FunctionsAnalyser curFuncAna;
+    public static FunctionsAnalyser curFuncCtx = null;
     
-    public TranslationListener(picoCParser parser, TranslationVisitor visitor) 
-    {
-        this.parser = parser;
-        this.visitor = visitor;
-        functions = new HashMap<>();
-    }
-
-
-    @Override
-    public void exitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
-    {
-        try {
-            Writers writers = new Writers();
-            writers.writeOutput();
-        } catch (IOException ex) {
-            Logger.getLogger(TranslationListener.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public static MemoryClassEnumeration currentDeclaratorType;
+    
+    static {
         
     }
-    /* This is serviced in enterFunctionDeclaration 
-    @Override
-    public void enterMain(picoCParser.MainContext ctx) 
+    
+    public TranslationListener()
     {
-        Writers.emitText("    global main");
-        Writers.emitText("main:");
-        Writers.emitInstruction(Constants.FUNCTION_ENTRY);
+        lisFuncAna = new HashMap<>();
     }
-
+    
+    /* Da ne zaboravim: Napravi prvi obilazak pomocu listenera 
+        i odredi potrebnu memoriju na stack-u za lokalne varijable i
+        parametre funkcije. Onda kad budes ulazio u visitFunctionDefinition i 
+        odstampas functionSetup, odma oduzmi rsp za izracunati pomeraj, da ne
+        bi svaki put kad se deklarisu varijable oduzimao po 4 bajta.
+        Jos nesto:
+        Prvo idu lokalne varijable na stack, pa onda kopije argumenata
+        prosledjenih preko registara u redosledu->
+        parametri:    func(arg1, arg2, arg3, arg4, arg5, arg6,  arg7,  arg8,  arg9)   
+        registri :         rdi   rsi   rdx    rcx   r8    r9 |3.push<-2.push<-1.push
+        registri :intVars  edi   esi   edx    ecx   r8d   r9d
+    
+        ako ima preko 6 parametara, onda se oni guraju u obrnutom redosledu 
+        na stack kao kod 32-bitnih asemblera.
+        
     */
-    
-    /* Set return value to eax register */
-    @Override
-    public void enterReturnStat(picoCParser.ReturnStatContext ctx) 
-    {
-        /* Used to be visitor.visitExpression(ctx.expression()); */
-        String res = visitor.visit(ctx.expression());
-        Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
-    }
 
-    /* Emit unconditional jump to the end of the function */
     @Override
-    public void exitReturnStat(picoCParser.ReturnStatContext ctx) 
+    public void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
-        Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
+        String functionName;
+        if (lisFuncAna.containsKey(functionName = ctx.functionName().getText()))
+            return ;
+        FunctionsAnalyser fa = new FunctionsAnalyser(functionName);
+        lisFuncAna.put(functionName, fa);
+        curFuncCtx = fa;
     }
 
     @Override
-    public void enterFunctionCall(picoCParser.FunctionCallContext ctx) 
+    public void enterParameterList(picoCParser.ParameterListContext ctx) 
     {
-//        TokenStream tokens = parser.getTokenStream();
-        
-        String functionName = ctx.functionName().getText();
-        List<picoCParser.ArgumentContext> argumentList;
-        if (ctx.argumentList() != null) {
-            argumentList = ctx.argumentList().argument();
-        } else
-            argumentList = null;
-        
-        if (functionName.equals("printf")) {
-            specialPrintfFunction(ctx, argumentList);
-        } else {
-            /* Default function implementation. Not done yet. */
-            System.out.println("Ulaz u funkciju: " + functionName);
-            if (argumentList != null)
-                System.out.println("Argumenti: " + argumentList.toString());
+        /* Get list of parameters */
+        List<picoCParser.ParameterContext> parameterList;
+        parameterList = ctx.parameter();
+        /* Calculate displacement for parameters */
+        int sizeOfParams, sizeOfVar, paramsNum, i, currStackDisp;
+        sizeOfParams = sizeOfVar = 0;
+        paramsNum = parameterList.size();
+        currStackDisp = curFuncCtx.getStackVariablesDisplacement();
+        System.out.println
+            ("Number of params in " + 
+                    curFuncCtx.getFunctionName() +
+                        ": " + paramsNum);
+        /* Iterate over list and calculate total size of parameters in bytes */
+        for (i = 0; i < paramsNum; ++i) {
+            /* Get type specifier's name and convert it to bytes */
+            String paramText = parameterList.get(i).typeSpecifier().getText();
+            MemoryClassEnumeration type = FunctionsAnalyser.getMemoryClass(paramText);
+            sizeOfVar = NasmTools.getSize(type);
+            sizeOfParams += sizeOfVar;
         }
-    }
-
-    @Override
-    public void exitFunctionCall(picoCParser.FunctionCallContext ctx) 
-    {
+        /* Set in function analyser */
+        curFuncCtx.setNumberOfParameters(sizeOfParams);
+        curFuncCtx.setStackVariablesDisplacement(currStackDisp + sizeOfParams);
         
-    }
-
-    @Override
-    public void enterExpression(picoCParser.ExpressionContext ctx) 
-    {
-        /* This is commented for testing. */
-        /* Set rax to 0 for further computation */
-        //System.out.println("enterExpression"); 
-                
-        /* Writers.emitInstruction("xor", "rax", "rax");
-        visitor.visit(ctx.simpleExpression()); */
+        System.out.println("Total space for local fariables in function " + 
+                curFuncCtx.getFunctionName() + ": " + (currStackDisp + sizeOfParams));
     }
     
-    /* Special printf context that differs from standard function.
-        Registers needs to be configured for gcc printf implementation. */
-    private void specialPrintfFunction
-    (picoCParser.FunctionCallContext ctx, 
-    List<picoCParser.ArgumentContext> arguments)  
-    {
-        String strFormat, strVal;
-        TokenEnumeration tokenType;
-        strVal = strFormat = null;
-        tokenType = null;
-        
-        if (arguments == null) {
-            System.err.println("Empty printf function!");
-            return;
-        } else if (arguments.size() > 2) {
-            System.err.println("To many arguments in funtion printf; Expected 2 at most..");
-            return;
-        } else {
-            strFormat = arguments.get(0).getText();         /* Take first arg */
-            Writers.emitPrintfFormatSetup(strFormat);      /* Pass it for further compilation */
-            if (arguments.get(1) != null) {
-                if (arguments.get(1).STRING_LITERAL() != null) {  /* STRING_LITERAK token hit */
-                    strVal = arguments.get(1).STRING_LITERAL().getText();
-                    tokenType = TokenEnumeration.STRING_LITERAL;
-                } else if (arguments.get(1).INT() != null) {    /* INT token hit */
-                    strVal = arguments.get(1).INT().getText();
-                    tokenType = TokenEnumeration.INT;
-                } else if (arguments.get(1).ID() != null) { /* ID token hit */
-                    strVal = arguments.get(1).ID().getText();
-                    tokenType = TokenEnumeration.ID;
-                }
-                /* Pass argument value for further compilation */
-                Writers.emitPrintfArgumentsSetup(strVal, tokenType);
-            }
-        }    
-            
-        Writers.emitPrintfCall();
-    }
-
+    
+    
     @Override
-    public void enterFunctionDefinition
-    (picoCParser.FunctionDefinitionContext ctx) 
+    public void enterDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
-        String name = ctx.functionName().getText();
-        
-        String memoryClass = ctx.typeSpecifier().getText();
-        MemoryClassEnumeration memclass;
-        memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
-        
-        /* Chech weather function is already defined */
-        if (functions.containsKey(name)) {
-            String error = "Multiple definitions of " + name;
-            System.err.println(error);
-            CompilationControler.errorOcured(error);
-        } else {
-            /* Setup text segment for function definition */
-            Writers.emitFunctionSetup(name);
-            /* Create new function analyser object, and set it's type specifier
-                to some type */
-            FunctionsAnalyser fa = new FunctionsAnalyser(name);
-            fa.setMemoryClass(memclass);
-            
-            functions.put(name, fa);       /* Add function to collection */
-            
-            FunctionsAnalyser.setFunctionInProcess(true); /* Walker in function context */
-            FunctionsAnalyser.setInProcess(name); /* Change function that is processed */
-            curFuncAna = fa;
-        }
-    }
-
-    @Override
-    public void exitFunctionDefinition
-    (picoCParser.FunctionDefinitionContext ctx) 
-    {
-        Writers.emitLabelReturn(curFuncAna.getFunctionName());
-        Writers.emitText(Constants.FUNCTION_EXIT);
-        FunctionsAnalyser.setFunctionInProcess(false);
-        FunctionsAnalyser.setInProcess(null);
+        currentDeclaratorType = 
+                FunctionsAnalyser.getMemoryClass(ctx.typeSpecifier().getText());
     }
 
     @Override
     public void enterDeclaration(picoCParser.DeclarationContext ctx) 
     {
-        System.out.println("enterDeclaration");
-        /* Extern variable declaration */
-        if (!FunctionsAnalyser.isFunctionInProcess()) {
-            DataSegment.DeclareExtern(ctx);
-            return ;
-        }
-        
-        /* Variable name */
-        String name = null;
-        
-        if (ctx.assignment() == null)
-            name = ctx.ID().getText();
-        else
-            name = ctx.assignment().ID().getText();
-        /* Chech if variable is already declared */
-        if (curFuncAna.getLocalVariables().containsKey(name)) {
-            CompilationControler.errorOcured("Multiple declaration of " + name);
-            return ;    
-        }
-        
-        /* Get variable's memory class  */
-        MemoryClassEnumeration typeSpecifier;
-        typeSpecifier = curFuncAna.getCurrentDeclaratorType();
-        
-        /* Get stack position */
-        String stackPosition = curFuncAna.declareNew(typeSpecifier);
-        
-        /* Create new variable object */
-        Variable var = new Variable(name, stackPosition, false, typeSpecifier);
-        
-        /* Insert new variable in function analyser */
-        curFuncAna.getLocalVariables().put(name, var);
-        
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
-        
-        if (varSize == -1) {
-            CompilationControler.errorOcured("Void variable not alowed!");
-            return;
-        }
-        
-        /* Emit assembly declaration */
-        Writers.emitInstruction("sub", "rsp", Integer.toString(varSize));
-    }
-
-    @Override
-    public void enterAssignment(picoCParser.AssignmentContext ctx) {
-        System.out.println("enterAssignment");
-        /* Get id value */
-        String id = ctx.ID().getText();
-        /* Get variable context */
-        Variable var;
-        /* Check if it is declared */
-        if ((var = curFuncAna.getLocalVariables().get(id)) == null) {
-            CompilationControler.errorOcured("Variable +" + id + "not declared");
-            return ;
-        }
-        /* Register where expression is calculated */
-        String res = visitor.visit(ctx.expression());
-        
-        var.setInitialized(true);
-        /* Emit assign.
-            getStackPosition returns position of var on stack */
-        Writers.emitInstruction("mov", var.getStackPosition(), res);
-        NasmTools.free(res);
+        /* Calculate space on stack for local variables */
+        int stackDisplacement = curFuncCtx.getStackVariablesDisplacement();
+        int sizeOfVar = NasmTools.getSize(currentDeclaratorType);
+        /* Set displacement in current function context */
+        curFuncCtx.setStackVariablesDisplacement(stackDisplacement + sizeOfVar);
+        System.out.println
+            ("Function " + curFuncCtx.getFunctionName()
+                + " space for locals : " + (stackDisplacement + sizeOfVar));
     }
     
 }

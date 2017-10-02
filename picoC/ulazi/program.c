@@ -1,20 +1,24 @@
-int main()
+int main(int a, int b, int c, int d)
 {   
-    int a = 10, b = a + 2, d, c = b + 10;
-    d = c + 5;
-    printf("%d\n", a);
-    printf("%d\n", b);    
-    printf("%d\n", c);
-    printf("%d\n", d);
+    int a, b = 5, c;
     
-    return a + c / b;
-}
+    a = b = c = 10;
+    
+    printf("%d\n", a);
+    printf("%d\n", b);
+    printf("%d\n", c);
 
-int funkcija()
-{
+
     return 10;
 }
 
+int funkcija(int a, int b)
+{
+    int c, d, a;
+    c = 5 + 12;
+    a = 2;
+    return d = a + 2;
+}
 /*
 int main()
 {

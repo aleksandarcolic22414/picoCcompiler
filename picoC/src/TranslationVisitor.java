@@ -16,7 +16,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public static Map<String, FunctionsAnalyser> functions;
     
     /* Curent function context.  */
-    public static FunctionsAnalyser curFuncAna;
+    public static FunctionsAnalyser curFuncAna = null;
 
     public TranslationVisitor() 
     {
@@ -55,7 +55,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     {
         System.out.println("visitFunctionDefinition");
         String name = ctx.functionName().getText();
-        
+        /* Get memory class of function */
         String memoryClass = ctx.typeSpecifier().getText();
         MemoryClassEnumeration memclass;
         memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
@@ -64,29 +64,44 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (functions.containsKey(name)) {
             String error = "Multiple definitions of " + name;
             System.err.println(error);
-            CompilationControler.errorOcured(error);
-        } else {
-            /* Setup text segment for function definition */
-            Writers.emitFunctionSetup(name);
-            /* Create new function analyser object, and set it's type specifier
-                to some type */
-            FunctionsAnalyser fa = new FunctionsAnalyser(name);
-            fa.setMemoryClass(memclass);
-            
-            functions.put(name, fa);       /* Add function to collection */
-            
-            FunctionsAnalyser.setFunctionInProcess(true); /* Walker in function context */
-            FunctionsAnalyser.setInProcess(name); /* Change function that is processed */
-            curFuncAna = fa;
-        }
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        name,
+                            error);
+            /* Try to recover if multiple definitions of function occurs */
+            return null;
+        } 
+        /* Setup text segment for function definition */
+        Writers.emitFunctionSetup(name);
+        /* Create new function analyser object, and set it's type specifier
+        to some type */
+        FunctionsAnalyser fa = new FunctionsAnalyser(name);
+        fa.setMemoryClass(memclass);
+        
+        functions.put(name, fa);       /* Add function to collection */
+        
+        FunctionsAnalyser.setFunctionInProcess(true); /* Walker in function context */
+        FunctionsAnalyser.setInProcess(name); /* Change function that is processed */
+        curFuncAna = fa;
+        /* Make room for local variables and arguments */
+        int localsAndArgsSize = 
+                TranslationListener.lisFuncAna.get(name).
+                                getStackVariablesDisplacement();
+        String ls = Integer.toString(localsAndArgsSize);
+        /* Substract number of bytes needed for variables */
+        Writers.emitInstruction("sub", "rsp", ls);
+        
         /* Visit rest of the function. (visitChildren) */
         super.visitFunctionDefinition(ctx);
+        
         /* Check for return statement */
         if (curFuncAna.getMemoryClass() != MemoryClassEnumeration.VOID && 
                 !curFuncAna.isHasReturn()) 
         {
             CompilationControler.warningOcured
-                ("Missing return statement in function " + curFuncAna.getFunctionName());
+                (ctx.getStart(), 
+                        curFuncAna.getFunctionName(),
+                            "Missing return statement in function " + curFuncAna.getFunctionName());
         }
         
         /* Emit return label and reset stack */
@@ -99,52 +114,17 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         return null;
     }
-    
-    /* Testing new approach */
-//    @Override
-//    public String visitDeclaration(picoCParser.DeclarationContext ctx) 
-//    {
-//        System.out.println("visitDeclaration");
-//        /* Extern variable declaration */
-//        if (!FunctionsAnalyser.isFunctionInProcess()) {
-//            DataSegment.DeclareExtern(ctx);
-//            return null;
-//        } 
-//        /* Variable name */
-//        String name = ctx.ID().getText();
-//        
-//        /* Chech if variable is already declared */
-//        if (curFuncAna.getLocalVariables().containsKey(name)) {
-//            CompilationControler.errorOcured("Multiple declaration of " + name);
-//            return null;    
-//        }
-//        
-//        /* Get variable's memory class  */
-//        MemoryClassEnumeration typeSpecifier;
-//        typeSpecifier = FunctionsAnalyser.getMemoryClass(ctx.typeSpecifier().getText());
-//        
-//        /* Get stack position */
-//        String stackPosition = curFuncAna.declareNew(typeSpecifier);
-//        
-//        /* Create new variable object */
-//        Variable var = new Variable(name, stackPosition, false, typeSpecifier);
-//        
-//        /* Insert new variable in function analyser */
-//        curFuncAna.getLocalVariables().put(name, var);
-//        
-//        /* Size in bytes */
-//        int varSize = NasmTools.getSize(typeSpecifier);
-//        
-//        if (varSize == -1) {
-//            CompilationControler.errorOcured("Void variable not alowed!");
-//            return null;
-//        }
-//        
-//        /* Emit assembly declaration */
-//        Writers.emitInstruction("sub", "rsp", Integer.toString(varSize));
-//        return null;
-//    }
 
+    @Override
+    public String visitParameter(picoCParser.ParameterContext ctx) {
+        
+        return null;
+    }
+
+    
+    
+    
+    
     @Override
     public String visitDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
@@ -180,7 +160,10 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             name = ctx.assignment().ID().getText();
         /* Chech if variable is already declared */
         if (curFuncAna.getLocalVariables().containsKey(name)) {
-            CompilationControler.errorOcured("Multiple declaration of " + name);
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        curFuncAna.getFunctionName(),
+                            "Multiple declaration of " + name);
             return null;    
         }
         
@@ -201,12 +184,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         int varSize = NasmTools.getSize(typeSpecifier);
         
         if (varSize == -1) {
-            CompilationControler.errorOcured("Void variable not alowed!");
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        curFuncAna.getFunctionName(),
+                            "Void variable not alowed!");
             return null;
         }
-        
-        /* Emit assembly declaration */
-        Writers.emitInstruction("sub", "rsp", Integer.toString(varSize));
         
         return super.visitDeclaration(ctx);
     }
@@ -223,19 +206,32 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         Variable var;
         /* Check if it is declared */
         if ((var = curFuncAna.getLocalVariables().get(id)) == null) {
-            CompilationControler.errorOcured("Variable +" + id + "not declared");
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        curFuncAna.getFunctionName(),
+                            "Variable +" + "'" + id + "'" + " not declared");
             return null;
         }
         /* Register where expression is calculated */
-        String res = visit(ctx.expression());
+        String res;
+        /* Try to recover from error. */
+        if ((res = visit(ctx.expression())) == null) 
+            return null;
         
         var.setInitialized(true);
-        /* Emit assign.
+        /* Emit assign if right operand is register.
             getStackPosition returns position of var on stack */
-        Writers.emitInstruction("mov", var.getStackPosition(), res);
-        
-        if (NasmTools.isRegister(res))
+        if (NasmTools.isRegister(res)) {
+            Writers.emitInstruction("mov", var.getStackPosition(), res);
             NasmTools.free(res);
+        } else {
+            String temp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", temp, res);
+            Writers.emitInstruction("mov", var.getStackPosition(), temp);
+            NasmTools.free(temp);
+        }
+        
+            
         /* Return stack displacement */
         return var.getStackPosition();
     }
@@ -255,7 +251,10 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     {
         System.out.println("visitReturnStat");
         /* TODO: Check for type of return value! */
-        String res = visit(ctx.expression());
+        String res;
+        /* Try to recover from error */
+        if ((res = visit(ctx.expression())) == null)
+            return null;
         /* Set function has return  */
         curFuncAna.setHasReturn(true);
         /* mov result to eax for return */
@@ -305,8 +304,13 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitAddSub(picoCParser.AddSubContext ctx) 
     {
-        String leftExpr = visit(ctx.simpleExpression(0));
-        String rightExpr = visit(ctx.simpleExpression(1));
+        String leftExpr;
+        String rightExpr;
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.simpleExpression(0))) == null)
+            return null;
+        if ((rightExpr = visit(ctx.simpleExpression(1))) == null)
+            return null;
         String nextFreeTemp;
         String operation = NasmTools.getOperation(ctx.op.getType());
         
@@ -332,8 +336,14 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitMulDiv(picoCParser.MulDivContext ctx) 
     {
         boolean fake = false;
-        String leftExpr = visit(ctx.simpleExpression(0));
-        String rightExpr = visit(ctx.simpleExpression(1));
+        String leftExpr;
+        String rightExpr;
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.simpleExpression(0))) == null)
+            return null;
+        if ((rightExpr = visit(ctx.simpleExpression(1))) == null)
+            return null;
+       
         String nextFreeTemp;
         String s1, s2;
         String fakelyTaken = null;
@@ -420,21 +430,24 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String stackPosition;
         /* Next free register */
         String nextFreeTemp;
-        /* Get curent function in process */
-        FunctionsAnalyser fa;
-        fa = functions.get(FunctionsAnalyser.getInProcess());
+        
         /* Check if variable exist */
-        Variable newVar = fa.getLocalVariables().get(id);
+        Variable newVar = curFuncAna.getLocalVariables().get(id);
         if (newVar == null) {
-            CompilationControler.errorOcured("Variable + " + id + "not declared");
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        curFuncAna.getFunctionName(),
+                            "Variable " +  "'" + id + "'" + " not declared");
             return null;
         }
         /* Check if variable is initialized */
         if (!newVar.isInitialized()) {
             CompilationControler.warningOcured
-                ("Variable " + id + " might not been initialized");
+                (ctx.getStart(), curFuncAna.getFunctionName(),
+                        "Variable " + "'" + id  + "'" 
+                        + " is used uninitialized");
         }
-        stackPosition = fa.getLocalVariables().get(id).getStackPosition();
+        stackPosition = curFuncAna.getLocalVariables().get(id).getStackPosition();
         nextFreeTemp = NasmTools.getNextFreeTemp();
         
         Writers.emitInstruction("mov", nextFreeTemp, stackPosition);

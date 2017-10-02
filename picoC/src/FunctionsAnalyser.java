@@ -18,7 +18,12 @@ public class FunctionsAnalyser
     /* Function name */
     private String functionName;
     
-    /* Pairs K->varName, V->Variable object */
+    /* Parameters of function 
+       Pairs K->varName, V->Variable object */
+    private Map<String, Variable> parameterVariables;
+    
+    /* Local variables of function 
+       Pairs K->varName, V->Variable object */
     private Map<String, Variable> localVariables;
     
     /* Number of parameters */
@@ -125,8 +130,14 @@ public class FunctionsAnalyser
         this.currentDeclaratorType = currentDeclaratorType;
     }
 
-    
-    
+    public Map<String, Variable> getParameterVariables() {
+        return parameterVariables;
+    }
+
+    public void setParameterVariables(Map<String, Variable> parameterVariables) {
+        this.parameterVariables = parameterVariables;
+    }
+
     public static MemoryClassEnumeration getMemoryClass(String memclass)
     {
         switch (memclass) {
