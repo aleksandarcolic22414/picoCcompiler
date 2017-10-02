@@ -5,7 +5,7 @@ import java.io.IOException;
 
 /**
  *
- * @author aleksandar
+ * @author Aleksandar Colic
  */
 public class Writers 
 {

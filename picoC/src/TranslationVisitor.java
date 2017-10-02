@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author aleksandar
+ * @author Aleksandar Colic
  */
 public class TranslationVisitor extends picoCBaseVisitor<String> 
 {

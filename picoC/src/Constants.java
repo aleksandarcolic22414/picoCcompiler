@@ -1,7 +1,7 @@
 
 /**
  *
- * @author aleksandar
+ * @author Aleksandar Colic
  */
 public class Constants 
 {

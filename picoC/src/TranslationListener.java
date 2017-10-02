@@ -1,17 +1,10 @@
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  *
- * @author aleksandar
+ * @author Aleksandar Colic
  */
 public class TranslationListener extends picoCBaseListener 
 {
@@ -26,32 +19,11 @@ public class TranslationListener extends picoCBaseListener
     
     public static MemoryClassEnumeration currentDeclaratorType;
     
-    static {
-        
-    }
-    
     public TranslationListener()
     {
         lisFuncAna = new HashMap<>();
     }
     
-    /* Da ne zaboravim: Napravi prvi obilazak pomocu listenera 
-        i odredi potrebnu memoriju na stack-u za lokalne varijable i
-        parametre funkcije. Onda kad budes ulazio u visitFunctionDefinition i 
-        odstampas functionSetup, odma oduzmi rsp za izracunati pomeraj, da ne
-        bi svaki put kad se deklarisu varijable oduzimao po 4 bajta.
-        Jos nesto:
-        Prvo idu lokalne varijable na stack, pa onda kopije argumenata
-        prosledjenih preko registara u redosledu->
-        parametri:    func(arg1, arg2, arg3, arg4, arg5, arg6,  arg7,  arg8,  arg9)   
-        registri :         rdi   rsi   rdx    rcx   r8    r9 |3.push<-2.push<-1.push
-        registri :intVars  edi   esi   edx    ecx   r8d   r9d
-    
-        ako ima preko 6 parametara, onda se oni guraju u obrnutom redosledu 
-        na stack kao kod 32-bitnih asemblera.
-        
-    */
-
     @Override
     public void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {

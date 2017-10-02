@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  *
- * @author aleksandar
+ * @author Aleksandar Colic
  */
 public class FunctionsAnalyser 
 {
