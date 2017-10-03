@@ -1,24 +1,32 @@
 int main(int a, int b, int c, int d)
 {   
-    int a, b = 5, c;
-    
+    int e, f = 5, g;
+    e = 10;
+    g = 12;
     a = b = c = 10;
-    
+
     printf("%d\n", a);
     printf("%d\n", b);
     printf("%d\n", c);
 
-
     return 10;
+}
+
+int bezParametarskaFunctiona()
+{
+    return 5;
 }
 
 int funkcija(int a, int b)
 {
-    int c, d, a;
+    int c, d;
     c = 5 + 12;
     a = 2;
     return d = a + 2;
 }
+
+
+
 /*
 int main()
 {

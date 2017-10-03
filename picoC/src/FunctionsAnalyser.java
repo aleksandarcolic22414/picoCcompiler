@@ -31,9 +31,11 @@ public class FunctionsAnalyser
     
     /* Number of integer variables that are pushed on the stack */
     private int localVariablesCounter = 0;
-    
+
     /* Space on stack used for local variables */
-    private int stackVariablesDisplacement = 0;
+    private int spaceForLocals = 0;
+    /* Space on stack used for parameter variables */
+    private int spaceForParams = 0;
     
     /* One of memory class identifiers used for return value */
     private MemoryClassEnumeration memoryClass = MemoryClassEnumeration.VOID;
@@ -43,9 +45,10 @@ public class FunctionsAnalyser
     
     /* Represents memory class for declarationList */
     private MemoryClassEnumeration currentDeclaratorType = MemoryClassEnumeration.VOID;
-    
+
     public FunctionsAnalyser(String functionName) {
         this.localVariables = new HashMap<>();
+        this.parameterVariables = new HashMap<>();
         this.functionName = functionName;
     }
     
@@ -81,11 +84,7 @@ public class FunctionsAnalyser
     public void setLocalVariablesCounter(int localVariablesCounter) {
         this.localVariablesCounter = localVariablesCounter;
     }
-
-    public void setStackVariablesDisplacement(int stackVariablesDisplacement) {
-        this.stackVariablesDisplacement = stackVariablesDisplacement;
-    }
-
+    
     public void setMemoryClass(MemoryClassEnumeration memoryClass) {
         this.memoryClass = memoryClass;
     }
@@ -108,10 +107,6 @@ public class FunctionsAnalyser
 
     public int getLocalVariablesCounter() {
         return localVariablesCounter;
-    }
-
-    public int getStackVariablesDisplacement() {
-        return stackVariablesDisplacement;
     }
 
     public MemoryClassEnumeration getMemoryClass() {
@@ -138,6 +133,22 @@ public class FunctionsAnalyser
         this.parameterVariables = parameterVariables;
     }
 
+    public int getSpaceForLocals() {
+        return spaceForLocals;
+    }
+
+    public void setSpaceForLocals(int spaceForLocals) {
+        this.spaceForLocals = spaceForLocals;
+    }
+
+    public int getSpaceForParams() {
+        return spaceForParams;
+    }
+
+    public void setSpaceForParams(int spaceForParams) {
+        this.spaceForParams = spaceForParams;
+    }
+
     public static MemoryClassEnumeration getMemoryClass(String memclass)
     {
         switch (memclass) {
@@ -150,15 +161,38 @@ public class FunctionsAnalyser
         }
     }
 
-    public String declareNew(MemoryClassEnumeration type) {
+    public String declareLocalVariable(MemoryClassEnumeration type) {
         /* Increase number of local variables */
         ++localVariablesCounter;
         
         int sizeofvar = NasmTools.getSize(type);
         /* Calculate new stack displacement */
-        stackVariablesDisplacement += sizeofvar;
+        spaceForLocals += sizeofvar;
         /* TODO: Determine witch cast should be used */
-        return "dword [rbp-" + Integer.toString(stackVariablesDisplacement) + "]";
+        return "dword [rbp-" + Integer.toString(spaceForLocals) + "]";
+    }
+
+    String declareParameterVariable(MemoryClassEnumeration type) {
+        /* Increase number of parameter variables */
+        int sizeofvar = NasmTools.getSize(type);
+        /* Take function name for further calculation */
+        String fname = TranslationVisitor.curFuncAna.getFunctionName();
+        /* Get taken space on stack for local variables calculated in
+            Listener class */
+        int taken = TranslationListener.lisFuncAna.get(fname).getSpaceForLocals();
+        /* Calculate new place on stack */
+        spaceForParams += sizeofvar;
+        /* TODO: Determine witch cast should be used */
+        return "dword [rbp-" + Integer.toString(taken + spaceForParams) + "]";
+    }
+
+    public Variable getAnyVariable(String id) {
+        Variable var;
+        if ((var = getLocalVariables().get(id)) != null)
+            return var;
+        if ((var = getParameterVariables().get(id)) != null)
+            return var;
+        return null;
     }
     
     

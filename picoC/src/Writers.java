@@ -157,8 +157,8 @@ public class Writers
                 String var;
                 var = TranslationVisitor. /* listener */
                         curFuncAna. /* current function context */
-                            getLocalVariables().    /* Function variables */
-                                get(argVal).getStackPosition();  /* var->varStackDisplacement */
+                            getAnyVariable(argVal)    /* Function variables */
+                                .getStackPosition();  /* var->varStackDisplacement */
                 Writers.emitInstruction("mov", "esi", var);
                 break;
             default:

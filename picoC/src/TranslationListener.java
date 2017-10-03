@@ -42,10 +42,10 @@ public class TranslationListener extends picoCBaseListener
         List<picoCParser.ParameterContext> parameterList;
         parameterList = ctx.parameter();
         /* Calculate displacement for parameters */
-        int sizeOfParams, sizeOfVar, paramsNum, i, currStackDisp;
+        int sizeOfParams, sizeOfVar, paramsNum, i;
         sizeOfParams = sizeOfVar = 0;
         paramsNum = parameterList.size();
-        currStackDisp = curFuncCtx.getStackVariablesDisplacement();
+        
         System.out.println
             ("Number of params in " + 
                     curFuncCtx.getFunctionName() +
@@ -56,14 +56,15 @@ public class TranslationListener extends picoCBaseListener
             String paramText = parameterList.get(i).typeSpecifier().getText();
             MemoryClassEnumeration type = FunctionsAnalyser.getMemoryClass(paramText);
             sizeOfVar = NasmTools.getSize(type);
+            /* Add it to overall size */
             sizeOfParams += sizeOfVar;
         }
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(sizeOfParams);
-        curFuncCtx.setStackVariablesDisplacement(currStackDisp + sizeOfParams);
+        curFuncCtx.setSpaceForParams(sizeOfParams);
         
-        System.out.println("Total space for local fariables in function " + 
-                curFuncCtx.getFunctionName() + ": " + (currStackDisp + sizeOfParams));
+        System.out.println("Total space for parameter variables in function " + 
+                curFuncCtx.getFunctionName() + ": " + (sizeOfParams));
     }
     
     
@@ -78,14 +79,15 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterDeclaration(picoCParser.DeclarationContext ctx) 
     {
-        /* Calculate space on stack for local variables */
-        int stackDisplacement = curFuncCtx.getStackVariablesDisplacement();
+        /* Calculate space on stack for local variables  */
+        int locals = curFuncCtx.getSpaceForLocals();
         int sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         /* Set displacement in current function context */
-        curFuncCtx.setStackVariablesDisplacement(stackDisplacement + sizeOfVar);
+        curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
+        
         System.out.println
             ("Function " + curFuncCtx.getFunctionName()
-                + " space for locals : " + (stackDisplacement + sizeOfVar));
+                + " space for locals : " + (locals + sizeOfVar));
     }
     
 }

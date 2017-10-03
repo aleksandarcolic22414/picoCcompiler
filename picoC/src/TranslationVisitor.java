@@ -83,13 +83,17 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         FunctionsAnalyser.setFunctionInProcess(true); /* Walker in function context */
         FunctionsAnalyser.setInProcess(name); /* Change function that is processed */
         curFuncAna = fa;
-        /* Make room for local variables and arguments */
+        /* Make room for local variables and arguments.
+            The information about whole space on stack needed for
+            local variables and parameters is hold within map of function in class
+            TranslationListener. */
         int localsAndArgsSize = 
-                TranslationListener.lisFuncAna.get(name).
-                                getStackVariablesDisplacement();
+                TranslationListener.lisFuncAna.get(name).getSpaceForLocals()
+                + TranslationListener.lisFuncAna.get(name).getSpaceForParams();
         String ls = Integer.toString(localsAndArgsSize);
-        /* Substract number of bytes needed for variables */
-        Writers.emitInstruction("sub", "rsp", ls);
+        /* Substract number of bytes needed for variables if there is any */
+        if (localsAndArgsSize > 0)
+            Writers.emitInstruction("sub", "rsp", ls);
         
         /* Visit rest of the function. (visitChildren) */
         super.visitFunctionDefinition(ctx);
@@ -116,9 +120,56 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitParameter(picoCParser.ParameterContext ctx) {
+    public String visitParameterList(picoCParser.ParameterListContext ctx) {
+        /* Get list of parameters */
+        List<picoCParser.ParameterContext> paramsList = ctx.parameter();
+        int numberOfParams = paramsList.size();
         
-        return null;
+        curFuncAna.setNumberOfParameters(numberOfParams);
+        return super.visitParameterList(ctx);
+    }
+
+    
+    
+    @Override
+    public String visitParameter(picoCParser.ParameterContext ctx) {
+        /* Variable name */
+        String name;
+        name = ctx.ID().getText();
+        /* Chech if variable is already declared */
+        if (curFuncAna.getParameterVariables().containsKey(name)) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        curFuncAna.getFunctionName(),
+                            "Two or more params with the same name: " + name);
+            return null;    
+        }
+        
+        /* Get variable's memory class  */
+        String type = ctx.typeSpecifier().getText();
+        MemoryClassEnumeration typeSpecifier;
+        typeSpecifier = FunctionsAnalyser.getMemoryClass(type);
+        
+        /* Get stack position */
+        String stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
+        
+        /* Create new variable object */
+        Variable var = new Variable(name, stackPosition, false, typeSpecifier);
+        
+        /* Insert new variable in function analyser */
+        curFuncAna.getParameterVariables().put(name, var);
+        
+        /* Size in bytes */
+        int varSize = NasmTools.getSize(typeSpecifier);
+        
+        if (varSize == -1) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        curFuncAna.getFunctionName(),
+                            "Void variable not alowed!");
+            return null;
+        }
+        return super.visitParameter(ctx);
     }
 
     
@@ -159,7 +210,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         else
             name = ctx.assignment().ID().getText();
         /* Chech if variable is already declared */
-        if (curFuncAna.getLocalVariables().containsKey(name)) {
+        if (curFuncAna.getLocalVariables().containsKey(name)
+                || curFuncAna.getParameterVariables().containsKey(name)) 
+        {
             CompilationControler.errorOcured
                 (ctx.getStart(), 
                         curFuncAna.getFunctionName(),
@@ -172,7 +225,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         typeSpecifier = curFuncAna.getCurrentDeclaratorType();
         
         /* Get stack position */
-        String stackPosition = curFuncAna.declareNew(typeSpecifier);
+        String stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
         
         /* Create new variable object */
         Variable var = new Variable(name, stackPosition, false, typeSpecifier);
@@ -205,11 +258,11 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Get variable context */
         Variable var;
         /* Check if it is declared */
-        if ((var = curFuncAna.getLocalVariables().get(id)) == null) {
+        if ((var = curFuncAna.getAnyVariable(id)) == null) {
             CompilationControler.errorOcured(
                     ctx.getStart(), 
                         curFuncAna.getFunctionName(),
-                            "Variable +" + "'" + id + "'" + " not declared");
+                            "Variable " + "'" + id + "'" + " not declared");
             return null;
         }
         /* Register where expression is calculated */
@@ -424,32 +477,49 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitId(picoCParser.IdContext ctx) 
     {
         System.out.println("Context: visitID Val: " + ctx.getText());
-        /* TODO: Determine displacement of variable ID */
+        /* Just for more readable code */
+        boolean local = true, param = true;
+        
         String id = ctx.ID().getText();
         /* Position of variable on stack */
         String stackPosition;
         /* Next free register */
         String nextFreeTemp;
         
-        /* Check if variable exist */
+        /* Check if variable is local */
         Variable newVar = curFuncAna.getLocalVariables().get(id);
-        if (newVar == null) {
-            CompilationControler.errorOcured(
-                    ctx.getStart(), 
-                        curFuncAna.getFunctionName(),
-                            "Variable " +  "'" + id + "'" + " not declared");
+        /* if variable is null, then it's sure that it is not local */
+        if (newVar == null)
+            local = false;
+        /* If it is not local, maybe it's parameter */
+        if (!local)
+            newVar = curFuncAna.getParameterVariables().get(id);
+        /* It is not parameter, if it is null */
+        if (newVar == null)
+            param = false;
+        /* TODO: If it is not local and it is not param, than it shoud be checked
+            if it is extern */
+        if (!local && !param) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), curFuncAna.getFunctionName(),
+                        "Variable " + "'" + id  + "'" 
+                        + " is not declared");
             return null;
         }
         /* Check if variable is initialized */
-        if (!newVar.isInitialized()) {
+        if (local && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
                         + " is used uninitialized");
         }
-        stackPosition = curFuncAna.getLocalVariables().get(id).getStackPosition();
-        nextFreeTemp = NasmTools.getNextFreeTemp();
+        /* Get right stack position */
+        if (local)
+            stackPosition = curFuncAna.getLocalVariables().get(id).getStackPosition();
+        else
+            stackPosition = curFuncAna.getParameterVariables().get(id).getStackPosition();
         
+        nextFreeTemp = NasmTools.getNextFreeTemp();
         Writers.emitInstruction("mov", nextFreeTemp, stackPosition);
         
         return nextFreeTemp;

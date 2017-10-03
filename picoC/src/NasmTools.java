@@ -130,7 +130,7 @@ public class NasmTools
         FunctionsAnalyser fa; 
         fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
         /* Calculate taken memory on stack */
-        int taken = fa.getStackVariablesDisplacement();
+        int taken = fa.getSpaceForLocals() + fa.getSpaceForParams();
         
         /* Make room for integer */
         Writers.emitInstruction(
