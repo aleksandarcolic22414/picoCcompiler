@@ -1,29 +1,32 @@
-int main(int a, int b, int c, int d)
-{   
-    int e, f = 5, g;
-    e = 10;
-    g = 12;
-    a = b = c = 10;
 
+int funkcija(int a, int b, int c, int d, int e, int f)
+{
+    int z = 100, x = 200;
     printf("%d\n", a);
     printf("%d\n", b);
     printf("%d\n", c);
+    printf("%d\n", d);
+    printf("%d\n", z);
+    printf("%d\n", x);
 
+    return a;
+}
+
+
+
+int main()
+{   
+    int a = 1;
+    int b = 2;
+    int c = 3;
+    int d = 4;
+    int e = 5;
+    int f = 6;
+
+    funkcija(a, b, c, d, e, f);
     return 10;
 }
 
-int bezParametarskaFunctiona()
-{
-    return 5;
-}
-
-int funkcija(int a, int b)
-{
-    int c, d;
-    c = 5 + 12;
-    a = 2;
-    return d = a + 2;
-}
 
 
 

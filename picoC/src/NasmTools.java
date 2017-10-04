@@ -1,5 +1,6 @@
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,17 +9,10 @@ import java.util.Map;
  */
 public class NasmTools 
 {
-    /* For integer computation e%x (%=(a,b,c,d)) register are used.
-        If no more registers are available, values are saved on stack. 
-        Better thing is used to calculate free registers. Look below. */
-    @Deprecated
-    public static String freeRegisters[] = 
-        {
-         "eax", "ebx", 
-         "ecx", "edx", 
-         "esi", "edi"
-        };
-    
+    /* This variable represents maping for arguments of function. */
+    public static final Map<Integer, Map<MemoryClassEnumeration, String>> registersPicker;
+    /* Helps during argument calculation and it works with registersPicker */
+    public static int registersPickerCounter = 0;
     /* This variable contains information about free registers  */
     public static int flags = 0;
     
@@ -78,6 +72,39 @@ public class NasmTools
         registersMap.put(STRING_R13D, R13D);
         registersMap.put(STRING_R14D, R14D);
         registersMap.put(STRING_R15D, R15D);
+        /* Register picker intialization ****************************/
+        
+        /* Initialize map for rdi register */
+        Map<MemoryClassEnumeration, String> diMap = new HashMap<>();
+        diMap.put(MemoryClassEnumeration.INT, "edi");
+        
+        /* Initialize map for rsi register */
+        Map<MemoryClassEnumeration, String> siMap = new HashMap<>();
+        siMap.put(MemoryClassEnumeration.INT, "esi");
+        
+        /* Initialize map for rdx register */
+        Map<MemoryClassEnumeration, String> dxMap = new HashMap<>();
+        dxMap.put(MemoryClassEnumeration.INT, "edx");
+        
+        /* Initialize map for rcx register */
+        Map<MemoryClassEnumeration, String> cxMap = new HashMap<>();
+        cxMap.put(MemoryClassEnumeration.INT, "ecx");
+        
+        /* Initialize map for r8 register */
+        Map<MemoryClassEnumeration, String> r8Map = new HashMap<>();
+        r8Map.put(MemoryClassEnumeration.INT, "r8d");
+        
+        /* Initialize map for r9 register */
+        Map<MemoryClassEnumeration, String> r9Map = new HashMap<>();
+        r9Map.put(MemoryClassEnumeration.INT, "r9d");
+        
+        registersPicker = new HashMap<>();
+        registersPicker.put(0, diMap);
+        registersPicker.put(1, siMap);
+        registersPicker.put(2, dxMap);
+        registersPicker.put(3, cxMap);
+        registersPicker.put(4, r8Map);
+        registersPicker.put(5, r9Map);
     }
     
     /* Function converts C-style string into nasm-style byte array.
@@ -263,9 +290,101 @@ public class NasmTools
         }
     }
 
-    static void freeAllRegisters() {
+    static void freeAllRegisters() 
+    {
         /* Clear flags regiser */
         flags = 0x0;
+    }
+    /* Function that copyes all argumets on stack for further use 
+    Warning: 
+        If there is more than 6 non floating variables passed to function, than
+        they are pushed in reverse order. This case won't work! */
+    static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
+    {
+        int lsize = parameters.size();
+        String reg, paramName, paramPos;
+        MemoryClassEnumeration memclass;
+        for (int i = 0; i < lsize; ++i) {
+            /* argument name needed for it's position on stack */
+            paramName = parameters.get(i).ID().getText();
+            /* get argument's position on stack */
+            paramPos = TranslationVisitor.curFuncAna.
+                        getParameterVariables().get(paramName).getStackPosition();
+            /* Get memory class of typeSpecifier and register 
+                in witch it is passed to function */
+            memclass = FunctionsAnalyser.getMemoryClass(parameters.get(i).typeSpecifier().getText());
+            reg = getNextRegForFuncCall(memclass);
+
+            /* Emit copying from registers to stack for argument */
+            Writers.emitInstruction("mov", paramPos, reg);
+        }
+        resetRegisterPicker();
+    }
+    /* This function returns, for some function argument, in witch register
+        it is passed during function call. For example, first int argument
+        is passed to edi register, second to esi ect. 
+        If no registers is free, function returns next position on stack that
+        holds argument value. 
+    Warning: 
+        If there is more than 6 non floating variables passed to function, than
+        they are pushed in reverse order. This case won't work! */
+    private static String getNextRegForFuncCall(MemoryClassEnumeration memclass) 
+    {
+        /* If all registers is taken, than argument is passed on stack */
+        if (registersPickerCounter > 5)
+            return pushArgumentOnStack(memclass);
+        else
+            return registersPicker.get(registersPickerCounter++).get(memclass);
+    }
+    
+    /* Resets register counter for further usage */
+    private static void resetRegisterPicker() 
+    {
+        registersPickerCounter = 0;
+    }
+    
+    static void moveArgsToRegisters
+    (List<picoCParser.ArgumentContext> arguments) 
+    {
+        int lsize = arguments.size();
+        String reg, argName, argPos;
+        Variable var;
+        MemoryClassEnumeration memclass;
+        for (int i = 0; i < lsize; ++i) {
+            /* argument name needed for it's position on stack */
+            argName = arguments.get(i).ID().getText();
+            /* Get variable object */
+            var = TranslationVisitor.curFuncAna.
+                            getAnyVariable(argName);
+            /* get argument's position on stack */
+            argPos = var.getStackPosition();
+            /* Get memory class of typeSpecifier and register 
+                in witch it is passed to function */
+            memclass = var.getTypeSpecifier();
+            reg = getNextRegForFuncCall(memclass);
+
+            /* Emit copying from registers to stack for argument */
+            Writers.emitInstruction("mov", reg, argPos);
+        }
+        resetRegisterPicker();
+    }
+    /* This method is used for storing registers that holds some value.
+        It is usualy done for function call */
+    /* Not implemented yet */
+    static void saveRegistersOnStack() 
+    {
+        
+    }
+    /* Not implemented yet */
+    static void restoreRegisters() 
+    {
+        
+    }
+
+    /* Not implemented yet */
+    private static String pushArgumentOnStack(MemoryClassEnumeration memclass) 
+    {
+        return null;
     }
     
 }

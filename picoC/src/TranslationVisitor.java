@@ -71,8 +71,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             /* Try to recover if multiple definitions of function occurs */
             return null;
         } 
-        /* Setup text segment for function definition */
-        Writers.emitFunctionSetup(name);
         /* Create new function analyser object, and set it's type specifier
         to some type */
         FunctionsAnalyser fa = new FunctionsAnalyser(name);
@@ -91,10 +89,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                 TranslationListener.lisFuncAna.get(name).getSpaceForLocals()
                 + TranslationListener.lisFuncAna.get(name).getSpaceForParams();
         String ls = Integer.toString(localsAndArgsSize);
+        
+        /* Setup text segment for function definition */
+        Writers.emitFunctionSetup(name);
         /* Substract number of bytes needed for variables if there is any */
         if (localsAndArgsSize > 0)
-            Writers.emitInstruction("sub", "rsp", ls);
-        
+            Writers.emitInstruction("sub", "rsp", ls);    
         /* Visit rest of the function. (visitChildren) */
         super.visitFunctionDefinition(ctx);
         
@@ -124,9 +124,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Get list of parameters */
         List<picoCParser.ParameterContext> paramsList = ctx.parameter();
         int numberOfParams = paramsList.size();
-        
         curFuncAna.setNumberOfParameters(numberOfParams);
-        return super.visitParameterList(ctx);
+        /* Visit children */
+        super.visitParameterList(ctx);
+        /* Copy arguments to stack */
+        NasmTools.moveArgsToStack(paramsList);
+        return null;
     }
 
     
@@ -292,8 +295,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     
     
     @Override
-    public String visitStatement(picoCParser.StatementContext ctx) {
-        super.visitStatement(ctx); //To change body of generated methods, choose Tools | Templates.
+    public String visitStatement(picoCParser.StatementContext ctx) 
+    {
+        super.visitStatement(ctx); 
         NasmTools.freeAllRegisters();
         return null;
     }
@@ -322,25 +326,37 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitFunctionCall(picoCParser.FunctionCallContext ctx) 
     {
         System.out.println("visitFunctionCall");
+        
         String functionName = ctx.functionName().getText();
         List<picoCParser.ArgumentContext> argumentList;
+        
         if (ctx.argumentList() != null) {
             argumentList = ctx.argumentList().argument();
         } else
             argumentList = null;
         
+        /* Check if function exist and try to recover if it doesn't 
+            It is skiped for now. */
+//        if ((funcAnalyser = functions.get(functionName)) == null) {
+//            CompilationControler.errorOcured
+//                (ctx.getStart(), functionName,
+//                        "Function " + functionName + " doesn't exist");
+//                return null;
+//        }
+
         if (functionName.equals("printf")) {
             specialPrintfFunction(ctx, argumentList);
+            return null;
         } else {
-            /* Default function implementation. Not done yet. */
-            System.out.println("Ulaz u funkciju: " + functionName);
+            NasmTools.saveRegistersOnStack();
             if (argumentList != null)
-                System.out.println("Argumenti: " + argumentList.toString());
+                NasmTools.moveArgsToRegisters(argumentList);
+            Writers.emitInstruction("call", functionName);
+            NasmTools.restoreRegisters();
         }
-        return null;
+        /* TODO: See in witch register is return value from function */
+        return "eax";
     }
-    
-    
     
     
     @Override
