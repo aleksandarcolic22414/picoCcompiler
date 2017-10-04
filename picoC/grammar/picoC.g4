@@ -55,10 +55,16 @@ functionName : ID ;
 
 argumentList : argument (',' argument)* ;
 
+/*
 argument : ID    
          | STRING_LITERAL
          | INT
          ;
+*/
+
+argument : expression
+         | STRING_LITERAL
+         ;    
 
 expression : simpleExpression;
 

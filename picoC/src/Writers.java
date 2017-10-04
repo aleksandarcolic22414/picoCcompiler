@@ -99,15 +99,10 @@ public class Writers
         BSS_SEGMENT.append("\n");
     }
     
-    public static String defineStringLiteral(String s) 
-    {
-        String literalName = DataSegment.getNextStringLiteral();
-        emitDefineDataSegment(literalName, s);
-        return literalName;
-    }
+    
     
     /* Emits define instruction without analysing literalValue. */
-    private static void emitDefineDataSegment
+    public static void emitDefineDataSegment
     (String literalName, String literalValue) 
     {
         /* Do analyse of literalValue for special characters! */
@@ -122,55 +117,6 @@ public class Writers
         Writers.emitText("\tglobal    " + name);
         Writers.emitText(name + ":");
         Writers.emitText(Constants.FUNCTION_ENTRY);
-    }
-    
-    /* Function sets format argument for printf function.
-        printf takes first argument as a format for other arguments.
-        For example: printf("%d", 50) where "%d" is format. */
-    public static void emitPrintfFormatSetup(String strFormat) 
-    {
-        /* Get nasm-style string from c-style string */
-        String strLitNasmVal = NasmTools.convertStringToNasmStringLiteral(strFormat);
-        /* Get next free3 literal name */
-        String dataLiteralName = Writers.defineStringLiteral(strLitNasmVal);
-        System.out.println("Converted format: " + strLitNasmVal);
-        /* Put literal name as argument into rdi register */
-        Writers.emitInstruction("mov", "rdi", dataLiteralName);
-    }
-    
-    /* Function that sets up the arguments for extern printf function. */
-    public static void emitPrintfArgumentsSetup
-    (String argVal, TokenEnumeration tokenType) 
-    {
-        String strlitVal, dataLiteralName;
-        if (null != tokenType) switch (tokenType) {
-            case STRING_LITERAL:
-                strlitVal = NasmTools.convertStringToNasmStringLiteral(argVal); /* Get nasm-style string */
-                System.out.println("Converted litval: " + strlitVal);
-                dataLiteralName = Writers.defineStringLiteral(strlitVal); /* Get next free3 name */
-                Writers.emitInstruction("mov", "rsi", dataLiteralName); /* place it into rsi */
-                break;
-            case INT:
-                Writers.emitInstruction("mov", "rsi", argVal); /* Place INT into rsi */
-                break;
-            case ID:
-                String var;
-                var = TranslationVisitor. /* listener */
-                        curFuncAna. /* current function context */
-                            getAnyVariable(argVal)    /* Function variables */
-                                .getStackPosition();  /* var->varStackDisplacement */
-                Writers.emitInstruction("mov", "esi", var);
-                break;
-            default:
-                break;
-        }
-    }
-
-    /* Setup and call for extern printf */
-    public static void emitPrintfCall() 
-    {
-        Writers.emitInstruction("mov", "rax", "0");
-        Writers.emitInstruction("call", "printf");
     }
     
     static void emitLabelReturn(String inProcess) {

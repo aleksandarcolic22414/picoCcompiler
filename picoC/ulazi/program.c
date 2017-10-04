@@ -1,15 +1,15 @@
+/* TODO: Implement function call for arguments that are not local variables.
+         Put function call and arguments as expression.
+         Make new type of data: POINTER TYPE */
 
-int funkcija(int a, int b, int c, int d, int e, int f)
+int funkcija(int a, int b)
 {
-    int z = 100, x = 200;
+    int c = a + b;
+    printf("%d\n", c);
     printf("%d\n", a);
     printf("%d\n", b);
-    printf("%d\n", c);
-    printf("%d\n", d);
-    printf("%d\n", z);
-    printf("%d\n", x);
 
-    return a;
+    return c;
 }
 
 
@@ -17,13 +17,9 @@ int funkcija(int a, int b, int c, int d, int e, int f)
 int main()
 {   
     int a = 1;
-    int b = 2;
-    int c = 3;
-    int d = 4;
-    int e = 5;
-    int f = 6;
+    int b = 6;
 
-    funkcija(a, b, c, d, e, f);
+    funkcija(a + b * 10, a - b);
     return 10;
 }
 

@@ -26,8 +26,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
     {
-        System.out.println("visitCompilationUnit");
-        super.visitCompilationUnit(ctx); //To change body of generated methods, choose Tools | Templates.
+        super.visitCompilationUnit(ctx); 
         
         if (CompilationControler.warnings != 0) {
             System.err.println("Warnings : " + CompilationControler.warnings);
@@ -38,8 +37,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         } else {
             System.err.println("Errors: " + CompilationControler.errors);
             System.err.println("Compilation failed!");
-            /* Just if output is not needed for testing */
-//            System.exit(0);
+            /* Just if output is not needed for testing, then -> 
+            System.exit(0); */
         }
         try {    
             Writers writers = new Writers();
@@ -53,7 +52,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
-        System.out.println("visitFunctionDefinition");
         String name = ctx.functionName().getText();
         /* Get memory class of function */
         String memoryClass = ctx.typeSpecifier().getText();
@@ -196,7 +194,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitDeclaration(picoCParser.DeclarationContext ctx) 
     {
-        System.out.println("enterDeclaration");
         /* Extern variable declaration */
         if (!FunctionsAnalyser.isFunctionInProcess()) {
             DataSegment.DeclareExtern(ctx);
@@ -255,7 +252,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitAssignment(picoCParser.AssignmentContext ctx)
     {
-        System.out.println("visitAssignment");
         /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -306,7 +302,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitReturnStat(picoCParser.ReturnStatContext ctx) 
     {
-        System.out.println("visitReturnStat");
         /* TODO: Check for type of return value! */
         String res;
         /* Try to recover from error */
@@ -325,44 +320,53 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitFunctionCall(picoCParser.FunctionCallContext ctx) 
     {
-        System.out.println("visitFunctionCall");
-        
-        String functionName = ctx.functionName().getText();
         List<picoCParser.ArgumentContext> argumentList;
-        
+        String functionName = ctx.functionName().getText();
+        /* Check if there is arguments */
         if (ctx.argumentList() != null) {
             argumentList = ctx.argumentList().argument();
         } else
             argumentList = null;
         
-        /* Check if function exist and try to recover if it doesn't 
-            It is skiped for now. */
-//        if ((funcAnalyser = functions.get(functionName)) == null) {
-//            CompilationControler.errorOcured
-//                (ctx.getStart(), functionName,
-//                        "Function " + functionName + " doesn't exist");
-//                return null;
-//        }
-
-        if (functionName.equals("printf")) {
-            specialPrintfFunction(ctx, argumentList);
+        /* Check function */
+        if (!Checker.functionCheck(ctx, argumentList))
             return null;
-        } else {
-            NasmTools.saveRegistersOnStack();
-            if (argumentList != null)
-                NasmTools.moveArgsToRegisters(argumentList);
-            Writers.emitInstruction("call", functionName);
-            NasmTools.restoreRegisters();
-        }
+        
+        /* Actual function call *******************/
+        /* Save registers if any is needed for further calculations */
+        /* If there is arguments, pass them through registers and stack */
+        /* Emit function call */
+        /* Restore saved registers */
+        NasmTools.saveRegistersOnStack();
+        if (argumentList != null)
+            NasmTools.moveArgsToRegisters(this, argumentList);
+        /* Special setup */
+        if (NasmTools.isFunctionFromLib(functionName))
+            Writers.emitInstruction("mov", "eax", "0");
+        Writers.emitInstruction("call", functionName);
+        NasmTools.restoreRegisters();
+        
         /* TODO: See in witch register is return value from function */
         return "eax";
     }
-    
+
+    @Override
+    public String visitArgument(picoCParser.ArgumentContext ctx) {
+        /* If it is not string literal, then return value in a register! */
+        if (ctx.STRING_LITERAL() == null) {
+            String res = visit(ctx.expression());
+            /* Free "a" register */
+            NasmTools.free(res);
+            return res;
+        }
+        String strlit = ctx.STRING_LITERAL().getText();
+        String literalName = NasmTools.defineStringLiteral(strlit);
+        return literalName;
+    }
     
     @Override
     public String visitExpression(picoCParser.ExpressionContext ctx)
     {
-        System.out.println("visitExpression");
         /* Writers.emitInstruction("xor", "eax", "eax");
             doesn't need to be done, because for expression
             the first instruction is  always "mov", and eax register shoud be saved
@@ -492,7 +496,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitId(picoCParser.IdContext ctx) 
     {
-        System.out.println("Context: visitID Val: " + ctx.getText());
         /* Just for more readable code */
         boolean local = true, param = true;
         
@@ -523,7 +526,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         }
         /* Check if variable is initialized */
-        if (local && !newVar.isInitialized()) {
+        if (local && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
@@ -544,7 +547,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitInt(picoCParser.IntContext ctx) 
     {
-        System.out.println("Context: visitInt Val: " + ctx.getText());
         String val = ctx.INT().getText();
         String nextFreeTemp = NasmTools.getNextFreeTemp();
         Writers.emitInstruction("mov", nextFreeTemp, val);
@@ -558,43 +560,4 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String s = visit(ctx.simpleExpression());
         return s;
     }
-    
-    
-    private void specialPrintfFunction
-    (picoCParser.FunctionCallContext ctx, 
-    List<picoCParser.ArgumentContext> arguments)  
-    {
-        String strFormat, strVal;
-        TokenEnumeration tokenType;
-        strVal = strFormat = null;
-        tokenType = null;
-        
-        if (arguments == null) {
-            System.err.println("Empty printf function!");
-            return;
-        } else if (arguments.size() > 2) {
-            System.err.println("To many arguments in funtion printf; Expected 2 at most..");
-            return;
-        } else {
-            strFormat = arguments.get(0).getText();         /* Take first arg */
-            Writers.emitPrintfFormatSetup(strFormat);      /* Pass it for further compilation */
-            if (arguments.get(1) != null) {
-                if (arguments.get(1).STRING_LITERAL() != null) {  /* STRING_LITERAK token hit */
-                    strVal = arguments.get(1).STRING_LITERAL().getText();
-                    tokenType = TokenEnumeration.STRING_LITERAL;
-                } else if (arguments.get(1).INT() != null) {    /* INT token hit */
-                    strVal = arguments.get(1).INT().getText();
-                    tokenType = TokenEnumeration.INT;
-                } else if (arguments.get(1).ID() != null) { /* ID token hit */
-                    strVal = arguments.get(1).ID().getText();
-                    tokenType = TokenEnumeration.ID;
-                }
-                /* Pass argument value for further compilation */
-                Writers.emitPrintfArgumentsSetup(strVal, tokenType);
-            }
-        }    
-            
-        Writers.emitPrintfCall();
-    }
-    
 }

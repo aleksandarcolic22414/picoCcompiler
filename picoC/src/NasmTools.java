@@ -77,26 +77,32 @@ public class NasmTools
         /* Initialize map for rdi register */
         Map<MemoryClassEnumeration, String> diMap = new HashMap<>();
         diMap.put(MemoryClassEnumeration.INT, "edi");
+        diMap.put(MemoryClassEnumeration.POINTER, "rdi");
         
         /* Initialize map for rsi register */
         Map<MemoryClassEnumeration, String> siMap = new HashMap<>();
         siMap.put(MemoryClassEnumeration.INT, "esi");
+        siMap.put(MemoryClassEnumeration.POINTER, "rsi");
         
         /* Initialize map for rdx register */
         Map<MemoryClassEnumeration, String> dxMap = new HashMap<>();
         dxMap.put(MemoryClassEnumeration.INT, "edx");
+        dxMap.put(MemoryClassEnumeration.POINTER, "rdx");
         
         /* Initialize map for rcx register */
         Map<MemoryClassEnumeration, String> cxMap = new HashMap<>();
         cxMap.put(MemoryClassEnumeration.INT, "ecx");
+        cxMap.put(MemoryClassEnumeration.POINTER, "rcx");
         
         /* Initialize map for r8 register */
         Map<MemoryClassEnumeration, String> r8Map = new HashMap<>();
         r8Map.put(MemoryClassEnumeration.INT, "r8d");
+        r8Map.put(MemoryClassEnumeration.POINTER, "r8");
         
         /* Initialize map for r9 register */
         Map<MemoryClassEnumeration, String> r9Map = new HashMap<>();
         r9Map.put(MemoryClassEnumeration.INT, "r9d");
+        r9Map.put(MemoryClassEnumeration.POINTER, "r9");
         
         registersPicker = new HashMap<>();
         registersPicker.put(0, diMap);
@@ -112,7 +118,6 @@ public class NasmTools
         Other conversions are about to be implemented. */
     public static String convertStringToNasmStringLiteral(String literalValue) 
     {
-        System.out.println("Input liteval: " + literalValue);
         char source[] = literalValue.toCharArray();
         char destination[] = new char[source.length * 3];
         int i, c;
@@ -133,10 +138,19 @@ public class NasmTools
             } else
                 destination[c++] = source[i];
         }
-        System.out.println(new String(destination).trim());
         return new String(destination).trim();
     }
 
+    public static String defineStringLiteral(String input) 
+    {
+        /* Get nasm-style string from c-style string */
+        input = NasmTools.convertStringToNasmStringLiteral(input);
+        /* Get next free literal name */
+        String literalName = DataSegment.getNextStringLiteral();
+        Writers.emitDefineDataSegment(literalName, input);
+        return literalName;
+    }
+    
     public static boolean isTakenRegisterEDX() 
     {
         return (flags & EDX) != 0;
@@ -149,8 +163,7 @@ public class NasmTools
     
 
     /* Function determines witch is next position on stack
-        that can hold value. 
-    TODO: Get real displacement when stack frame is not empty! */
+        that can hold value. */
     private static String getStackDisplacement() 
     {
         /* Get function analyser */
@@ -283,6 +296,8 @@ public class NasmTools
         switch (typeSpecifier) {
             case INT:
                 return Constants.SIZE_OF_INT;
+            case POINTER:
+                return Constants.SIZE_OF_POINTER;    
             case VOID:
                 return -1;
             default:
@@ -321,7 +336,7 @@ public class NasmTools
         resetRegisterPicker();
     }
     /* This function returns, for some function argument, in witch register
-        it is passed during function call. For example, first int argument
+        argument is passed during function call. For example, first int argument
         is passed to edi register, second to esi ect. 
         If no registers is free, function returns next position on stack that
         holds argument value. 
@@ -343,31 +358,49 @@ public class NasmTools
         registersPickerCounter = 0;
     }
     
+    /* Function passes arguments in function call to registers. 
+        The order of passing non floating kind of argument is:
+        arg1   arg2   arg3   arg4    arg5    arg6   arg7    arg8     arg9 
+        rdi    rsi    rdx    rcx      r8      r9   push3 <- push2 <- push1
+    Of course, diferent parts of registers is used for different types
+    */
     static void moveArgsToRegisters
-    (List<picoCParser.ArgumentContext> arguments) 
+    (TranslationVisitor visitor, List<picoCParser.ArgumentContext> arguments) 
     {
         int lsize = arguments.size();
-        String reg, argName, argPos;
-        Variable var;
+        String res, reg;
         MemoryClassEnumeration memclass;
+        
         for (int i = 0; i < lsize; ++i) {
-            /* argument name needed for it's position on stack */
-            argName = arguments.get(i).ID().getText();
-            /* Get variable object */
-            var = TranslationVisitor.curFuncAna.
-                            getAnyVariable(argName);
-            /* get argument's position on stack */
-            argPos = var.getStackPosition();
+            /* Visit expression or STRING_LITERAL */
+            res = visitor.visit(arguments.get(i));
+            /* Get variable size based on register it is stored in */
+            memclass = getMemoryClassFromRegister(res);
             /* Get memory class of typeSpecifier and register 
                 in witch it is passed to function */
-            memclass = var.getTypeSpecifier();
             reg = getNextRegForFuncCall(memclass);
 
-            /* Emit copying from registers to stack for argument */
-            Writers.emitInstruction("mov", reg, argPos);
+            /* Emit copying from registers to stack memory for arguments setup */
+            Writers.emitInstruction("mov", reg, res);
         }
         resetRegisterPicker();
     }
+    
+    /* Since result of expression and other operations is always stored in "a"
+        register, function checks witch part of a register is used, and
+        based on that, return size of variable stored in it */
+    private static MemoryClassEnumeration getMemoryClassFromRegister(String res) 
+    {
+        switch (res) {
+            case "rax":
+                return MemoryClassEnumeration.POINTER;
+            case "eax":
+                return MemoryClassEnumeration.INT;
+            default:    /* It is string literal name then: */
+                return MemoryClassEnumeration.POINTER;
+        }
+    }
+    
     /* This method is used for storing registers that holds some value.
         It is usualy done for function call */
     /* Not implemented yet */
@@ -386,5 +419,17 @@ public class NasmTools
     {
         return null;
     }
+
+    /* TODO: Make map of C standard library functions, 
+        and just call map.get(fname) != null */
+    static boolean isFunctionFromLib(String functionName) {
+        switch (functionName) {
+            case "printf":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     
 }

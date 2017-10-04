@@ -5,5 +5,6 @@
  */
 public enum MemoryClassEnumeration {
     INT,
+    POINTER,
     VOID
 }

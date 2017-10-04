@@ -46,10 +46,6 @@ public class TranslationListener extends picoCBaseListener
         sizeOfParams = sizeOfVar = 0;
         paramsNum = parameterList.size();
         
-        System.out.println
-            ("Number of params in " + 
-                    curFuncCtx.getFunctionName() +
-                        ": " + paramsNum);
         /* Iterate over list and calculate total size of parameters in bytes */
         for (i = 0; i < paramsNum; ++i) {
             /* Get type specifier's name and convert it to bytes */
@@ -62,9 +58,6 @@ public class TranslationListener extends picoCBaseListener
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(sizeOfParams);
         curFuncCtx.setSpaceForParams(sizeOfParams);
-        
-        System.out.println("Total space for parameter variables in function " + 
-                curFuncCtx.getFunctionName() + ": " + (sizeOfParams));
     }
     
     
@@ -84,10 +77,6 @@ public class TranslationListener extends picoCBaseListener
         int sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         /* Set displacement in current function context */
         curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
-        
-        System.out.println
-            ("Function " + curFuncCtx.getFunctionName()
-                + " space for locals : " + (locals + sizeOfVar));
     }
     
 }

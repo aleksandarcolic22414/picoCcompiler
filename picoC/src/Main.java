@@ -26,7 +26,6 @@ public class Main
             picoCParser parser = new picoCParser(tokens);
             
             ParseTree tree = parser.compilationUnit();
-            System.out.println(tree.toStringTree(parser));
             
             ParseTreeWalker walker = new ParseTreeWalker();
             TranslationVisitor visitor = new TranslationVisitor();
