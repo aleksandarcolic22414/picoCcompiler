@@ -9,20 +9,12 @@ import java.util.Map;
  */
 public class NasmTools 
 {
-    /* This variable represents maping for arguments of function. */
-    public static final Map<Integer, Map<MemoryClassEnumeration, String>> registersPicker;
-    
-    /* Helps during argument calculation and it works with registersPicker */
-    public static int registersPickerCounter = 0;
-    
     /* Number of general purpose registers */
     public static final int NUMBER_OF_REGISTERS = 14;
     
     /* This variable contains information about free registers  */
     public static int flags = 0;
     
-    /* This variable contains information about registers taken with picker */
-    public static int registersTakenForPicker = 0;
     /* This array represent stack of flags. It it used for function calls.
         Before every function call, if some registers holds 
         significant information, they need to be saved on stack.
@@ -30,8 +22,28 @@ public class NasmTools
         saved for function call. */
     private static final int savedRegisters[] = new int[256];
     
-    private static final int registerPikcers[] = new int[256];
-    private static int regPickTop = -1;
+    /* This variable represents maping for arguments of function. */
+    public static final Map<Integer, Map<MemoryClassEnumeration, String>> registersPicker;
+    
+    /* This array holds information about registers
+        that are used by picker (during argument calculations). 
+        Because arguments could be functions, than, picker needs to store his
+        state because it provides registers in order: rdi, rsi or edi, esi ect..
+        So for every new function call, those registers also need to be saved on
+        stack, and new state for picking register is initializes by moving
+        registerPickerCountersTop and regPickFlagsTop to next index in array 
+        witch represents new function call context.
+    */
+    private static final int registerPikcersFlags[] = new int[256];
+    /* This variable holds information in witch function call contex program is */
+    private static int regPickFlagsTop = -1;
+    
+    /* Helps during argument calculation and it works with registersPicker.
+        It holds information in every function call, how many registers are
+        taken by the picker */
+    public static int registersPickerCounters[] = new int [256];
+    /* This variable holds information in witch function call contex program is */
+    public static int registerPikcerCountersTop = -1;
     
     /* Variable represents number of function calls. It is used with savedRegisters
         to save and restore informations for registers before and after function call  */
@@ -450,12 +462,14 @@ public class NasmTools
         /* Clear flags regiser */
         flags = 0x0;
     }
-    /* Function that copyes all argumets on stack for further use 
+    /* Function that copyes all parameters on stack for further use 
+        It is used in function definition. 
     Warning: 
         If there is more than 6 non floating variables passed to function, than
         they are pushed in reverse order. This case won't work! */
     static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
     {
+        initializeNewPickers();
         int lsize = parameters.size();
         String reg, paramName, paramPos;
         MemoryClassEnumeration memclass;
@@ -475,35 +489,7 @@ public class NasmTools
         }
         resetRegisterPicker();
     }
-    /* This function returns, for some function argument, in witch register
-        argument is passed during function call. For example, first int argument
-        is passed to edi register, second to esi ect. 
-        If no registers is free, function returns next position on stack that
-        holds argument value. 
-    Warning: 
-        If there is more than 6 non floating variables passed to function, than
-        they are pushed in reverse order. This case won't work! */
-    private static String getNextRegForFuncCall(MemoryClassEnumeration memclass) 
-    {
-        /* If all registers is taken, than argument is passed on stack */
-        if (registersPickerCounter > 5)
-            return pushArgumentOnStack(memclass);
-        else {
-            String res = registersPicker.get(registersPickerCounter++).get(memclass);
-            int register = stringToRegister(res);
-            flags |= register;
-            registersTakenForPicker |= register;
-            return res;
-        }
-    }
     
-    /* Resets register counter for further usage */
-    private static void resetRegisterPicker() 
-    {
-        registersPickerCounter = 0;
-        flags ^= registersTakenForPicker;
-        registersTakenForPicker = 0;
-    }
     
     /* Function passes arguments in function call to registers. 
         The order of passing non floating kind of argument is:
@@ -520,6 +506,8 @@ public class NasmTools
         int lsize = arguments.size();
         String res, reg;
         MemoryClassEnumeration memclass;
+        /* Set pickers for next function */
+        initializeNewPickers();
         
         for (int i = 0; i < lsize; ++i) {
             /* Visit expression or STRING_LITERAL */
@@ -535,6 +523,47 @@ public class NasmTools
         }
         resetRegisterPicker();
     }
+    
+    
+    static void initializeNewPickers() {
+        ++registerPikcerCountersTop;
+        ++regPickFlagsTop;
+    }
+    
+    /* This function returns, for some function argument, in witch register
+        argument is passed during function call. For example, first int argument
+        is passed to edi register, second to esi ect. 
+        If no registers is free, function returns next position on stack that
+        holds argument value. 
+    Warning: 
+        If there is more than 6 non floating variables passed to function, than
+        they are pushed in reverse order. This case won't work! */
+    private static String getNextRegForFuncCall(MemoryClassEnumeration memclass) 
+    {
+        /* If all registers is taken, than argument is passed on stack */
+        if (registersPickerCounters[registerPikcerCountersTop] > 5)
+            return pushArgumentOnStack(memclass);
+        else {
+            String res = 
+                    registersPicker.
+                            get(registersPickerCounters[registerPikcerCountersTop]++)
+                                .get(memclass);
+            int register = stringToRegister(res);
+            flags |= register;
+            registerPikcersFlags[regPickFlagsTop] |= register;
+            return res;
+        }
+    }
+    
+    /* Resets register counter for further usage and free flags */
+    private static void resetRegisterPicker() 
+    {
+        registersPickerCounters[registerPikcerCountersTop] = 0;
+        registerPikcersFlags[regPickFlagsTop] = 0x0;
+        --regPickFlagsTop;
+        --registerPikcerCountersTop;
+    }
+    
     
     /* Since result of expression and other operations is always stored in "a"
         register, function checks witch part of a register is used, and
@@ -610,10 +639,5 @@ public class NasmTools
         }
     }
 
-    static void initializeNewPicker() {
-        
-    }
-
-    
     
 }

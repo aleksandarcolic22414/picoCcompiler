@@ -35,6 +35,13 @@ public class Checker
                             TranslationVisitor.curFuncAna.getFunctionName(), "Too many arguments in function call");
                 return false;
             }
+        } else {
+            if (funcAnalyser.getNumberOfParameters() > 0) {
+                CompilationControler.errorOcured
+                    (ctx.getStart(),
+                            TranslationVisitor.curFuncAna.getFunctionName(), "Too few arguments in function call");
+                return false;
+            }
         }
         return true;
     }

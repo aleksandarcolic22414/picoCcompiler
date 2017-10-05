@@ -344,6 +344,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Little thing: Get next free register for further calculation
             and move function's return value to it, to continue calculating */
         String nextFreeTemp = NasmTools.showNextFreeTemp();
+        /* Registers are saved and freed for further use */
         NasmTools.saveRegistersOnStack();
         NasmTools.moveArgsToRegisters(this, argumentList);
         /* Special setup */
@@ -362,7 +363,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
 
     @Override
     public String visitArgumentList(picoCParser.ArgumentListContext ctx) {
-        NasmTools.initializeNewPicker();
         return super.visitArgumentList(ctx);
     }
 
