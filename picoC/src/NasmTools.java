@@ -11,31 +11,66 @@ public class NasmTools
 {
     /* This variable represents maping for arguments of function. */
     public static final Map<Integer, Map<MemoryClassEnumeration, String>> registersPicker;
+    
     /* Helps during argument calculation and it works with registersPicker */
     public static int registersPickerCounter = 0;
+    
+    /* Number of general purpose registers */
+    public static final int NUMBER_OF_REGISTERS = 14;
+    
     /* This variable contains information about free registers  */
     public static int flags = 0;
     
-    public static final int NUMBER_OF_REGISTERS = 14;
+    /* This variable contains information about registers taken with picker */
+    public static int registersTakenForPicker = 0;
+    /* This array represent stack of flags. It it used for function calls.
+        Before every function call, if some registers holds 
+        significant information, they need to be saved on stack.
+        Every element in an array holds information about registers that are
+        saved for function call. */
+    private static final int savedRegisters[] = new int[256];
+    
+    private static final int registerPikcers[] = new int[256];
+    private static int regPickTop = -1;
+    
+    /* Variable represents number of function calls. It is used with savedRegisters
+        to save and restore informations for registers before and after function call  */
+    private static int functionCalls = 0;
     
     /* Next variables represents possition of registers in flags.
         eax register is the right most bit, ebx is one on the left, and so on... */
-    public static final int EAX = 0x1;
-    public static final int EBX = 0x2;
-    public static final int ECX = 0x4;
-    public static final int EDX = 0x8;
-    public static final int ESI = 0x10;
-    public static final int EDI = 0x20;
-    public static final int R8D = 0x40;
-    public static final int R9D = 0x80;
-    public static final int R10D = 0x100;
-    public static final int R11D = 0x200;
-    public static final int R12D = 0x400;
-    public static final int R13D = 0x800;
-    public static final int R14D = 0x1000;
-    public static final int R15D = 0x2000;
     
-    /* Mext variables is string representation of registers */
+    /* Represents number of saved registers on stack for computation. */
+    public static int pushedRegistersOnStack = 0;
+    
+    /* String to registers mapping for lower 4 bytes of registers */
+    private static final Map<String, Integer> storMap4Bytes;
+    
+    /* String to registers mapping whole 8 bytes of registers */
+    private static final Map<String, Integer> storMap8Bytes;
+    
+    /* Registers to string mapping for lower 4 bytes of registers */
+    private static final Map<Integer, String> rtosMap4Bytes;
+    
+    /* Registers to string mapping whole 8 bytes of registers */
+    private static final Map<Integer, String> rtosMap8Bytes;
+    
+    public static final int AREG = 0x1;
+    public static final int BREG = 0x2;
+    public static final int CREG = 0x4;
+    public static final int DREG = 0x8;
+    public static final int SIREG = 0x10;
+    public static final int DIREG = 0x20;
+    public static final int R8REG = 0x40;
+    public static final int R9REG = 0x80;
+    public static final int R10REG = 0x100;
+    public static final int R11REG = 0x200;
+    public static final int R12REG = 0x400;
+    public static final int R13REG = 0x800;
+    public static final int R14REG = 0x1000;
+    public static final int R15REG = 0x2000;
+    
+    /* Next variables is string representation of 4 bite parts of registers */
     public static final String STRING_EAX = "eax";
     public static final String STRING_EBX = "ebx";
     public static final String STRING_ECX = "ecx";
@@ -51,27 +86,89 @@ public class NasmTools
     public static final String STRING_R14D = "r14d";
     public static final String STRING_R15D = "r15d";
     
-    /* Represents number of saved registers on stack for computation. */
-    public static int pushedRegistersOnStack = 0;
+    /* Next variables is string representation of whole 8 bytes of registers */
+    public static final String STRING_RAX = "rax";
+    public static final String STRING_RBX = "rbx";
+    public static final String STRING_RCX = "rcx";
+    public static final String STRING_RDX = "rdx";
+    public static final String STRING_RSI = "rsi";
+    public static final String STRING_RDI = "rdi";
+    public static final String STRING_R8 = "r8";
+    public static final String STRING_R9 = "r9";
+    public static final String STRING_R10 = "r10";
+    public static final String STRING_R11 = "r11";
+    public static final String STRING_R12 = "r12";
+    public static final String STRING_R13 = "r13";
+    public static final String STRING_R14 = "r14";
+    public static final String STRING_R15 = "r15";
     
-    private static final Map<String, Integer> registersMap;
-    
+    /* Initialize mapping */
     static {
-        registersMap = new HashMap<>();
-        registersMap.put(STRING_EAX, EAX);
-        registersMap.put(STRING_EBX, EBX);
-        registersMap.put(STRING_ECX, ECX);
-        registersMap.put(STRING_EDX, EDX);
-        registersMap.put(STRING_ESI, ESI);
-        registersMap.put(STRING_EDI, EDI);
-        registersMap.put(STRING_R8D, R8D);
-        registersMap.put(STRING_R9D, R9D);
-        registersMap.put(STRING_R10D, R10D);
-        registersMap.put(STRING_R11D, R11D);
-        registersMap.put(STRING_R12D, R12D);
-        registersMap.put(STRING_R13D, R13D);
-        registersMap.put(STRING_R14D, R14D);
-        registersMap.put(STRING_R15D, R15D);
+        storMap4Bytes = new HashMap<>();
+        storMap4Bytes.put(STRING_EAX, AREG);
+        storMap4Bytes.put(STRING_EBX, BREG);
+        storMap4Bytes.put(STRING_ECX, CREG);
+        storMap4Bytes.put(STRING_EDX, DREG);
+        storMap4Bytes.put(STRING_ESI, SIREG);
+        storMap4Bytes.put(STRING_EDI, DIREG);
+        storMap4Bytes.put(STRING_R8D, R8REG);
+        storMap4Bytes.put(STRING_R9D, R9REG);
+        storMap4Bytes.put(STRING_R10D, R10REG);
+        storMap4Bytes.put(STRING_R11D, R11REG);
+        storMap4Bytes.put(STRING_R12D, R12REG);
+        storMap4Bytes.put(STRING_R13D, R13REG);
+        storMap4Bytes.put(STRING_R14D, R14REG);
+        storMap4Bytes.put(STRING_R15D, R15REG);
+        
+        storMap8Bytes = new HashMap<>();
+        storMap8Bytes.put(STRING_RAX, AREG);
+        storMap8Bytes.put(STRING_RBX, BREG);
+        storMap8Bytes.put(STRING_RCX, CREG);
+        storMap8Bytes.put(STRING_RDX, DREG);
+        storMap8Bytes.put(STRING_RSI, SIREG);
+        storMap8Bytes.put(STRING_RDI, DIREG);
+        storMap8Bytes.put(STRING_R8, R8REG);
+        storMap8Bytes.put(STRING_R9, R9REG);
+        storMap8Bytes.put(STRING_R10, R10REG);
+        storMap8Bytes.put(STRING_R11, R11REG);
+        storMap8Bytes.put(STRING_R12, R12REG);
+        storMap8Bytes.put(STRING_R13, R13REG);
+        storMap8Bytes.put(STRING_R14, R14REG);
+        storMap8Bytes.put(STRING_R15, R15REG);
+        
+        
+        rtosMap4Bytes = new HashMap<>();
+        rtosMap4Bytes.put(AREG, STRING_EAX);
+        rtosMap4Bytes.put(BREG, STRING_EBX);
+        rtosMap4Bytes.put(CREG, STRING_ECX);
+        rtosMap4Bytes.put(DREG, STRING_EDX);
+        rtosMap4Bytes.put(SIREG, STRING_ESI);
+        rtosMap4Bytes.put(DIREG, STRING_EDI);
+        rtosMap4Bytes.put(R8REG, STRING_R8D);
+        rtosMap4Bytes.put(R9REG, STRING_R9D);
+        rtosMap4Bytes.put(R10REG, STRING_R10D);
+        rtosMap4Bytes.put(R11REG, STRING_R11D);
+        rtosMap4Bytes.put(R12REG, STRING_R12D);
+        rtosMap4Bytes.put(R13REG, STRING_R13D);
+        rtosMap4Bytes.put(R14REG, STRING_R14D);
+        rtosMap4Bytes.put(R15REG, STRING_R15D);
+        
+        rtosMap8Bytes = new HashMap<>();
+        rtosMap8Bytes.put(AREG, STRING_RAX);
+        rtosMap8Bytes.put(BREG, STRING_RBX);
+        rtosMap8Bytes.put(CREG, STRING_RCX);
+        rtosMap8Bytes.put(DREG, STRING_RDX);
+        rtosMap8Bytes.put(SIREG, STRING_RSI);
+        rtosMap8Bytes.put(DIREG, STRING_RDI);
+        rtosMap8Bytes.put(R8REG, STRING_R8);
+        rtosMap8Bytes.put(R9REG, STRING_R9);
+        rtosMap8Bytes.put(R10REG, STRING_R10);
+        rtosMap8Bytes.put(R11REG, STRING_R11);
+        rtosMap8Bytes.put(R12REG, STRING_R12);
+        rtosMap8Bytes.put(R13REG, STRING_R13);
+        rtosMap8Bytes.put(R14REG, STRING_R14);
+        rtosMap8Bytes.put(R15REG, STRING_R15);
+        
         /* Register picker intialization ****************************/
         
         /* Initialize map for rdi register */
@@ -153,12 +250,12 @@ public class NasmTools
     
     public static boolean isTakenRegisterEDX() 
     {
-        return (flags & EDX) != 0;
+        return (flags & DREG) != 0;
     }
 
     public static boolean isTakenRegisterEAX() 
     {
-        return (flags & EAX) != 0;
+        return (flags & AREG) != 0;
     }
     
 
@@ -189,10 +286,31 @@ public class NasmTools
         return "dword [rbp-" + Integer.toString(disp) + "]";
     }
 
-    /* Really stupid check */
+    /* Function determines witch is next position on stack
+        that can hold value. */
+    private static String showStackDisplacement() {
+        /* Get function analyser */
+        FunctionsAnalyser fa; 
+        fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
+        /* Calculate taken memory on stack */
+        int taken = fa.getSpaceForLocals() + fa.getSpaceForParams();
+        
+        /* First free location is ebp-4. So every next is calculated by
+            multipliing pushedRegisters and sizeof(int).
+            Also taken must be added consider already taken place on stack. */
+        int disp = 
+                taken + 
+                Constants.SIZE_OF_INT + 
+                Constants.SIZE_OF_INT * pushedRegistersOnStack;
+        
+        /* [rbp - displacement] is returned casted to dword
+            TODO: Determine witch cast should be used  */
+        return "dword [rbp-" + Integer.toString(disp) + "]";
+    }
+    
     public static boolean isRegister(String left) 
     {
-        return registersMap.containsKey(left);
+        return storMap4Bytes.containsKey(left) || storMap8Bytes.containsKey(left);
     }
 
     /* Returns text representation of operation.
@@ -212,8 +330,8 @@ public class NasmTools
                 return null;
         }
     }
-    /* Return next free register if there is one. If there is no free3 registers
-        function returns first free3 stack memory */
+    /* Return next free register if there is one. If there is no free registers
+        function returns first free stack memory */
     public static String getNextFreeTemp() 
     {
         int register = -1;
@@ -226,6 +344,25 @@ public class NasmTools
             if ((flags & (1 << i)) == 0) {
                 register = 1 << i;
                 flags |= register;
+                break;
+            }
+        }
+        return NasmTools.registerToString(register);
+    }
+    
+    /* Shows next free register if there is one. If there is no free registers
+        function returns first free stack memory */
+    public static String showNextFreeTemp() 
+    {
+        int register = -1;
+        /* If all registers are taken */
+        if (flags == ((1 << NUMBER_OF_REGISTERS) - 1)) 
+            return showStackDisplacement();
+        /* Look for first free register */
+        
+        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+            if ((flags & (1 << i)) == 0) {
+                register = 1 << i;
                 break;
             }
         }
@@ -252,33 +389,33 @@ public class NasmTools
     private static String registerToString(int register) 
     {
         switch (register) {
-            case EAX:
+            case AREG:
                 return "eax";
-            case EBX:
+            case BREG:
                 return "ebx";
-            case ECX:
+            case CREG:
                 return "ecx";
-            case EDX:
+            case DREG:
                 return "edx";
-            case ESI:
+            case SIREG:
                 return "esi";
-            case EDI:
+            case DIREG:
                 return "edi";
-            case R8D:
+            case R8REG:
                 return "r8d";
-            case R9D:
+            case R9REG:
                 return "r9d";
-            case R10D:
+            case R10REG:
                 return "r10d";
-            case R11D:
+            case R11REG:
                 return "r11d";
-            case R12D:
+            case R12REG:
                 return "r12d";
-            case R13D:
+            case R13REG:
                 return "r13d";
-            case R14D:
+            case R14REG:
                 return "r14d";
-            case R15D:
+            case R15REG:
                 return "r15d";
             default:
                 break;
@@ -288,7 +425,10 @@ public class NasmTools
     
     private static int stringToRegister(String source) 
     {
-        return registersMap.get(source);
+        Integer res = storMap4Bytes.get(source);
+        if (res != null)
+            return res;
+        return storMap8Bytes.get(source);
     }
 
     public static int getSize(MemoryClassEnumeration typeSpecifier) 
@@ -348,14 +488,21 @@ public class NasmTools
         /* If all registers is taken, than argument is passed on stack */
         if (registersPickerCounter > 5)
             return pushArgumentOnStack(memclass);
-        else
-            return registersPicker.get(registersPickerCounter++).get(memclass);
+        else {
+            String res = registersPicker.get(registersPickerCounter++).get(memclass);
+            int register = stringToRegister(res);
+            flags |= register;
+            registersTakenForPicker |= register;
+            return res;
+        }
     }
     
     /* Resets register counter for further usage */
     private static void resetRegisterPicker() 
     {
         registersPickerCounter = 0;
+        flags ^= registersTakenForPicker;
+        registersTakenForPicker = 0;
     }
     
     /* Function passes arguments in function call to registers. 
@@ -367,6 +514,9 @@ public class NasmTools
     static void moveArgsToRegisters
     (TranslationVisitor visitor, List<picoCParser.ArgumentContext> arguments) 
     {
+        /* If there is no arguments */
+        if (arguments == null)
+            return;
         int lsize = arguments.size();
         String res, reg;
         MemoryClassEnumeration memclass;
@@ -402,16 +552,44 @@ public class NasmTools
     }
     
     /* This method is used for storing registers that holds some value.
-        It is usualy done for function call */
-    /* Not implemented yet */
+        It is usualy done for function call. Registers are pushed in 
+        normal order (of coure normal order in my implementation :) ),
+        and later they are restored in reverse order. */
     static void saveRegistersOnStack() 
     {
-        
+        int reg;
+        String strReg;
+        /* Save current flags for some function before function call */
+        savedRegisters[functionCalls++] = flags;
+        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+            /* If register is used, than it needs to be pushed on stack */
+            reg = flags & (1 << i);
+            if (reg != 0) {
+                strReg = rtosMap8Bytes.get(reg);
+                Writers.emitInstruction("push", strReg);
+                System.out.println("push     " + strReg);
+            }
+        }
+        /* Set flags to 0 */
+        freeAllRegisters();
     }
-    /* Not implemented yet */
+    /* Next function resotores registers that are pushed on stack 
+        before function call. Registers are restored after function call. 
+        Also, it is done in reversed order of pushing. */
     static void restoreRegisters() 
     {
-        
+        int reg;
+        String strReg;
+        /* Get value of flags for current function (restore state to previous) */
+        flags = savedRegisters[--functionCalls];
+        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+            reg = flags & (1 << (NUMBER_OF_REGISTERS - 1 - i));
+            if (reg != 0) {
+                strReg = rtosMap8Bytes.get(reg);
+                Writers.emitInstruction("pop", strReg);
+                System.out.println("pop     " + strReg);
+            }
+        }
     }
 
     /* Not implemented yet */
@@ -422,7 +600,8 @@ public class NasmTools
 
     /* TODO: Make map of C standard library functions, 
         and just call map.get(fname) != null */
-    static boolean isFunctionFromLib(String functionName) {
+    static boolean isFunctionFromLib(String functionName) 
+    {
         switch (functionName) {
             case "printf":
                 return true;
@@ -431,5 +610,10 @@ public class NasmTools
         }
     }
 
+    static void initializeNewPicker() {
+        
+    }
+
+    
     
 }

@@ -39,7 +39,6 @@ statements : (statement ';')*
            ;
 
 statement :  declarationList        
-          |  functionCall       
           |  returnStat         
           |  expression         
           |  assignment         
@@ -55,13 +54,6 @@ functionName : ID ;
 
 argumentList : argument (',' argument)* ;
 
-/*
-argument : ID    
-         | STRING_LITERAL
-         | INT
-         ;
-*/
-
 argument : expression
          | STRING_LITERAL
          ;    
@@ -72,6 +64,7 @@ simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                  |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
                  |  ID                                                #Id
                  |  INT                                               #Int
+                 |  functionCall                                      #FuncCall
                  |  '(' simpleExpression ')'                          #Parens              
                  |  assignment                                        #Assign  
                  ;

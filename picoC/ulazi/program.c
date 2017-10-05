@@ -1,25 +1,20 @@
-/* TODO: Implement function call for arguments that are not local variables.
-         Put function call and arguments as expression.
-         Make new type of data: POINTER TYPE */
+/* TODO: Put function call as expression. */
 
 int funkcija(int a, int b)
 {
-    int c = a + b;
-    printf("%d\n", c);
-    printf("%d\n", a);
-    printf("%d\n", b);
-
-    return c;
+    return a + b;
 }
 
 
 
 int main()
 {   
-    int a = 1;
-    int b = 6;
+    int a = 10;
+    int b = 20;
 
-    funkcija(a + b * 10, a - b);
+    int d = funkcija(funkcija(a, b), funkcija(a + b, a - b));
+    printf("%d\n", d);
+
     return 10;
 }
 

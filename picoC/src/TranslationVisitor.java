@@ -118,7 +118,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitParameterList(picoCParser.ParameterListContext ctx) {
+    public String visitParameterList(picoCParser.ParameterListContext ctx) 
+    {
         /* Get list of parameters */
         List<picoCParser.ParameterContext> paramsList = ctx.parameter();
         int numberOfParams = paramsList.size();
@@ -130,10 +131,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return null;
     }
 
-    
-    
     @Override
-    public String visitParameter(picoCParser.ParameterContext ctx) {
+    public String visitParameter(picoCParser.ParameterContext ctx) 
+    {
         /* Variable name */
         String name;
         name = ctx.ID().getText();
@@ -173,10 +173,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return super.visitParameter(ctx);
     }
 
-    
-    
-    
-    
     @Override
     public String visitDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
@@ -247,8 +243,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return super.visitDeclaration(ctx);
     }
     
-    
-    
     @Override
     public String visitAssignment(picoCParser.AssignmentContext ctx)
     {
@@ -282,8 +276,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             Writers.emitInstruction("mov", var.getStackPosition(), temp);
             NasmTools.free(temp);
         }
-        
-            
         /* Return stack displacement */
         return var.getStackPosition();
     }
@@ -317,6 +309,23 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return null;
     }
 
+    
+    /* Actual function call goes something like this: *******************/
+        /* Save registers if any of them is needed for further calculations */
+        /* If there is arguments, pass them through registers and stack */
+        /* Emit function call */
+        /* Store return value in free memory */
+        /* Restore saved registers */
+    /* Now the explanation for showNextFreeTemp function.
+        It doesn't actually set any flags in flags variable in NasmTools, but
+        just check witch is next register (or position on stack if registers are filed)
+        witch can hold value. After that, register's are saved on stack, 
+        but before they are restored, real method for getting
+        registers is called witch is getNextFreeTemp. It can't be done without
+        that, because, if getNextFreeTemp is called insted of showNextFreeTemp, then
+        restoreRegisters from NasmTools would override it's value, because
+        that value would be pushed on stack along with other registers as
+        saved registers from function. */
     @Override
     public String visitFunctionCall(picoCParser.FunctionCallContext ctx) 
     {
@@ -328,30 +337,40 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         } else
             argumentList = null;
         
-        /* Check function */
+        /* Check function and try to recover if it's bad call */
         if (!Checker.functionCheck(ctx, argumentList))
             return null;
         
-        /* Actual function call *******************/
-        /* Save registers if any is needed for further calculations */
-        /* If there is arguments, pass them through registers and stack */
-        /* Emit function call */
-        /* Restore saved registers */
+        /* Little thing: Get next free register for further calculation
+            and move function's return value to it, to continue calculating */
+        String nextFreeTemp = NasmTools.showNextFreeTemp();
         NasmTools.saveRegistersOnStack();
-        if (argumentList != null)
-            NasmTools.moveArgsToRegisters(this, argumentList);
+        NasmTools.moveArgsToRegisters(this, argumentList);
         /* Special setup */
         if (NasmTools.isFunctionFromLib(functionName))
             Writers.emitInstruction("mov", "eax", "0");
         Writers.emitInstruction("call", functionName);
+        /* Avoid unnecessary move */
+        if (!nextFreeTemp.equals("eax"))
+            Writers.emitInstruction("mov", nextFreeTemp, "eax");
         NasmTools.restoreRegisters();
+        nextFreeTemp = NasmTools.getNextFreeTemp();
         
         /* TODO: See in witch register is return value from function */
-        return "eax";
+        return nextFreeTemp;
     }
 
     @Override
-    public String visitArgument(picoCParser.ArgumentContext ctx) {
+    public String visitArgumentList(picoCParser.ArgumentListContext ctx) {
+        NasmTools.initializeNewPicker();
+        return super.visitArgumentList(ctx);
+    }
+
+    
+    
+    @Override
+    public String visitArgument(picoCParser.ArgumentContext ctx) 
+    {
         /* If it is not string literal, then return value in a register! */
         if (ctx.STRING_LITERAL() == null) {
             String res = visit(ctx.expression());
@@ -533,10 +552,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                         + " is used uninitialized");
         }
         /* Get right stack position */
-        if (local)
-            stackPosition = curFuncAna.getLocalVariables().get(id).getStackPosition();
-        else
-            stackPosition = curFuncAna.getParameterVariables().get(id).getStackPosition();
+        stackPosition = curFuncAna.getAnyVariable(id).getStackPosition();
         
         nextFreeTemp = NasmTools.getNextFreeTemp();
         Writers.emitInstruction("mov", nextFreeTemp, stackPosition);
