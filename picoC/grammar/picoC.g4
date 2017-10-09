@@ -67,6 +67,7 @@ simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                  |  functionCall                                      #FuncCall
                  |  '(' simpleExpression ')'                          #Parens              
                  |  assignment                                        #Assign  
+		 |  '-' simpleExpression			      #Negation	                 
                  ;
 
 assignment : ID '=' expression ;

@@ -7,7 +7,7 @@ import java.util.List;
 public class Checker 
 {
 
-    public static boolean functionCheck
+    public static boolean functionCallCheck
     (picoCParser.FunctionCallContext ctx, List<picoCParser.ArgumentContext> argumentList) 
     {
         int paramCount;
@@ -56,5 +56,121 @@ public class Checker
                 return false;
         }
     }
+    /* Check for multiple definitions of function */
+    static boolean funcDefCheck(picoCParser.FunctionDefinitionContext ctx, String name) 
+    {
+        if (TranslationVisitor.functions.containsKey(name)) {
+            String error = "Multiple definitions of " + name;
+            System.err.println(error);
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        name,
+                            error);
+            return false;
+        } 
+        return true;
+    }
+
+    static void funcRetStatCheck(picoCParser.FunctionDefinitionContext ctx) 
+    {
+        if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnumeration.VOID && 
+                !TranslationVisitor.curFuncAna.isHasReturn()) 
+        {
+            CompilationControler.warningOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Missing return statement in function " + 
+                                    TranslationVisitor.curFuncAna.getFunctionName());
+        }
+        
+    }
+
+    static boolean paramCheck(picoCParser.ParameterContext ctx, String name) 
+    {
+        if (TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Two or more params with the same name: " + name);
+            return false;    
+        }
+        return true;
+    }
+
+    static boolean varSizeCheck(picoCParser.ParameterContext ctx, int varSize) 
+    {
+        if (varSize == -1) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Void variable not alowed!");
+            return false;
+        }
+        return true;
+    }
+
+    
+    static boolean varSizeCheck(picoCParser.DeclarationContext ctx, int varSize) 
+    {
+        if (varSize == -1) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Void variable not alowed!");
+            return false;
+        }
+        return true;
+    }
+    
+    static boolean varDeclCheck(picoCParser.DeclarationContext ctx, String name) 
+    {
+        if (TranslationVisitor.curFuncAna.getLocalVariables().containsKey(name)
+                || TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) 
+        {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Multiple declaration of " + name);
+            return false;    
+        }
+        return true;
+    }
+
+    static boolean varDeclCheck
+    (picoCParser.AssignmentContext ctx, String id, Variable var) 
+    {
+        if (var == null) {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Variable " + "'" + id + "'" + " not declared");
+            return false;
+        }
+        return true;
+    }
+
+    static boolean varLocalAndParamCheck
+    (boolean local, boolean param, picoCParser.IdContext ctx, String id) 
+    {
+        if (!local && !param) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                        "Variable " + "'" + id  + "'" 
+                        + " is not declared");
+            return false;
+        }
+        return true;
+    }
+
+    static void varInitCheck(boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
+    {
+        if (local && newVar != null && !newVar.isInitialized()) {
+            CompilationControler.warningOcured
+                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                        "Variable " + "'" + id  + "'" 
+                        + " is used uninitialized");
+        }
+    }
+
     
 }

@@ -194,6 +194,11 @@ public class FunctionsAnalyser
             return var;
         return null;
     }
+
+    /* Just return sum of space needed for parameters and local variables */
+    int getSpaceForVariables() {
+        return getSpaceForLocals() + getSpaceForParams();
+    }
     
     
 }
