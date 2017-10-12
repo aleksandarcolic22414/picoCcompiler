@@ -4,7 +4,6 @@ import antlr.TranslationVisitor;
 import antlr.picoCParser;
 import tools.FunctionsAnalyser;
 import tools.Variable;
-import compilationControlers.CompilationControler;
 import constants.MemoryClassEnumeration;
 import java.util.List;
 

@@ -3,7 +3,6 @@ package tools;
 
 import antlr.TranslationListener;
 import antlr.TranslationVisitor;
-import tools.Variable;
 import constants.MemoryClassEnumeration;
 import nasm.NasmTools;
 import java.util.HashMap;

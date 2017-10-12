@@ -1,6 +1,5 @@
-package antlr;
-
 // Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompilerCloneRemote/picoC/grammar/picoC.g4 by ANTLR 4.6
+package antlr;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -284,6 +283,42 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitInt(picoCParser.IntContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code simple}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterSimple(picoCParser.SimpleContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code simple}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitSimple(picoCParser.SimpleContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code equality}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code equality}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code relation}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterRelation(picoCParser.RelationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code relation}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitRelation(picoCParser.RelationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#assignment}.
 	 * @param ctx the parse tree

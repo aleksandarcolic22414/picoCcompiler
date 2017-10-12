@@ -59,7 +59,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         }
         return null;
     }
-
+    
     @Override
     public String visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
@@ -126,6 +126,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         super.visitParameterList(ctx);
         /* Copy arguments to stack */
         NasmTools.moveArgsToStack(paramsList);
+        /* Free all registers for function body */
+        NasmTools.freeAllRegisters();
         return null;
     }
 
@@ -312,7 +314,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (!Checker.functionCallCheck(ctx, argumentList))
             return null;
         
-        /* Little thing: Get next free register for further calculation
+        /* Little thing: View witch is next free register for further calculation
             and move function's return value to it, to continue calculating */
         String nextFreeTemp = NasmTools.showNextFreeTemp();
         /* Registers are saved and freed for further use */
@@ -361,9 +363,16 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             doesn't need to be done, because for expression
             the first instruction is  always "mov", and eax register shoud be saved
             before enterance if it holds some significant value. */
-        return visit(ctx.simpleExpression());
+        return super.visitExpression(ctx);
     }
 
+    @Override
+    public String visitParens(picoCParser.ParensContext ctx) 
+    {
+        String s = visit(ctx.expression());
+        return s;
+    }
+    
     @Override
     public String visitNegation(picoCParser.NegationContext ctx) {
         /* Visit rest of expression */
@@ -436,7 +445,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                 Writers.emitInstruction("imul", leftExpr, rightExpr);
         } else if (ctx.op.getType() == picoCParser.DIV) {
             if (leftExpr.equals("eax")) {
-                if (NasmTools.isTakenRegisterEDX()) { /* Never true, but stil */
+                if (NasmTools.isTakenRegisterDREG()) { /* Never true, but stil */
                     nextFreeTemp = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", nextFreeTemp, "edx");
                     Writers.emitInstruction("cdq");
@@ -452,12 +461,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     would not save some register in edx, because it is needed
                     for remainder of division. */
                 
-                if (!NasmTools.isTakenRegisterEDX()) {
+                if (!NasmTools.isTakenRegisterDREG()) {
                     fake = true;
                     fakelyTaken = NasmTools.getNextFreeTemp();
                 }
                 /* Always true -> */
-                if (NasmTools.isTakenRegisterEAX() && NasmTools.isTakenRegisterEDX()) {
+                if (NasmTools.isTakenRegisterAREG() && NasmTools.isTakenRegisterDREG()) {
                     s1 = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", s1, "eax");  /* save eax value into s1 */
                     s2 = NasmTools.getNextFreeTemp();
@@ -544,10 +553,40 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return nextFreeTemp;
     }
     
+    
+    /* relation could be '<' '<=' '>' '>=' */
     @Override
-    public String visitParens(picoCParser.ParensContext ctx) 
+    public String visitRelation(picoCParser.RelationContext ctx) 
     {
-        String s = visit(ctx.simpleExpression());
-        return s;
+        String left = visit(ctx.relationalExpression());
+        String right = visit(ctx.expression());
+        String rel = ctx.rel.getText();
+        /* Special case, when left and right expression didn't return registers */
+        boolean takenMightyFour;
+        
+        if (!NasmTools.isRegister(left)) {
+            if (takenMightyFour = NasmTools.isTakenRegisterMightyFour()) {
+                /* Save registers and continue */
+                NasmTools.saveRegistersOnStack();
+            }
+        }
+        
+        
+
+        return left;
     }
+    
+    /* rel could be '==' '!=' */
+    @Override
+    public String visitEquality(picoCParser.EqualityContext ctx) 
+    {
+        String left = visit(ctx.relationalExpression());
+        String right = visit(ctx.expression());
+        System.out.println("visitEqualityContext:");
+        System.out.println("Relation: " + ctx.rel.getText());
+        System.out.println("Left: " + left);
+        System.out.println("right: " + right);
+        return left;
+    }
+    
 }

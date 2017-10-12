@@ -1,18 +1,11 @@
-int saberi(int a, int b)
+int main()
 {
-    return a + b;
-}
-
-int main(int z)
-{   
-    int a = 10;
-    int b = 20;
-    int c = - saberi(-a, - b);
-    printf("%d %d %d\n", a, b, c);
+    int a = 5;
+    int b = a < 10;
+    printf("%d\n", a);
 
     return 0;
 }
-
 
 
 /*

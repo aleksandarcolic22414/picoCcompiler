@@ -58,17 +58,25 @@ argument : expression
          | STRING_LITERAL
          ;    
 
-expression : simpleExpression;
-
+expression : simpleExpression 
+	   | relationalExpression            
+	   ;
+              
 simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
                  |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
                  |  ID                                                #Id
                  |  INT                                               #Int
                  |  functionCall                                      #FuncCall
-                 |  '(' simpleExpression ')'                          #Parens              
+		 | '(' expression ')'  				      #Parens	
                  |  assignment                                        #Assign  
 		 |  '-' simpleExpression			      #Negation	                 
                  ;
+
+
+relationalExpression : simpleExpression					           #simple	
+		     | relationalExpression rel=('<'|'<='|'>='|'>') expression     #relation
+                     | relationalExpression rel=('=='|'!=') expression             #equality
+                     ;           
 
 assignment : ID '=' expression ;
 
@@ -94,8 +102,14 @@ DIV : '/' ;
 ADD : '+' ;
 SUB : '-' ;
 
-/* Type specifiers */
+EQUAL :          '==' ;
+NOT_EQUAL :      '!=' ;
+LESS :            '<' ;
+LESS_EQUAL :     '<=' ;
+GREATER :         '>' ;
+GREATER_EQUAL :  '>=' ;
 
+/* Type specifiers */
 fragment
 VOIDTYPE : 'void' ;
 fragment

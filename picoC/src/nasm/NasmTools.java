@@ -268,15 +268,26 @@ public class NasmTools
         return literalName;
     }
     
-    public static boolean isTakenRegisterEDX() 
+    public static boolean isTakenRegisterAREG() 
+    {
+        return (flags & AREG) != 0;
+    }
+    
+    public static boolean isTakenRegisterBREG() 
+    {
+        return (flags & BREG) != 0;
+    }
+    
+    public static boolean isTakenRegisterCREG() 
+    {
+        return (flags & CREG) != 0;
+    }
+    
+    public static boolean isTakenRegisterDREG() 
     {
         return (flags & DREG) != 0;
     }
 
-    public static boolean isTakenRegisterEAX() 
-    {
-        return (flags & AREG) != 0;
-    }
     
 
     /* Function determines witch is next position on stack
@@ -350,6 +361,13 @@ public class NasmTools
                 return null;
         }
     }
+    
+    public static String getRelation(int rel)
+    {
+        
+        return null;
+    }
+    
     /* Return next free register if there is one. If there is no free registers
         function returns first free stack memory */
     public static String getNextFreeTemp() 
@@ -645,6 +663,13 @@ public class NasmTools
             default:
                 return false;
         }
+    }
+
+    public static boolean isTakenRegisterMightyFour() {
+        return isTakenRegisterAREG()
+                && isTakenRegisterBREG()
+                && isTakenRegisterCREG()
+                && isTakenRegisterDREG();
     }
 
     

@@ -1,6 +1,5 @@
-package antlr;
-
 // Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompilerCloneRemote/picoC/grammar/picoC.g4 by ANTLR 4.6
+package antlr;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -175,6 +174,27 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitInt(picoCParser.IntContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code simple}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSimple(picoCParser.SimpleContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code equality}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code relation}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRelation(picoCParser.RelationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#assignment}.
 	 * @param ctx the parse tree
