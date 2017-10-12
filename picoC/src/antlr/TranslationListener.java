@@ -1,3 +1,8 @@
+package antlr;
+
+import tools.FunctionsAnalyser;
+import constants.MemoryClassEnumeration;
+import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -1,4 +1,12 @@
+package nasm;
 
+
+import antlr.picoCParser;
+import compilationControlers.Writers;
+import antlr.TranslationVisitor;
+import tools.FunctionsAnalyser;
+import constants.Constants;
+import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -457,7 +465,7 @@ public class NasmTools
         }
     }
 
-    static void freeAllRegisters() 
+    public static void freeAllRegisters() 
     {
         /* Clear flags regiser */
         flags = 0x0;
@@ -467,7 +475,7 @@ public class NasmTools
     Warning: 
         If there is more than 6 non floating variables passed to function, than
         they are pushed in reverse order. This case won't work! */
-    static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
+    public static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
     {
         initializeNewPickers();
         int lsize = parameters.size();
@@ -497,7 +505,7 @@ public class NasmTools
         rdi    rsi    rdx    rcx      r8      r9   push3 <- push2 <- push1
     Of course, diferent parts of registers is used for different types
     */
-    static void moveArgsToRegisters
+    public static void moveArgsToRegisters
     (TranslationVisitor visitor, List<picoCParser.ArgumentContext> arguments) 
     {
         /* If there is no arguments */
@@ -584,7 +592,7 @@ public class NasmTools
         It is usualy done for function call. Registers are pushed in 
         normal order (of coure normal order in my implementation :) ),
         and later they are restored in reverse order. */
-    static void saveRegistersOnStack() 
+    public static void saveRegistersOnStack() 
     {
         int reg;
         String strReg;
@@ -605,7 +613,7 @@ public class NasmTools
     /* Next function resotores registers that are pushed on stack 
         before function call. Registers are restored after function call. 
         Also, it is done in reversed order of pushing. */
-    static void restoreRegisters() 
+    public static void restoreRegisters() 
     {
         int reg;
         String strReg;
@@ -629,7 +637,7 @@ public class NasmTools
 
     /* TODO: Make map of C standard library functions, 
         and just call map.get(fname) != null */
-    static boolean isFunctionFromLib(String functionName) 
+    public static boolean isFunctionFromLib(String functionName) 
     {
         switch (functionName) {
             case "printf":

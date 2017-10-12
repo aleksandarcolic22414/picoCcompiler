@@ -1,3 +1,14 @@
+package antlr;
+
+import compilationControlers.Writers;
+import tools.FunctionsAnalyser;
+import tools.Variable;
+import nasm.DataSegment;
+import compilationControlers.Checker;
+import compilationControlers.CompilationControler;
+import constants.Constants;
+import constants.MemoryClassEnumeration;
+import nasm.NasmTools;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;

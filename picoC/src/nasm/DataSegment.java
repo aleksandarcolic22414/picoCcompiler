@@ -1,3 +1,6 @@
+package nasm;
+
+import antlr.picoCParser;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +28,7 @@ public class DataSegment
         return nextStrLit;
     }
 
-    static void DeclareExtern(picoCParser.DeclarationContext ctx) {
+    public static void DeclareExtern(picoCParser.DeclarationContext ctx) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

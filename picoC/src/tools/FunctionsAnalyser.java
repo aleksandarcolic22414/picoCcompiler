@@ -1,4 +1,11 @@
+package tools;
 
+
+import antlr.TranslationListener;
+import antlr.TranslationVisitor;
+import tools.Variable;
+import constants.MemoryClassEnumeration;
+import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -172,7 +179,7 @@ public class FunctionsAnalyser
         return "dword [rbp-" + Integer.toString(spaceForLocals) + "]";
     }
 
-    String declareParameterVariable(MemoryClassEnumeration type) {
+    public String declareParameterVariable(MemoryClassEnumeration type) {
         /* Increase number of parameter variables */
         int sizeofvar = NasmTools.getSize(type);
         /* Take function name for further calculation */
@@ -196,7 +203,7 @@ public class FunctionsAnalyser
     }
 
     /* Just return sum of space needed for parameters and local variables */
-    int getSpaceForVariables() {
+    public int getSpaceForVariables() {
         return getSpaceForLocals() + getSpaceForParams();
     }
     

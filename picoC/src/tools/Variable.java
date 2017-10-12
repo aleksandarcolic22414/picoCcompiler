@@ -1,3 +1,8 @@
+package tools;
+
+
+import constants.MemoryClassEnumeration;
+
 
 /**
  *

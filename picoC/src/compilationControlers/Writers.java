@@ -1,4 +1,7 @@
+package compilationControlers;
 
+
+import constants.Constants;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -113,24 +116,24 @@ public class Writers
     }
     
     /* Set text segment for function definition */
-    static void emitFunctionSetup(String name) {
+    public static void emitFunctionSetup(String name) {
         Writers.emitText("\tglobal    " + name);
         Writers.emitText(name + ":");
         Writers.emitText(Constants.FUNCTION_ENTRY);
     }
     
-    static void emitLabelReturn(String inProcess) {
+    public static void emitLabelReturn(String inProcess) {
         Writers.emitText("");
         Writers.emitText(inProcess + "Exit:");
     }
     
-    static void emitJumpToExit(String inProcess) {
+    public static void emitJumpToExit(String inProcess) {
         String exit = inProcess + "Exit";
         Writers.emitInstruction("jmp", exit);
     }
     
     /* Function flushes all 3 string builders into output file. */
-    void writeOutput() throws IOException 
+    public void writeOutput() throws IOException 
     {
         buff.write(DATA_SEGMENT.toString());
         buff.write(TEXT_SEGMENT.toString());

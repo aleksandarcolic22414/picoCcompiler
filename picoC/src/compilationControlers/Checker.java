@@ -1,3 +1,11 @@
+package compilationControlers;
+
+import antlr.TranslationVisitor;
+import antlr.picoCParser;
+import tools.FunctionsAnalyser;
+import tools.Variable;
+import compilationControlers.CompilationControler;
+import constants.MemoryClassEnumeration;
 import java.util.List;
 
 /**
@@ -47,7 +55,7 @@ public class Checker
     }
     /* This shoud check for all external functions.
         That could be some functions from gcc's standard library */
-    private static boolean externalFunctionCheck(String functionName) 
+    public static boolean externalFunctionCheck(String functionName) 
     {
         switch (functionName) {
             case "printf":
@@ -57,7 +65,7 @@ public class Checker
         }
     }
     /* Check for multiple definitions of function */
-    static boolean funcDefCheck(picoCParser.FunctionDefinitionContext ctx, String name) 
+    public static boolean funcDefCheck(picoCParser.FunctionDefinitionContext ctx, String name) 
     {
         if (TranslationVisitor.functions.containsKey(name)) {
             String error = "Multiple definitions of " + name;
@@ -71,7 +79,7 @@ public class Checker
         return true;
     }
 
-    static void funcRetStatCheck(picoCParser.FunctionDefinitionContext ctx) 
+    public static void funcRetStatCheck(picoCParser.FunctionDefinitionContext ctx) 
     {
         if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnumeration.VOID && 
                 !TranslationVisitor.curFuncAna.isHasReturn()) 
@@ -85,7 +93,7 @@ public class Checker
         
     }
 
-    static boolean paramCheck(picoCParser.ParameterContext ctx, String name) 
+    public static boolean paramCheck(picoCParser.ParameterContext ctx, String name) 
     {
         if (TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) {
             CompilationControler.errorOcured
@@ -97,7 +105,7 @@ public class Checker
         return true;
     }
 
-    static boolean varSizeCheck(picoCParser.ParameterContext ctx, int varSize) 
+    public static boolean varSizeCheck(picoCParser.ParameterContext ctx, int varSize) 
     {
         if (varSize == -1) {
             CompilationControler.errorOcured
@@ -110,7 +118,7 @@ public class Checker
     }
 
     
-    static boolean varSizeCheck(picoCParser.DeclarationContext ctx, int varSize) 
+    public static boolean varSizeCheck(picoCParser.DeclarationContext ctx, int varSize) 
     {
         if (varSize == -1) {
             CompilationControler.errorOcured
@@ -122,7 +130,7 @@ public class Checker
         return true;
     }
     
-    static boolean varDeclCheck(picoCParser.DeclarationContext ctx, String name) 
+    public static boolean varDeclCheck(picoCParser.DeclarationContext ctx, String name) 
     {
         if (TranslationVisitor.curFuncAna.getLocalVariables().containsKey(name)
                 || TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) 
@@ -136,7 +144,7 @@ public class Checker
         return true;
     }
 
-    static boolean varDeclCheck
+    public static boolean varDeclCheck
     (picoCParser.AssignmentContext ctx, String id, Variable var) 
     {
         if (var == null) {
@@ -149,7 +157,7 @@ public class Checker
         return true;
     }
 
-    static boolean varLocalAndParamCheck
+    public static boolean varLocalAndParamCheck
     (boolean local, boolean param, picoCParser.IdContext ctx, String id) 
     {
         if (!local && !param) {
@@ -162,7 +170,8 @@ public class Checker
         return true;
     }
 
-    static void varInitCheck(boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
+    public static void varInitCheck
+    (boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
         if (local && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
