@@ -1,6 +1,7 @@
 package compilationControlers;
 
 
+import antlr.picoCParser;
 import constants.Constants;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -15,7 +16,6 @@ public class Writers
     public static StringBuilder TEXT_SEGMENT;
     public static StringBuilder DATA_SEGMENT;
     public static StringBuilder BSS_SEGMENT;
-
     
     FileWriter out;
     BufferedWriter buff;
@@ -140,5 +140,30 @@ public class Writers
         buff.write(BSS_SEGMENT.toString());
         buff.flush();
     }    
+    
+    public static void SetCCInstruction(String left, int typeOfRelation) 
+    {
+        switch (typeOfRelation) {
+            case picoCParser.LESS :
+                Writers.emitInstruction("setl", left);
+                break;
+            case picoCParser.LESS_EQUAL :
+                Writers.emitInstruction("setle", left);
+                break;
+            case picoCParser.GREATER :
+                Writers.emitInstruction("setg", left);
+                break;
+            case picoCParser.GREATER_EQUAL :
+                Writers.emitInstruction("setge", left);
+                break;
+            case picoCParser.EQUAL :
+                Writers.emitInstruction("sete", left);
+                break;
+            case picoCParser.NOT_EQUAL :
+                Writers.emitInstruction("setne", left);
+                break;
+        }
+    }
+
     
 }

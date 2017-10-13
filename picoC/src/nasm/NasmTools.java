@@ -63,11 +63,17 @@ public class NasmTools
     /* Represents number of saved registers on stack for computation. */
     public static int pushedRegistersOnStack = 0;
     
+    /* String to registers mapping for least significant byte of registers */
+    private static final Map<String, Integer> storMap1Bytes;
+    
     /* String to registers mapping for lower 4 bytes of registers */
     private static final Map<String, Integer> storMap4Bytes;
     
     /* String to registers mapping whole 8 bytes of registers */
     private static final Map<String, Integer> storMap8Bytes;
+    
+    /* Registers to string mapping for least significant byte of registers */
+    private static final Map<Integer, String> rtosMap1Bytes;
     
     /* Registers to string mapping for lower 4 bytes of registers */
     private static final Map<Integer, String> rtosMap4Bytes;
@@ -75,6 +81,7 @@ public class NasmTools
     /* Registers to string mapping whole 8 bytes of registers */
     private static final Map<Integer, String> rtosMap8Bytes;
     
+    /* Positions of registers in registers flags */
     public static final int AREG = 0x1;
     public static final int BREG = 0x2;
     public static final int CREG = 0x4;
@@ -90,7 +97,7 @@ public class NasmTools
     public static final int R14REG = 0x1000;
     public static final int R15REG = 0x2000;
     
-    /* Next variables is string representation of 4 bite parts of registers */
+    /* Next variables is string representation of 4 byte parts of registers */
     public static final String STRING_EAX = "eax";
     public static final String STRING_EBX = "ebx";
     public static final String STRING_ECX = "ecx";
@@ -122,8 +129,41 @@ public class NasmTools
     public static final String STRING_R14 = "r14";
     public static final String STRING_R15 = "r15";
     
+    /* Next variables is string representation of the 
+        least significant byte in registers (right most byte)   */
+    public static final String STRING_AL = "al";
+    public static final String STRING_BL = "bl";
+    public static final String STRING_CL = "cl";
+    public static final String STRING_DL = "dl";
+    public static final String STRING_SIL = "sil";
+    public static final String STRING_DIL = "dil";
+    public static final String STRING_R8B = "r8b";
+    public static final String STRING_R9B = "r9b";
+    public static final String STRING_R10B = "r10b";
+    public static final String STRING_R11B = "r11b";
+    public static final String STRING_R12B = "r12b";
+    public static final String STRING_R13B = "r13b";
+    public static final String STRING_R14B = "r14b";
+    public static final String STRING_R15B = "r15b";
+    
     /* Initialize mapping */
     static {
+        storMap1Bytes = new HashMap<>();
+        storMap1Bytes.put(STRING_AL, AREG);
+        storMap1Bytes.put(STRING_BL, BREG);
+        storMap1Bytes.put(STRING_CL, CREG);
+        storMap1Bytes.put(STRING_CL, DREG);
+        storMap1Bytes.put(STRING_SIL, SIREG);
+        storMap1Bytes.put(STRING_DIL, DIREG);
+        storMap1Bytes.put(STRING_R8B, R8REG);
+        storMap1Bytes.put(STRING_R9B, R9REG);
+        storMap1Bytes.put(STRING_R10B, R10REG);
+        storMap1Bytes.put(STRING_R11B, R11REG);
+        storMap1Bytes.put(STRING_R12B, R12REG);
+        storMap1Bytes.put(STRING_R13B, R13REG);
+        storMap1Bytes.put(STRING_R14B, R14REG);
+        storMap1Bytes.put(STRING_R15B, R15REG);
+        
         storMap4Bytes = new HashMap<>();
         storMap4Bytes.put(STRING_EAX, AREG);
         storMap4Bytes.put(STRING_EBX, BREG);
@@ -156,6 +196,21 @@ public class NasmTools
         storMap8Bytes.put(STRING_R14, R14REG);
         storMap8Bytes.put(STRING_R15, R15REG);
         
+        rtosMap1Bytes = new HashMap<>();
+        rtosMap1Bytes.put(AREG, STRING_AL);
+        rtosMap1Bytes.put(BREG, STRING_BL);
+        rtosMap1Bytes.put(CREG, STRING_CL);
+        rtosMap1Bytes.put(DREG, STRING_DL);
+        rtosMap1Bytes.put(SIREG, STRING_SIL);
+        rtosMap1Bytes.put(DIREG, STRING_DIL);
+        rtosMap1Bytes.put(R8REG, STRING_R8B);
+        rtosMap1Bytes.put(R9REG, STRING_R9B);
+        rtosMap1Bytes.put(R10REG, STRING_R10B);
+        rtosMap1Bytes.put(R11REG, STRING_R11B);
+        rtosMap1Bytes.put(R12REG, STRING_R12B);
+        rtosMap1Bytes.put(R13REG, STRING_R13B);
+        rtosMap1Bytes.put(R14REG, STRING_R14B);
+        rtosMap1Bytes.put(R15REG, STRING_R15B);
         
         rtosMap4Bytes = new HashMap<>();
         rtosMap4Bytes.put(AREG, STRING_EAX);
@@ -341,7 +396,9 @@ public class NasmTools
     
     public static boolean isRegister(String left) 
     {
-        return storMap4Bytes.containsKey(left) || storMap8Bytes.containsKey(left);
+        return storMap1Bytes.containsKey(left)
+                || storMap4Bytes.containsKey(left) 
+                || storMap8Bytes.containsKey(left);
     }
 
     /* Returns text representation of operation.
@@ -362,12 +419,6 @@ public class NasmTools
         }
     }
     
-    public static String getRelation(int rel)
-    {
-        
-        return null;
-    }
-    
     /* Return next free register if there is one. If there is no free registers
         function returns first free stack memory */
     public static String getNextFreeTemp() 
@@ -385,7 +436,7 @@ public class NasmTools
                 break;
             }
         }
-        return NasmTools.registerToString(register);
+        return NasmTools.registerToString4Bytes(register);
     }
     
     /* Shows next free register if there is one. If there is no free registers
@@ -404,7 +455,7 @@ public class NasmTools
                 break;
             }
         }
-        return NasmTools.registerToString(register);
+        return NasmTools.registerToString4Bytes(register);
     }
     
     /* Funtion cleans up memory location that is used for computations. 
@@ -423,52 +474,26 @@ public class NasmTools
         }
     }
     
-    /* Returns string representation of register */
-    private static String registerToString(int register) 
+    /* Returns string representation of 4 byte register */
+    private static String registerToString4Bytes(int register) 
     {
-        switch (register) {
-            case AREG:
-                return "eax";
-            case BREG:
-                return "ebx";
-            case CREG:
-                return "ecx";
-            case DREG:
-                return "edx";
-            case SIREG:
-                return "esi";
-            case DIREG:
-                return "edi";
-            case R8REG:
-                return "r8d";
-            case R9REG:
-                return "r9d";
-            case R10REG:
-                return "r10d";
-            case R11REG:
-                return "r11d";
-            case R12REG:
-                return "r12d";
-            case R13REG:
-                return "r13d";
-            case R14REG:
-                return "r14d";
-            case R15REG:
-                return "r15d";
-            default:
-                break;
-        }
-        return null;
+        return rtosMap4Bytes.get(register);
     }
     
-    private static int stringToRegister(String source) 
+    /* Returns string representation of register */
+    private static int stringToRegister(String stringRegister) 
     {
-        Integer res = storMap4Bytes.get(source);
-        if (res != null)
-            return res;
-        return storMap8Bytes.get(source);
+        Integer register;
+        if ((register = storMap1Bytes.get(stringRegister)) != null)
+            return register;
+        if ((register = storMap4Bytes.get(stringRegister)) != null)
+            return register;
+        if ((register = storMap8Bytes.get(stringRegister)) != null)
+            return register;
+        return -1;
     }
 
+    /* Returns size of type specifier */
     public static int getSize(MemoryClassEnumeration typeSpecifier) 
     {
         switch (typeSpecifier) {
@@ -665,12 +690,112 @@ public class NasmTools
         }
     }
 
-    public static boolean isTakenRegisterMightyFour() {
+    /* Function determines wheather 4 general purpose registers a, b, c and are
+        available or not */
+    public static boolean isTakenRegisterMightyFour() 
+    {
         return isTakenRegisterAREG()
                 && isTakenRegisterBREG()
                 && isTakenRegisterCREG()
                 && isTakenRegisterDREG();
     }
 
+    /* Function returns size of register in bytes */
+    public static int sizeOfReg(String left) 
+    {
+        if (storMap1Bytes.containsKey(left))
+            return 1;
+        if (storMap4Bytes.containsKey(left))
+            return 4;
+        if (storMap8Bytes.containsKey(left))
+            return 8;
+        return 0;
+    }
+
+    /* Cast register to proper size */
+    public static String castRegister(String left, int size) 
+    {
+        if (size == Constants.SIZE_OF_CHAR)
+            return castRegisterToChar(left);
+        if (size == Constants.SIZE_OF_INT)
+            return castRegisterToInt(left);
+        if (size == Constants.SIZE_OF_POINTER)
+            return castRegisterToPointer(left);
+        return null;
+    }
+
+    /* Function takes register, and converts it to it's 1 byte representation.
+        If register is already 1 byte register, than function returns 
+        input register */
+    private static String castRegisterToChar(String left) 
+    {
+        int register = stringToRegister(left);
+        String intValueOfReg = rtosMap1Bytes.get(register);
+        return intValueOfReg;
+    }
+    
+    /* Function takes register, and converts it to it's 4 byte representation.
+        If register is already 4 byte register, than function returns 
+        input register */
+    private static String castRegisterToInt(String left) 
+    {
+        int register = stringToRegister(left);
+        String intValueOfReg = rtosMap4Bytes.get(register);
+        return intValueOfReg;
+    }
+    
+    /* Function takes register, and converts it to it's 8 byte representation.
+        If register is already 8 byte register, than function returns 
+        input register */
+    private static String castRegisterToPointer(String left) 
+    {
+        int register = stringToRegister(left);
+        String intValueOfReg = rtosMap8Bytes.get(register);
+        return intValueOfReg;
+    }
+
+    /* Function casts registers to maximum of both registers and emits
+        cast to file */
+    public static int castRegistersToMaxSize(String left, String right) 
+    {
+        String newLeft, newRight;
+        int sizeOfLeft, sizeOfRight, maxSize;
+        sizeOfLeft = NasmTools.sizeOfReg(left);
+        sizeOfRight = NasmTools.sizeOfReg(right);
+        
+        if (sizeOfLeft == sizeOfRight)
+            return sizeOfLeft;
+        /* Take bigger size and cast registers to that size */
+        maxSize = sizeOfLeft > sizeOfRight ? sizeOfLeft : sizeOfRight;
+        if (sizeOfLeft < maxSize) {
+            newLeft = NasmTools.castRegister(left, maxSize);
+            /* Emit cast to file */
+            Writers.emitInstruction("movzx", newLeft, left);
+        }
+        if (sizeOfRight < maxSize) {
+            newRight = NasmTools.castRegister(right, maxSize);
+            /* Emit cast to file */
+            Writers.emitInstruction("movzx", newRight, right);
+        }
+        return maxSize;
+    }
+
+/*    
+    public static void main(String[] args) 
+    {
+        String left, right;
+        int maxSizeOfRegisters;
+        left = "esi";
+        right = "rbx";
+        maxSizeOfRegisters = NasmTools.castRegistersToMaxSize(left, right);
+        left = NasmTools.castRegister(left, maxSizeOfRegisters);
+        System.out.println("New left: " + left);
+        right = NasmTools.castRegister(right, maxSizeOfRegisters);
+        System.out.println("New right: " + right);
+        
+        left = NasmTools.castRegister(left, Constants.SIZE_OF_CHAR);
+        System.out.println("Left for return: " + left);
+    }
+*/
     
 }

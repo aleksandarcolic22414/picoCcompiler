@@ -1,12 +1,13 @@
 int main()
 {
-    int a = 5;
-    int b = a < 10;
+    int a = 12312313;
+    a = 12312313 == 12312313;
     printf("%d\n", a);
-
     return 0;
 }
-
+/* TODO: Check NasmTools.castTo functions. When assignment is done,
+    castRegister only returns string representation of casts, but doesn't emit
+    actual cast instruction. So above code won't work. */
 
 /*
 int main()
