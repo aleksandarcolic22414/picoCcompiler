@@ -240,14 +240,15 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         var.setInitialized(true);
         
         /* If size of return register doesn't match size of var than it needs
-            to be casted. */
+            to be casted, so size of variable is taken and later, if it is register,
+            it is casted to proper size */
         int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
-        res = NasmTools.castRegister(res, sizeOfVar);
         /* Get position of variable */
         String stackPos = var.getStackPosition();
         /* Emit assign if right operand is register.
             getStackPosition returns position of var on stack */
         if (NasmTools.isRegister(res)) {
+            res = NasmTools.castVariable(res, sizeOfVar);
             Writers.emitInstruction("mov", stackPos, res);
             NasmTools.free(res);
         } else {
@@ -572,7 +573,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitRelation(picoCParser.RelationContext ctx) 
     {
         String left, right;
-        int maxSizeOfRegisters;
+        int maxSizeOfVars;
         /* Visit expressions and try to recover if error ocurs */
         if ((left = visit(ctx.relationalExpression())) == null)
             return null;
@@ -581,15 +582,15 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         /* If sizes of registers doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of registers match */
-        maxSizeOfRegisters = NasmTools.castRegistersToMaxSize(left, right);
-        left = NasmTools.castRegister(left, maxSizeOfRegisters);
-        right = NasmTools.castRegister(right, maxSizeOfRegisters);
+        maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
+        left = NasmTools.castVariable(left, maxSizeOfVars);
+        right = NasmTools.castVariable(right, maxSizeOfVars);
         
         Writers.emitInstruction("cmp", left, right);
         /* Because result of comparison only can be stored in low byte of register
             left register needs to be casted to one. */
-        left = NasmTools.castRegister(left, Constants.SIZE_OF_CHAR);
-        /* Emit result of comparisson to file */
+        left = NasmTools.castVariable(left, Constants.SIZE_OF_CHAR);
+        /* Emit result of seting the least significant byte to register. */
         Writers.SetCCInstruction(left, ctx.rel.getType());
         
         NasmTools.free(right);
@@ -601,7 +602,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitEquality(picoCParser.EqualityContext ctx) 
     {
         String left, right;
-        int maxSizeOfRegisters;
+        int maxSizeOfVars;
         /* Visit expressions and try to recover if error ocurs */
         if ((left = visit(ctx.relationalExpression())) == null)
             return null;
@@ -610,15 +611,15 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         /* If sizes of registers doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of registers match */
-        maxSizeOfRegisters = NasmTools.castRegistersToMaxSize(left, right);
-        left = NasmTools.castRegister(left, maxSizeOfRegisters);
-        right = NasmTools.castRegister(right, maxSizeOfRegisters);
+        maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
+        left = NasmTools.castVariable(left, maxSizeOfVars);
+        right = NasmTools.castVariable(right, maxSizeOfVars);
         
         Writers.emitInstruction("cmp", left, right);
         /* Because result of comparison only can be stored in low byte of register
             left register needs to be casted to one. */
-        left = NasmTools.castRegister(left, Constants.SIZE_OF_CHAR);
-        /* Emit result of comparisson to file */
+        left = NasmTools.castVariable(left, Constants.SIZE_OF_CHAR);
+        /* Emit result of seting the least significant byte to register. */
         Writers.SetCCInstruction(left, ctx.rel.getType());
         
         NasmTools.free(right);

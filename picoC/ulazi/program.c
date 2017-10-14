@@ -1,13 +1,23 @@
+int cmp(int a, int b)
+{
+    return a - b;
+}
+
+int oduzmi(int a, int b)
+{
+    return a - b;
+}
+
 int main()
 {
-    int a = 12312313;
-    a = 12312313 == 12312313;
-    printf("%d\n", a);
+    int a = 1234567;
+    int b = 123456789;
+    b = a == (b = 1234567);
+    printf("a: %d\n", a);
+    printf("b: %d\n", b);
     return 0;
 }
-/* TODO: Check NasmTools.castTo functions. When assignment is done,
-    castRegister only returns string representation of casts, but doesn't emit
-    actual cast instruction. So above code won't work. */
+
 
 /*
 int main()
@@ -23,5 +33,4 @@ int main()
     
     return (((2+2*2)+2)/2+2)/2 * 8/(12/2-6/(1+12/(4+8/(3+2/(1+4/(1+3))))));
 }
-
 */

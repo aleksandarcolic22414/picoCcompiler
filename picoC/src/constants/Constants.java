@@ -13,6 +13,14 @@ public class Constants
     public static final int SIZE_OF_POINTER = 8;
     /* Represents char size in bytes */
     public static final int SIZE_OF_CHAR = 1;
+    /* Represents value of byte in string */
+    public static String STRING_BYTE = "byte";
+    /* Represents value of word in string */
+    public static String STRING_WORD = "word";
+    /* Represents value of double word in string */
+    public static String STRING_DWORD = "dword";
+    /* Represents value of double word in string */
+    public static String STRING_QWORD = "qword";
     /* path to Desktop for testing puropse. */
     /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */
     public static final String PATH_TO_OUTPUT_FILE = 
@@ -27,5 +35,6 @@ public class Constants
     /* function emits */
     public static final String FUNCTION_ENTRY = "    push    rbp\n    mov    rbp,rsp\n";
     public static final String FUNCTION_EXIT = "\n    mov    rsp,rbp\n    pop    rbp\n    ret";
+    
     
 }

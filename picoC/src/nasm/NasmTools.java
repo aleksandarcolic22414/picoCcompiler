@@ -700,102 +700,162 @@ public class NasmTools
                 && isTakenRegisterDREG();
     }
 
-    /* Function returns size of register in bytes */
-    public static int sizeOfReg(String left) 
+    /* Function returns size of variable or register in bytes */
+    public static int sizeOf(String var) 
     {
-        if (storMap1Bytes.containsKey(left))
+        if (storMap1Bytes.containsKey(var))
             return 1;
-        if (storMap4Bytes.containsKey(left))
+        if (storMap4Bytes.containsKey(var))
             return 4;
-        if (storMap8Bytes.containsKey(left))
+        if (storMap8Bytes.containsKey(var))
+            return 8;
+        /* If it is not register, then check stack position for variable */
+        if (var.startsWith(Constants.STRING_BYTE))
+            return 1;
+        if (var.startsWith(Constants.STRING_DWORD))
+            return 4;
+        if (var.startsWith(Constants.STRING_DWORD))
             return 8;
         return 0;
     }
 
-    /* Cast register to proper size */
-    public static String castRegister(String left, int size) 
+    /* Cast variable to proper size */
+    public static String castVariable(String var, int size) 
     {
-        if (size == Constants.SIZE_OF_CHAR)
-            return castRegisterToChar(left);
-        if (size == Constants.SIZE_OF_INT)
-            return castRegisterToInt(left);
-        if (size == Constants.SIZE_OF_POINTER)
-            return castRegisterToPointer(left);
+        /* If variable is register */
+        if (NasmTools.isRegister(var)) {
+            if (size == Constants.SIZE_OF_CHAR)
+                return castRegisterToChar(var);
+            if (size == Constants.SIZE_OF_INT)
+                return castRegisterToInt(var);
+            if (size == Constants.SIZE_OF_POINTER)
+                return castRegisterToPointer(var);
+        } else {  /* else it is variable */
+            if (size == Constants.SIZE_OF_CHAR)
+                return castVarToChar(var);
+            if (size == Constants.SIZE_OF_INT)
+                return castVarToInt(var);
+            if (size == Constants.SIZE_OF_POINTER)
+                return castVarToPointer(var);
+        }
         return null;
     }
 
     /* Function takes register, and converts it to it's 1 byte representation.
         If register is already 1 byte register, than function returns 
-        input register */
-    private static String castRegisterToChar(String left) 
+        input register. If register has more than 1 byte, than instructions
+        doesn't need to be emited to file, because function will just
+        return 1 byte representation of register. This is usually used for
+        converting 4 byte register representation to 1 byte register
+        representation for evaluating comparison of some kind. */
+    private static String castRegisterToChar(String inputRegister) 
     {
-        int register = stringToRegister(left);
-        String intValueOfReg = rtosMap1Bytes.get(register);
-        return intValueOfReg;
+        int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
+        if (sizeOfInputRegister == Constants.SIZE_OF_CHAR)
+            return inputRegister;
+        int register = stringToRegister(inputRegister);
+        String oneByteRegister = rtosMap1Bytes.get(register);
+//      No cast is done:  Writers.emitInstruction("castInstruction", intValueOfReg, left);
+        return oneByteRegister;
     }
     
     /* Function takes register, and converts it to it's 4 byte representation.
         If register is already 4 byte register, than function returns 
-        input register */
-    private static String castRegisterToInt(String left) 
+        input register. Function also emits converting instruction if size
+        of input register is less than 4 bytes */
+    private static String castRegisterToInt(String inputRegister) 
     {
-        int register = stringToRegister(left);
-        String intValueOfReg = rtosMap4Bytes.get(register);
-        return intValueOfReg;
+        int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
+        if (sizeOfInputRegister == Constants.SIZE_OF_INT)
+            return inputRegister;
+        int register = stringToRegister(inputRegister);
+        String fourByteRegister = rtosMap4Bytes.get(register);
+        /* Zero extend register because  */
+        System.out.println("Emiting: " + "movzx " + fourByteRegister + " " + inputRegister);
+        Writers.emitInstruction("movzx", fourByteRegister, inputRegister);
+        return fourByteRegister;
     }
     
     /* Function takes register, and converts it to it's 8 byte representation.
         If register is already 8 byte register, than function returns 
         input register */
-    private static String castRegisterToPointer(String left) 
+    private static String castRegisterToPointer(String inputRegister) 
     {
-        int register = stringToRegister(left);
-        String intValueOfReg = rtosMap8Bytes.get(register);
-        return intValueOfReg;
+        int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
+        if (sizeOfInputRegister == Constants.SIZE_OF_POINTER)
+            return inputRegister;
+        int register = stringToRegister(inputRegister);
+        String eightByteRegister = rtosMap8Bytes.get(register);
+//      No cast is done: Writers.emitInstruction("castInstruction", intValueOfReg, inputRegister);
+        return eightByteRegister;
     }
 
-    /* Function casts registers to maximum of both registers and emits
-        cast to file */
-    public static int castRegistersToMaxSize(String left, String right) 
+    /* Calculates size of input variables (or register(s)) and returns
+        greater one */
+    public static int maxSizeOfVars(String var1, String var2)
     {
-        String newLeft, newRight;
-        int sizeOfLeft, sizeOfRight, maxSize;
-        sizeOfLeft = NasmTools.sizeOfReg(left);
-        sizeOfRight = NasmTools.sizeOfReg(right);
-        
-        if (sizeOfLeft == sizeOfRight)
-            return sizeOfLeft;
-        /* Take bigger size and cast registers to that size */
-        maxSize = sizeOfLeft > sizeOfRight ? sizeOfLeft : sizeOfRight;
-        if (sizeOfLeft < maxSize) {
-            newLeft = NasmTools.castRegister(left, maxSize);
-            /* Emit cast to file */
-            Writers.emitInstruction("movzx", newLeft, left);
-        }
-        if (sizeOfRight < maxSize) {
-            newRight = NasmTools.castRegister(right, maxSize);
-            /* Emit cast to file */
-            Writers.emitInstruction("movzx", newRight, right);
-        }
-        return maxSize;
+        int sizeOfLeft, sizeOfRight;
+        sizeOfLeft = NasmTools.sizeOf(var1);
+        sizeOfRight = NasmTools.sizeOf(var2);
+        return sizeOfLeft < sizeOfRight ? sizeOfRight : sizeOfLeft;
     }
 
-/*    
+    /* Function casts input variable to char variable. If input variable is
+       already a char variable, then input variable is returned */
+    private static String castVarToChar(String inputVar) {
+        int sizeOfInputVar = NasmTools.sizeOf(inputVar);
+        if (sizeOfInputVar == Constants.SIZE_OF_CHAR)
+            return inputVar;
+        return NasmTools.castVarToSizeOf(inputVar, Constants.SIZE_OF_CHAR);
+    }
+    /* Function casts input variable to int variable. If input variable is
+       already a int variable, then input variable is returned */
+    private static String castVarToInt(String inputVar) {
+        int sizeOfInputVar = NasmTools.sizeOf(inputVar);
+        if (sizeOfInputVar == Constants.SIZE_OF_INT)
+            return inputVar;
+        return NasmTools.castVarToSizeOf(inputVar, Constants.SIZE_OF_INT);
+    }
+
+    /* Function casts input variable to pointer variable. If input variable is
+       already a pointer variable, then input variable is returned */
+    private static String castVarToPointer(String inputVar) {
+        int sizeOfInputVar = NasmTools.sizeOf(inputVar);
+        if (sizeOfInputVar == Constants.SIZE_OF_POINTER)
+            return inputVar;
+        return NasmTools.castVarToSizeOf(inputVar, Constants.SIZE_OF_POINTER);
+    }
+    
+    /* Function casts variable to proper size. */
+    private static String castVarToSizeOf(String inputVar, int size) {
+        String newVar = inputVar.substring(inputVar.indexOf("["));
+        switch (size) {
+            case Constants.SIZE_OF_CHAR :
+                newVar = Constants.STRING_BYTE + " " + newVar;
+                break;
+            case Constants.SIZE_OF_INT :
+                newVar = Constants.STRING_DWORD + " " + newVar;
+                break;
+            case Constants.SIZE_OF_POINTER :
+                newVar = Constants.STRING_QWORD + " " + newVar;
+                break;
+            default :
+                return inputVar;
+        }
+        return newVar;
+    }
+
+    
     public static void main(String[] args) 
     {
-        String left, right;
-        int maxSizeOfRegisters;
-        left = "esi";
-        right = "rbx";
-        maxSizeOfRegisters = NasmTools.castRegistersToMaxSize(left, right);
-        left = NasmTools.castRegister(left, maxSizeOfRegisters);
-        System.out.println("New left: " + left);
-        right = NasmTools.castRegister(right, maxSizeOfRegisters);
-        System.out.println("New right: " + right);
+        String var = "r9";
         
-        left = NasmTools.castRegister(left, Constants.SIZE_OF_CHAR);
-        System.out.println("Left for return: " + left);
+        var = NasmTools.castVariable(var, Constants.SIZE_OF_CHAR);
+        System.out.println(var);
+        var = NasmTools.castVariable(var, Constants.SIZE_OF_INT);
+        System.out.println(var);
+        var = NasmTools.castVariable(var, Constants.SIZE_OF_POINTER);
+        System.out.println(var);
     }
-*/
     
 }
