@@ -42,7 +42,7 @@ public class Writers
     public static void emitInstruction(String instruction)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(instruction);
         TEXT_SEGMENT.append("\n");
     }
@@ -50,9 +50,9 @@ public class Writers
     public static void emitInstruction(String instruction, String arg1)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append("\n");
     }
@@ -60,9 +60,9 @@ public class Writers
     public static void emitInstruction(String instruction, String arg1, String arg2)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append(",");
         TEXT_SEGMENT.append(arg2);
@@ -73,9 +73,9 @@ public class Writers
     (String instruction, String arg1, String arg2, String arg3)
     {
         /* Make instructions readable */
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(instruction);
-        TEXT_SEGMENT.append("    ");
+        TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(arg1);
         TEXT_SEGMENT.append(",");
         TEXT_SEGMENT.append(arg2);
@@ -102,8 +102,6 @@ public class Writers
         BSS_SEGMENT.append("\n");
     }
     
-    
-    
     /* Emits define instruction without analysing literalValue. */
     public static void emitDefineDataSegment
     (String literalName, String literalValue) 
@@ -123,7 +121,6 @@ public class Writers
     }
     
     public static void emitLabelReturn(String inProcess) {
-        Writers.emitText("");
         Writers.emitText(inProcess + "Exit:");
     }
     
@@ -165,5 +162,11 @@ public class Writers
         }
     }
 
+    /* Function just emits label, but it is logicaly 
+        separated from emitText */
+    public static void emitLabel(String label) 
+    {
+        Writers.emitText(label + ":");
+    }
     
 }

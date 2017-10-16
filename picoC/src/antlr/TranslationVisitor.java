@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tools.LogicalHelper;
 
 /**
  *
@@ -192,11 +193,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             to snap of variable name for declaration */
         if (ctx.assignmentExpression() == null)
             name = ctx.ID().getText();
-        else {
+        else
             name = ctx.assignmentExpression().getChild(0).getText();
-            System.out.println("proba u visitDeclaration. Assignment vratio: " + name);    
-        }
-        
+            
         /* Chech if variable is already declared */
         if (!Checker.varDeclCheck(ctx, name))
             return null;
@@ -348,8 +347,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return super.visitArgumentList(ctx);
     }
 
-    
-    
     @Override
     public String visitArgument(picoCParser.ArgumentContext ctx) 
     {
@@ -581,8 +578,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if ((right = visit(ctx.additiveExpression())) == null)
             return null;
         
-        /* If sizes of registers doesn't match, than they need to be casted.
-            Next three lines does nothing if sizes of registers match */
+        /* If sizes of variables doesn't match, than they need to be casted.
+            Next three lines does nothing if sizes of variables match.
+            Variable could be register or variable on stack. */
         maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
         left = NasmTools.castVariable(left, maxSizeOfVars);
         right = NasmTools.castVariable(right, maxSizeOfVars);
@@ -610,8 +608,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if ((right = visit(ctx.relationalExpression())) == null)
             return null;
         
-        /* If sizes of registers doesn't match, than they need to be casted.
-            Next three lines does nothing if sizes of registers match */
+        /* If sizes of variables doesn't match, than they need to be casted.
+            Next three lines does nothing if sizes of variables match.
+            Variable could be register or variable on stack. */
         maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
         left = NasmTools.castVariable(left, maxSizeOfVars);
         right = NasmTools.castVariable(right, maxSizeOfVars);
@@ -626,5 +625,61 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         NasmTools.free(right);
         return left;
     }
+
+    @Override
+    public String visitLogicalAND(picoCParser.LogicalANDContext ctx) 
+    {
+        String left, right, labelTrue, labelFalse, afterFalseLabel;
+        int maxSizeOfVars;
+        /* Visit left and right child and try to recover from error */
+        if ((left = visit(ctx.logicalAndExpression())) == null)
+            return null;
+        if ((right = visit(ctx.equalityExpression())) == null) 
+            return null;
+        System.out.println("LogicalAND: Left: " + left + " right: " + right);
+        
+        /* If sizes of variables doesn't match, than they need to be casted.
+            Next three lines does nothing if sizes of variables match.
+            Variable could be register or variable on stack. */
+        maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
+        left = NasmTools.castVariable(left, maxSizeOfVars);
+        right = NasmTools.castVariable(right, maxSizeOfVars);
+        
+        /* Call nasm tools to emit standard procedure for evaluating 'AND' expression */
+        NasmTools.andExpressionEvaluation(left, right);
+        
+        /* Free right and return left */
+        NasmTools.free(right);
+        return left;
+    }
+
+    @Override
+    public String visitLogicalOR(picoCParser.LogicalORContext ctx) 
+    {
+        String left, right, labelTrue, labelFalse, afterFalseLabel;
+        int maxSizeOfVars;
+        /* Visit left and right child and try to recover from error */
+        if ((left = visit(ctx.logicalOrExpression())) == null)
+            return null;
+        if ((right = visit(ctx.logicalAndExpression())) == null) 
+            return null;
+        System.out.println("LogicalOR: Left: " + left + " right: " + right);
+        
+        /* If sizes of variables doesn't match, than they need to be casted.
+            Next three lines does nothing if sizes of variables match.
+            Variable could be register or variable on stack. */
+        maxSizeOfVars = NasmTools.maxSizeOfVars(left, right);
+        left = NasmTools.castVariable(left, maxSizeOfVars);
+        right = NasmTools.castVariable(right, maxSizeOfVars);
+        
+        /* Call nasm tools to emit standard procedure for evaluating 'OR' expression */
+        NasmTools.orExpressionEvaluation(left, right);
+        
+        /* Free right and return left */
+        NasmTools.free(right);
+        return left;
+    }
+    
+    
     
 }

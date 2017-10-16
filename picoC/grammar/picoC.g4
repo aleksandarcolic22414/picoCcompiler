@@ -153,6 +153,9 @@ LESS_EQUAL :     '<=' ;
 GREATER :         '>' ;
 GREATER_EQUAL :  '>=' ;
 
+LOGICAL_AND :   '&&'  ;
+LOGICAL_OR  :   '||'  ; 
+
 /* Type specifiers */
 fragment
 VOIDTYPE : 'void' ;

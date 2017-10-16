@@ -10,6 +10,7 @@ import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import tools.LogicalHelper;
 
 /**
  *
@@ -802,7 +803,8 @@ public class NasmTools
 
     /* Function casts input variable to char variable. If input variable is
        already a char variable, then input variable is returned */
-    private static String castVarToChar(String inputVar) {
+    private static String castVarToChar(String inputVar) 
+    {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_CHAR)
             return inputVar;
@@ -810,7 +812,8 @@ public class NasmTools
     }
     /* Function casts input variable to int variable. If input variable is
        already a int variable, then input variable is returned */
-    private static String castVarToInt(String inputVar) {
+    private static String castVarToInt(String inputVar) 
+    {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_INT)
             return inputVar;
@@ -819,7 +822,8 @@ public class NasmTools
 
     /* Function casts input variable to pointer variable. If input variable is
        already a pointer variable, then input variable is returned */
-    private static String castVarToPointer(String inputVar) {
+    private static String castVarToPointer(String inputVar) 
+    {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_POINTER)
             return inputVar;
@@ -827,7 +831,8 @@ public class NasmTools
     }
     
     /* Function casts variable to proper size. */
-    private static String castVarToSizeOf(String inputVar, int size) {
+    private static String castVarToSizeOf(String inputVar, int size) 
+    {
         String newVar = inputVar.substring(inputVar.indexOf("["));
         switch (size) {
             case Constants.SIZE_OF_CHAR :
@@ -856,6 +861,54 @@ public class NasmTools
         System.out.println(var);
         var = NasmTools.castVariable(var, Constants.SIZE_OF_POINTER);
         System.out.println(var);
+    }
+
+    public static void andExpressionEvaluation(String left, String right) {
+        String labelTrue, labelFalse, afterFalseLabel;
+        /* Get labels */
+        labelTrue = LogicalHelper.getNextTrueLogicalLabel();
+        labelFalse = LogicalHelper.getNextFalseLogicalLabel();
+        afterFalseLabel = LogicalHelper.getNextAfterFalseLogicalLabel();
+        
+        /* Emit compare with zero, and jump if it is true */
+        Writers.emitInstruction("cmp", left, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Now compare right with 0 and jump if it is true */
+        Writers.emitInstruction("cmp", right, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Emit true label and store 1 to left register, meaning evaluated: true */
+        Writers.emitLabel(labelTrue);
+        Writers.emitInstruction("mov", left, "1");
+        Writers.emitInstruction("jmp", afterFalseLabel);
+        /* Emit false label, and store 0 to left register, meaning evaluated: false */
+        Writers.emitLabel(labelFalse);
+        Writers.emitInstruction("mov", left, "0");
+        /* Emit label for rest of the code */
+        Writers.emitLabel(afterFalseLabel);
+    }
+
+    public static void orExpressionEvaluation(String left, String right) {
+        String labelTrue, labelFalse, afterFalseLabel;
+        /* Get labels */
+        labelTrue = LogicalHelper.getNextTrueLogicalLabel();
+        labelFalse = LogicalHelper.getNextFalseLogicalLabel();
+        afterFalseLabel = LogicalHelper.getNextAfterFalseLogicalLabel();
+        
+        /* Emit compare with zero, and jump if it is false */
+        Writers.emitInstruction("cmp", left, "0");
+        Writers.emitInstruction("jne", labelTrue);
+        /* Now compare right with 0 and jump if it is true */
+        Writers.emitInstruction("cmp", right, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Emit true label and store 1 to left register, meaning evaluated: true */
+        Writers.emitLabel(labelTrue);
+        Writers.emitInstruction("mov", left, "1");
+        Writers.emitInstruction("jmp", afterFalseLabel);
+        /* Emit false label, and store 0 to left register, meaning evaluated: false */
+        Writers.emitLabel(labelFalse);
+        Writers.emitInstruction("mov", left, "0");
+        /* Emit label for rest of the code */
+        Writers.emitLabel(afterFalseLabel);
     }
     
 }
