@@ -144,7 +144,7 @@ public class Checker
     }
 
     public static boolean varDeclCheck
-    (picoCParser.AssignmentContext ctx, String id, Variable var) 
+    (picoCParser.AssignContext ctx, String id, Variable var) 
     {
         if (var == null) {
             CompilationControler.errorOcured(

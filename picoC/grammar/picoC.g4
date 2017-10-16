@@ -1,84 +1,127 @@
 grammar picoC;
 
-compilationUnit : translationUnit? EOF
-                ;
+compilationUnit 
+        :   translationUnit? EOF  ;
 
-translationUnit : externalDeclaration
-                | translationUnit externalDeclaration
-                ;
+translationUnit 
+        :   externalDeclaration
+        |   translationUnit externalDeclaration
+        ;
 
-externalDeclaration : functionDefinition
-                    | declarationList ';'
-                    | assignment ';'
-                    | ';'
-                    ;
+externalDeclaration 
+        :   functionDefinition
+        |   declarationList
+        |   assignmentExpression
+        |   ';'
+        ;
 
-declarationList : typeSpecifier declaration (',' declaration)*;
+declarationList 
+        :   typeSpecifier declaration (',' declaration)*  ';'  ;
 
-declaration : ID
-	    | assignment
-	    ;
+declaration 
+        :   ID
+	|   assignmentExpression
+	;
 
-functionDefinition : typeSpecifier functionName '(' parameterList? ')' functionBody 
-                   ;
+functionDefinition 
+        :   typeSpecifier functionName '(' parameterList? ')' functionBody 
+        ;
 
-typeSpecifier : 'int'   
-              | 'void'
-              ;
+typeSpecifier 
+        :   'int'   
+        |   'void'
+        ;
 
-parameterList :  parameter (',' parameter)*
-              ;
+parameterList 
+        :   parameter (',' parameter)*  ;
 
-parameter :  typeSpecifier ID
-          ;
+parameter 
+        :   typeSpecifier ID  ;
 
-functionBody : '{' statements '}'
-             ;
+functionBody 
+        :   '{' statements '}'  ;
 
-statements : (statement ';')* 
-           ;
+statements 
+        :   (statement)*  ;
 
-statement :  declarationList        
-          |  returnStat         
-          |  expression         
-          |  assignment         
-          ;
+statement 
+        :   declarationList   
+        |   expressionStatement
+        |   returnStat                         
+        ;
 
-returnStat : 'return' expression? 
-           ;
+returnStat 
+        :   'return' expression?  ';'  ;
 
 
-functionCall : functionName '(' argumentList? ')' ;
+functionCall 
+        :   functionName '(' argumentList? ')' ;
 
-functionName : ID ;
+functionName 
+        :   ID ;
 
-argumentList : argument (',' argument)* ;
+argumentList 
+        :   argument (',' argument)*  ;
 
-argument : expression
+argument : assignmentExpression 
          | STRING_LITERAL
          ;    
 
-expression : simpleExpression 
-	   | relationalExpression            
-	   ;
-              
-simpleExpression :  simpleExpression op=('*'|'/') simpleExpression    #MulDiv
-                 |  simpleExpression op=('+'|'-') simpleExpression    #AddSub
-                 |  ID                                                #Id
-                 |  INT                                               #Int
-                 |  functionCall                                      #FuncCall
-		 | '(' expression ')'  				      #Parens	
-                 |  assignment                                        #Assign  
-		 |  '-' simpleExpression			      #Negation	                 
-                 ;
+primaryExpression 
+        :   ID                 #Id
+        |   INT                #Int
+        |   functionCall       #FuncCall
+        |   '(' expression ')' #Parens
+        ;
+
+unaryExpression 
+        :   primaryExpression      #DropUnary
+        |   '-' primaryExpression  #Negation
+        ;
+
+multiplicativeExpression 
+        :   unaryExpression                                           #DropMulDiv
+        |   multiplicativeExpression op=('*'|'/') unaryExpression     #MulDiv
+        ;
+
+additiveExpression 
+        :   multiplicativeExpression                                  #DropAddSub
+        |   additiveExpression op=('+'|'-') multiplicativeExpression  #AddSub
+        ;
+
+relationalExpression 
+        :   additiveExpression					             #DropRelational	
+        |   relationalExpression rel=('<'|'<='|'>='|'>') additiveExpression  #Relation
+        ;    
+
+equalityExpression
+        :   relationalExpression                                       #DropEquality
+        |   equalityExpression rel=('=='|'!=') relationalExpression    #Equality
+        ;
+
+logicalAndExpression
+        :   equalityExpression                                  #DropLogicalAND
+        |   logicalAndExpression '&&' equalityExpression        #LogicalAND
+        ;
+
+logicalOrExpression
+        :   logicalAndExpression                                #DropLogicalOR
+        |   logicalOrExpression '||' logicalAndExpression       #LogicalOR
+        ;
+
+assignmentExpression
+        :   logicalOrExpression                     #DropAssign
+        |   ID '=' assignmentExpression             #Assign
+        ;
+
+expression
+        :   assignmentExpression
+        |   expression ',' assignmentExpression
+        ;      
 
 
-relationalExpression : simpleExpression					           #simple	
-		     | relationalExpression rel=('<'|'<='|'>='|'>') expression     #relation
-                     | relationalExpression rel=('=='|'!=') expression             #equality
-                     ;           
-
-assignment : ID '=' expression ;
+expressionStatement 
+        : expression? ';'  ;
 
 ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
 INT     : [0-9]+ ;
@@ -95,7 +138,8 @@ MULTY_LINE_COMMENT
     ;
 
 SINGLE_LINE_COMMENT
-    :   '//' .*? '\r'? '\n' ->skip ; // match anything after // until newline
+    :   '//' .*? '\r'? '\n' -> skip  // match anything after // until newline
+    ;
 
 MUL : '*' ;
 DIV : '/' ;

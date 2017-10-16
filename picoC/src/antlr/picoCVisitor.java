@@ -113,92 +113,155 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArgument(picoCParser.ArgumentContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpression(picoCParser.ExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code FuncCall}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFuncCall(picoCParser.FuncCallContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code Negation}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNegation(picoCParser.NegationContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code MulDiv}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMulDiv(picoCParser.MulDivContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code AddSub}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAddSub(picoCParser.AddSubContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code Parens}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParens(picoCParser.ParensContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code Assign}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssign(picoCParser.AssignContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code Id}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitId(picoCParser.IdContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code Int}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitInt(picoCParser.IntContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code simple}
+	 * Visit a parse tree produced by the {@code FuncCall}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFuncCall(picoCParser.FuncCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Parens}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParens(picoCParser.ParensContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropUnary}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropUnary(picoCParser.DropUnaryContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Negation}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropMulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropMulDiv(picoCParser.DropMulDivContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code MulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMulDiv(picoCParser.MulDivContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code AddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAddSub(picoCParser.AddSubContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropAddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropAddSub(picoCParser.DropAddSubContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropRelational}
 	 * labeled alternative in {@link picoCParser#relationalExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSimple(picoCParser.SimpleContext ctx);
+	T visitDropRelational(picoCParser.DropRelationalContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code equality}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEquality(picoCParser.EqualityContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code relation}
+	 * Visit a parse tree produced by the {@code Relation}
 	 * labeled alternative in {@link picoCParser#relationalExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitRelation(picoCParser.RelationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#assignment}.
+	 * Visit a parse tree produced by the {@code DropEquality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignment(picoCParser.AssignmentContext ctx);
+	T visitDropEquality(picoCParser.DropEqualityContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Equality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code LogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicalAND(picoCParser.LogicalANDContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropLogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropLogicalAND(picoCParser.DropLogicalANDContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropLogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropLogicalOR(picoCParser.DropLogicalORContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code LogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicalOR(picoCParser.LogicalORContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropAssign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropAssign(picoCParser.DropAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Assign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssign(picoCParser.AssignContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpression(picoCParser.ExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#expressionStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionStatement(picoCParser.ExpressionStatementContext ctx);
 }

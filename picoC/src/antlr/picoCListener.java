@@ -178,6 +178,246 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitArgument(picoCParser.ArgumentContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Id}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterId(picoCParser.IdContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Id}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitId(picoCParser.IdContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Int}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterInt(picoCParser.IntContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Int}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitInt(picoCParser.IntContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code FuncCall}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterFuncCall(picoCParser.FuncCallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code FuncCall}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitFuncCall(picoCParser.FuncCallContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Parens}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterParens(picoCParser.ParensContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Parens}
+	 * labeled alternative in {@link picoCParser#primaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitParens(picoCParser.ParensContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropUnary}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropUnary(picoCParser.DropUnaryContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropUnary}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropUnary(picoCParser.DropUnaryContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Negation}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Negation}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropMulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropMulDiv(picoCParser.DropMulDivContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropMulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropMulDiv(picoCParser.DropMulDivContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code MulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterMulDiv(picoCParser.MulDivContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code MulDiv}
+	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitMulDiv(picoCParser.MulDivContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code AddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterAddSub(picoCParser.AddSubContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code AddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitAddSub(picoCParser.AddSubContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropAddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropAddSub(picoCParser.DropAddSubContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropAddSub}
+	 * labeled alternative in {@link picoCParser#additiveExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropAddSub(picoCParser.DropAddSubContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropRelational}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropRelational(picoCParser.DropRelationalContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropRelational}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropRelational(picoCParser.DropRelationalContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Relation}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterRelation(picoCParser.RelationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Relation}
+	 * labeled alternative in {@link picoCParser#relationalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitRelation(picoCParser.RelationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropEquality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropEquality(picoCParser.DropEqualityContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropEquality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropEquality(picoCParser.DropEqualityContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Equality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Equality}
+	 * labeled alternative in {@link picoCParser#equalityExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code LogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterLogicalAND(picoCParser.LogicalANDContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code LogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitLogicalAND(picoCParser.LogicalANDContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropLogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropLogicalAND(picoCParser.DropLogicalANDContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropLogicalAND}
+	 * labeled alternative in {@link picoCParser#logicalAndExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropLogicalAND(picoCParser.DropLogicalANDContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropLogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropLogicalOR(picoCParser.DropLogicalORContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropLogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropLogicalOR(picoCParser.DropLogicalORContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code LogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterLogicalOR(picoCParser.LogicalORContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code LogicalOR}
+	 * labeled alternative in {@link picoCParser#logicalOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitLogicalOR(picoCParser.LogicalORContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropAssign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropAssign(picoCParser.DropAssignContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropAssign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropAssign(picoCParser.DropAssignContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Assign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssign(picoCParser.AssignContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Assign}
+	 * labeled alternative in {@link picoCParser#assignmentExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssign(picoCParser.AssignContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#expression}.
 	 * @param ctx the parse tree
 	 */
@@ -188,145 +428,13 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitExpression(picoCParser.ExpressionContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code FuncCall}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
+	 * Enter a parse tree produced by {@link picoCParser#expressionStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterFuncCall(picoCParser.FuncCallContext ctx);
+	void enterExpressionStatement(picoCParser.ExpressionStatementContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code FuncCall}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
+	 * Exit a parse tree produced by {@link picoCParser#expressionStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitFuncCall(picoCParser.FuncCallContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Negation}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterNegation(picoCParser.NegationContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Negation}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitNegation(picoCParser.NegationContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code MulDiv}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterMulDiv(picoCParser.MulDivContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code MulDiv}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitMulDiv(picoCParser.MulDivContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code AddSub}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterAddSub(picoCParser.AddSubContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code AddSub}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitAddSub(picoCParser.AddSubContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Parens}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterParens(picoCParser.ParensContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Parens}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitParens(picoCParser.ParensContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Assign}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssign(picoCParser.AssignContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Assign}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssign(picoCParser.AssignContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Id}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterId(picoCParser.IdContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Id}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitId(picoCParser.IdContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Int}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterInt(picoCParser.IntContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Int}
-	 * labeled alternative in {@link picoCParser#simpleExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitInt(picoCParser.IntContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code simple}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterSimple(picoCParser.SimpleContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code simple}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitSimple(picoCParser.SimpleContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code equality}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterEquality(picoCParser.EqualityContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code equality}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitEquality(picoCParser.EqualityContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code relation}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterRelation(picoCParser.RelationContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code relation}
-	 * labeled alternative in {@link picoCParser#relationalExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitRelation(picoCParser.RelationContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#assignment}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssignment(picoCParser.AssignmentContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#assignment}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssignment(picoCParser.AssignmentContext ctx);
+	void exitExpressionStatement(picoCParser.ExpressionStatementContext ctx);
 }

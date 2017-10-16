@@ -190,10 +190,13 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String name;
         /* If direct ID is available, then declare it, else go into assignment context
             to snap of variable name for declaration */
-        if (ctx.assignment() == null)
+        if (ctx.assignmentExpression() == null)
             name = ctx.ID().getText();
-        else
-            name = ctx.assignment().ID().getText();
+        else {
+            name = ctx.assignmentExpression().getChild(0).getText();
+            System.out.println("proba u visitDeclaration. Assignment vratio: " + name);    
+        }
+        
         /* Chech if variable is already declared */
         if (!Checker.varDeclCheck(ctx, name))
             return null;
@@ -219,10 +222,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         return super.visitDeclaration(ctx);
     }
-    
+
     @Override
-    public String visitAssignment(picoCParser.AssignmentContext ctx)
-    {
+    public String visitAssign(picoCParser.AssignContext ctx) {
         /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -234,7 +236,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Register where expression is calculated */
         String res;
         /* Try to recover from error. */
-        if ((res = visit(ctx.expression())) == null) 
+        if ((res = visit(ctx.assignmentExpression())) == null) 
             return null;
         
         var.setInitialized(true);
@@ -260,7 +262,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Return stack displacement */
         return stackPos;
     }
-
     
     
     @Override
@@ -354,7 +355,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     {
         /* If it is not string literal, then return value in a register! */
         if (ctx.STRING_LITERAL() == null) {
-            String res = visit(ctx.expression());
+            String res = visit(ctx.assignmentExpression());
             /* Free "a" register */
             NasmTools.free(res);
             return res;
@@ -399,9 +400,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String leftExpr;
         String rightExpr;
         /* Try to visit children and recover if error ocured */
-        if ((leftExpr = visit(ctx.simpleExpression(0))) == null)
+        if ((leftExpr = visit(ctx.additiveExpression())) == null)
             return null;
-        if ((rightExpr = visit(ctx.simpleExpression(1))) == null)
+        if ((rightExpr = visit(ctx.multiplicativeExpression())) == null)
             return null;
         String nextFreeTemp;
         String operation = NasmTools.getOperation(ctx.op.getType());
@@ -431,9 +432,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String leftExpr;
         String rightExpr;
         /* Try to visit children and recover if error ocured */
-        if ((leftExpr = visit(ctx.simpleExpression(0))) == null)
+        if ((leftExpr = visit(ctx.multiplicativeExpression())) == null)
             return null;
-        if ((rightExpr = visit(ctx.simpleExpression(1))) == null)
+        if ((rightExpr = visit(ctx.unaryExpression())) == null)
             return null;
        
         String nextFreeTemp;
@@ -577,7 +578,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Visit expressions and try to recover if error ocurs */
         if ((left = visit(ctx.relationalExpression())) == null)
             return null;
-        if ((right = visit(ctx.expression())) == null)
+        if ((right = visit(ctx.additiveExpression())) == null)
             return null;
         
         /* If sizes of registers doesn't match, than they need to be casted.
@@ -587,7 +588,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         right = NasmTools.castVariable(right, maxSizeOfVars);
         
         Writers.emitInstruction("cmp", left, right);
-        /* Because result of comparison only can be stored in low byte of register
+        /* Because result of comparison only can be stored in low byte of register,
             left register needs to be casted to one. */
         left = NasmTools.castVariable(left, Constants.SIZE_OF_CHAR);
         /* Emit result of seting the least significant byte to register. */
@@ -604,9 +605,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         String left, right;
         int maxSizeOfVars;
         /* Visit expressions and try to recover if error ocurs */
-        if ((left = visit(ctx.relationalExpression())) == null)
+        if ((left = visit(ctx.equalityExpression())) == null)
             return null;
-        if ((right = visit(ctx.expression())) == null)
+        if ((right = visit(ctx.relationalExpression())) == null)
             return null;
         
         /* If sizes of registers doesn't match, than they need to be casted.
@@ -616,7 +617,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         right = NasmTools.castVariable(right, maxSizeOfVars);
         
         Writers.emitInstruction("cmp", left, right);
-        /* Because result of comparison only can be stored in low byte of register
+        /* Because result of comparison only can be stored in low byte of register,
             left register needs to be casted to one. */
         left = NasmTools.castVariable(left, Constants.SIZE_OF_CHAR);
         /* Emit result of seting the least significant byte to register. */
