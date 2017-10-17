@@ -1,7 +1,7 @@
 # picoCcompiler
 
 Projekat predstavlja minijaturnu verziju C kompajlera.
-Funkcionise tako sto izvorni fajl, napisan u C programskom jeziku, prevodi u asemblerski jezik.
+Funkcionise tako sto izvorni fajl, napisan u jeziku koji je ogranicena verzija programskog jezika C, prevodi u asemblerski jezik.
 Asemblerski jezik koji se ovde koristi je NASM (Netwide Assembler).
 
 Za parsiranje teksta se koristi ANTLR (Another Tool For Language Recognition) alat.
