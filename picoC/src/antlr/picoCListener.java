@@ -78,6 +78,16 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree
 	 */
@@ -108,16 +118,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitFunctionBody(picoCParser.FunctionBodyContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#statements}.
-	 * @param ctx the parse tree
-	 */
-	void enterStatements(picoCParser.StatementsContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#statements}.
-	 * @param ctx the parse tree
-	 */
-	void exitStatements(picoCParser.StatementsContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link picoCParser#statement}.
 	 * @param ctx the parse tree
 	 */
@@ -127,6 +127,46 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitStatement(picoCParser.StatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#compoundStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterCompoundStatement(picoCParser.CompoundStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#compoundStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitCompoundStatement(picoCParser.CompoundStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#blockItemList}.
+	 * @param ctx the parse tree
+	 */
+	void enterBlockItemList(picoCParser.BlockItemListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#blockItemList}.
+	 * @param ctx the parse tree
+	 */
+	void exitBlockItemList(picoCParser.BlockItemListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#blockItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterBlockItem(picoCParser.BlockItemContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#blockItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitBlockItem(picoCParser.BlockItemContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#selectionStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSelectionStatement(picoCParser.SelectionStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#selectionStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
@@ -147,16 +187,6 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunctionCall(picoCParser.FunctionCallContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionName(picoCParser.FunctionNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionName(picoCParser.FunctionNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#argumentList}.
 	 * @param ctx the parse tree

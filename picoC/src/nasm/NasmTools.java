@@ -10,7 +10,7 @@ import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import tools.LogicalHelper;
+import tools.LabelsHelper;
 
 /**
  *
@@ -41,17 +41,17 @@ public class NasmTools
         So for every new function call, those registers also need to be saved on
         stack, and new state for picking register is initializes by moving
         registerPickerCountersTop and regPickFlagsTop to next index in array 
-        witch represents new function call context.
+        which represents new function call context.
     */
     private static final int registerPikcersFlags[] = new int[256];
-    /* This variable holds information in witch function call contex program is */
+    /* This variable holds information in which function call contex program is */
     private static int regPickFlagsTop = -1;
     
     /* Helps during argument calculation and it works with registersPicker.
         It holds information in every function call, how many registers are
         taken by the picker */
     public static int registersPickerCounters[] = new int [256];
-    /* This variable holds information in witch function call contex program is */
+    /* This variable holds information in which function call contex program is */
     public static int registerPikcerCountersTop = -1;
     
     /* Variable represents number of function calls. It is used with savedRegisters
@@ -346,7 +346,7 @@ public class NasmTools
 
     
 
-    /* Function determines witch is next position on stack
+    /* Function determines which is next position on stack
         that can hold value. */
     private static String getStackDisplacement() 
     {
@@ -369,11 +369,11 @@ public class NasmTools
         
         ++pushedRegistersOnStack;
         /* [rbp - displacement] is returned casted to dword
-            TODO: Determine witch cast should be used  */
+            TODO: Determine which cast should be used  */
         return "dword [rbp-" + Integer.toString(disp) + "]";
     }
 
-    /* Function determines witch is next position on stack
+    /* Function determines which is next position on stack
         that can hold value. */
     private static String showStackDisplacement() {
         /* Get function analyser */
@@ -391,7 +391,7 @@ public class NasmTools
                 Constants.SIZE_OF_INT * pushedRegistersOnStack;
         
         /* [rbp - displacement] is returned casted to dword
-            TODO: Determine witch cast should be used  */
+            TODO: Determine which cast should be used  */
         return "dword [rbp-" + Integer.toString(disp) + "]";
     }
     
@@ -532,7 +532,7 @@ public class NasmTools
             paramPos = TranslationVisitor.curFuncAna.
                         getParameterVariables().get(paramName).getStackPosition();
             /* Get memory class of typeSpecifier and register 
-                in witch it is passed to function */
+                in which it is passed to function */
             memclass = FunctionsAnalyser.getMemoryClass(parameters.get(i).typeSpecifier().getText());
             reg = getNextRegForFuncCall(memclass);
 
@@ -567,7 +567,7 @@ public class NasmTools
             /* Get variable size based on register it is stored in */
             memclass = getMemoryClassFromRegister(res);
             /* Get memory class of typeSpecifier and register 
-                in witch it is passed to function */
+                in which it is passed to function */
             reg = getNextRegForFuncCall(memclass);
 
             /* Emit copying from registers to stack memory for arguments setup */
@@ -582,7 +582,7 @@ public class NasmTools
         ++regPickFlagsTop;
     }
     
-    /* This function returns, for some function argument, in witch register
+    /* This function returns, for some function argument, in which register
         argument is passed during function call. For example, first int argument
         is passed to edi register, second to esi ect. 
         If no registers is free, function returns next position on stack that
@@ -618,7 +618,7 @@ public class NasmTools
     
     
     /* Since result of expression and other operations is always stored in "a"
-        register, function checks witch part of a register is used, and
+        register, function checks which part of a register is used, and
         based on that, return size of variable stored in it */
     private static MemoryClassEnumeration getMemoryClassFromRegister(String res) 
     {
@@ -866,9 +866,9 @@ public class NasmTools
     public static void andExpressionEvaluation(String left, String right) {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
-        labelTrue = LogicalHelper.getNextTrueLogicalLabel();
-        labelFalse = LogicalHelper.getNextFalseLogicalLabel();
-        afterFalseLabel = LogicalHelper.getNextAfterFalseLogicalLabel();
+        labelTrue = LabelsHelper.getNextTrueLogicalLabel();
+        labelFalse = LabelsHelper.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsHelper.getNextAfterFalseLogicalLabel();
         
         /* Emit compare with zero, and jump if it is true */
         Writers.emitInstruction("cmp", left, "0");
@@ -890,9 +890,9 @@ public class NasmTools
     public static void orExpressionEvaluation(String left, String right) {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
-        labelTrue = LogicalHelper.getNextTrueLogicalLabel();
-        labelFalse = LogicalHelper.getNextFalseLogicalLabel();
-        afterFalseLabel = LogicalHelper.getNextAfterFalseLogicalLabel();
+        labelTrue = LabelsHelper.getNextTrueLogicalLabel();
+        labelFalse = LabelsHelper.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsHelper.getNextAfterFalseLogicalLabel();
         
         /* Emit compare with zero, and jump if it is false */
         Writers.emitInstruction("cmp", left, "0");

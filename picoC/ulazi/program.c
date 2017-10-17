@@ -1,11 +1,19 @@
+int fib(int n)
+{
+    if (n < 2)
+        return n;
+    int a = fib(n-1) + fib(n-2);
+    printf("%d ", a);
+    return a;
+}
+
 int main()
 {
-    int a, b, c;
-    a = 10;
-    b = 20;
-    c = 1 && (0 || (1 && 0) || 0);
-    printf("%d\n", c);
-    return c;
+    int a;
+    a = fib(30);
+    printf("%d\n", a);
+    
+    return 0;
 }
 
 

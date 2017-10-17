@@ -174,7 +174,7 @@ public class FunctionsAnalyser
         int sizeofvar = NasmTools.getSize(type);
         /* Calculate new stack displacement */
         spaceForLocals += sizeofvar;
-        /* TODO: Determine witch cast should be used */
+        /* TODO: Determine which cast should be used */
         return "dword [rbp-" + Integer.toString(spaceForLocals) + "]";
     }
 
@@ -188,7 +188,7 @@ public class FunctionsAnalyser
         int taken = TranslationListener.lisFuncAna.get(fname).getSpaceForLocals();
         /* Calculate new place on stack */
         spaceForParams += sizeofvar;
-        /* TODO: Determine witch cast should be used */
+        /* TODO: Determine which cast should be used */
         return "dword [rbp-" + Integer.toString(taken + spaceForParams) + "]";
     }
 

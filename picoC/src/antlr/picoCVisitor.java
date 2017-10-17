@@ -53,6 +53,12 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -71,17 +77,35 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionBody(picoCParser.FunctionBodyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#statements}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatements(picoCParser.StatementsContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link picoCParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitStatement(picoCParser.StatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#compoundStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompoundStatement(picoCParser.CompoundStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#blockItemList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockItemList(picoCParser.BlockItemListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#blockItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockItem(picoCParser.BlockItemContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#selectionStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
@@ -94,12 +118,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionCall(picoCParser.FunctionCallContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunctionName(picoCParser.FunctionNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#argumentList}.
 	 * @param ctx the parse tree

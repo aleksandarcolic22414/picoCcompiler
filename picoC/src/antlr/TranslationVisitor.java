@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tools.LogicalHelper;
+import tools.LabelsHelper;
 
 /**
  *
@@ -26,7 +26,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     /* List that contains informations about all functions
         that are beeing compiled */
     public static Map<String, FunctionsAnalyser> functions;
-    
+   
     /* Curent function context.  */
     public static FunctionsAnalyser curFuncAna = null;
 
@@ -57,6 +57,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             writers.writeOutput();
         } catch (IOException ex) {
             Logger.getLogger(TranslationVisitor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        for (long i : LabelsHelper.ifElseLabelHelper) {
+            System.out.print(i + " ");
         }
         return null;
     }
@@ -262,7 +265,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         return stackPos;
     }
     
-    
     @Override
     public String visitStatement(picoCParser.StatementContext ctx) 
     {
@@ -270,7 +272,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         NasmTools.freeAllRegisters();
         return null;
     }
-    
     
     @Override
     public String visitReturnStat(picoCParser.ReturnStatContext ctx) 
@@ -299,10 +300,10 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Restore saved registers */
     /* Now the explanation for showNextFreeTemp function.
         It doesn't actually set any flags in flags variable in NasmTools, but
-        just check witch is next register (or position on stack if registers are filed)
-        witch can hold value. After that, register's are saved on stack, 
+        just check which is next register (or position on stack if registers are filed)
+        which can hold value. After that, register's are saved on stack, 
         but before they are restored, real method for getting
-        registers is called witch is getNextFreeTemp. It can't be done without
+        registers is called which is getNextFreeTemp. It can't be done without
         that, because, if getNextFreeTemp is called insted of showNextFreeTemp, then
         restoreRegisters from NasmTools would override it's value, because
         that value would be pushed on stack along with other registers as
@@ -322,7 +323,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (!Checker.functionCallCheck(ctx, argumentList))
             return null;
         
-        /* Little thing: View witch is next free register for further calculation
+        /* Little thing: View which is next free register for further calculation
             and move function's return value to it, to continue calculating */
         String nextFreeTemp = NasmTools.showNextFreeTemp();
         /* Registers are saved and freed for further use */
@@ -338,7 +339,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         NasmTools.restoreRegisters();
         nextFreeTemp = NasmTools.getNextFreeTemp();
         
-        /* TODO: See in witch part of register is return value from function */
+        /* TODO: See in which part of register is return value from function */
         return nextFreeTemp;
     }
 
@@ -483,7 +484,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     Writers.emitInstruction("cdq");
                     
                     /* If right operand od division is edx, than eax needs
-                        to be divided by moved edx, witch is s2 */
+                        to be divided by moved edx, which is s2 */
                     if (!rightExpr.equals("edx"))
                         Writers.emitInstruction("idiv", rightExpr);
                     else
@@ -678,6 +679,42 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Free right and return left */
         NasmTools.free(right);
         return left;
+    }
+
+    @Override
+    public String visitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+        String expr, right, labelIf, labelElse, labelAfterElse;
+        long depthIfElse;
+        /* Get depth of if else */
+        depthIfElse = LabelsHelper.getIfDepth();
+        /* Get all tree labels, to keep their counters equal for easier debugging */
+        labelIf = LabelsHelper.getNextIfLabel();
+        labelElse = LabelsHelper.getNextElseLabel();
+        labelAfterElse = LabelsHelper.getNextAfterElseLabel();
+        
+        /* Visit statement and try to recover if error ocurs */
+        if ((expr = visit(ctx.expression())) == null)
+            return null;
+        /* Free all registers taken by calculating the expression */
+        NasmTools.freeAllRegisters();
+        /* Here goes emiting  */
+        Writers.emitInstruction("cmp", expr, "0");
+        Writers.emitInstruction("je", labelElse);
+        Writers.emitLabel(labelIf);
+        /* Insert code within if statement */
+        visit(ctx.statement(0));
+        /* Jump to after else label if expression is true */
+        Writers.emitInstruction("jmp", labelAfterElse);
+        Writers.emitLabel(labelElse);
+        /* Insert code within else statement if it is there */
+        if (ctx.statement(1) != null)
+            visit(ctx.statement(1));
+        
+        /* If LabelsHelper alow after else label, emit it */
+        if (depthIfElse == 0)
+            Writers.emitLabel(labelAfterElse);
+        
+        return null;
     }
     
     

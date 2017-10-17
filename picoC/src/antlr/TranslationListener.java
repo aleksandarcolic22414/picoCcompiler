@@ -6,6 +6,8 @@ import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import tools.LabelsHelper;
+
 
 /**
  *
@@ -83,5 +85,20 @@ public class TranslationListener extends picoCBaseListener
         /* Set displacement in current function context */
         curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
     }
+
+    @Override
+    public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+        System.out.println("enterSelectionStatement: " + LabelsHelper.selectionDepthCounter);
+        LabelsHelper.insertDepth();
+        LabelsHelper.increaseDepth();
+    }
+
+    @Override
+    public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+        System.out.println("enterSelectionStatement: " + LabelsHelper.selectionDepthCounter);
+        LabelsHelper.resetSelectionDepthCounter();
+    }
+    
+    
     
 }
