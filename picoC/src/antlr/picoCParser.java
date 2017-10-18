@@ -19,9 +19,9 @@ public class picoCParser extends Parser {
 	public static final int
 		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
 		T__9=10, T__10=11, T__11=12, ID=13, INT=14, WS=15, STRING_LITERAL=16, 
-		MULTY_LINE_COMMENT=17, SINGLE_LINE_COMMENT=18, MUL=19, DIV=20, ADD=21, 
-		SUB=22, EQUAL=23, NOT_EQUAL=24, LESS=25, LESS_EQUAL=26, GREATER=27, GREATER_EQUAL=28, 
-		LOGICAL_AND=29, LOGICAL_OR=30;
+		MULTY_LINE_COMMENT=17, SINGLE_LINE_COMMENT=18, MUL=19, DIV=20, MOD=21, 
+		ADD=22, SUB=23, EQUAL=24, NOT_EQUAL=25, LESS=26, LESS_EQUAL=27, GREATER=28, 
+		GREATER_EQUAL=29, LOGICAL_AND=30, LOGICAL_OR=31;
 	public static final int
 		RULE_compilationUnit = 0, RULE_translationUnit = 1, RULE_externalDeclaration = 2, 
 		RULE_declarationList = 3, RULE_declaration = 4, RULE_functionDefinition = 5, 
@@ -46,13 +46,13 @@ public class picoCParser extends Parser {
 	private static final String[] _LITERAL_NAMES = {
 		null, "';'", "','", "'('", "')'", "'int'", "'void'", "'{'", "'}'", "'if'", 
 		"'else'", "'return'", "'='", null, null, null, null, null, null, "'*'", 
-		"'/'", "'+'", "'-'", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'&&'", 
-		"'||'"
+		"'/'", "'%'", "'+'", "'-'", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", 
+		"'&&'", "'||'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, "ID", "INT", "WS", "STRING_LITERAL", "MULTY_LINE_COMMENT", "SINGLE_LINE_COMMENT", 
-		"MUL", "DIV", "ADD", "SUB", "EQUAL", "NOT_EQUAL", "LESS", "LESS_EQUAL", 
+		"MUL", "DIV", "MOD", "ADD", "SUB", "EQUAL", "NOT_EQUAL", "LESS", "LESS_EQUAL", 
 		"GREATER", "GREATER_EQUAL", "LOGICAL_AND", "LOGICAL_OR"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
@@ -1619,26 +1619,7 @@ public class picoCParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class DropMulDivContext extends MultiplicativeExpressionContext {
-		public UnaryExpressionContext unaryExpression() {
-			return getRuleContext(UnaryExpressionContext.class,0);
-		}
-		public DropMulDivContext(MultiplicativeExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof picoCListener ) ((picoCListener)listener).enterDropMulDiv(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof picoCListener ) ((picoCListener)listener).exitDropMulDiv(this);
-		}
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof picoCVisitor ) return ((picoCVisitor<? extends T>)visitor).visitDropMulDiv(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class MulDivContext extends MultiplicativeExpressionContext {
+	public static class MulDivModContext extends MultiplicativeExpressionContext {
 		public Token op;
 		public MultiplicativeExpressionContext multiplicativeExpression() {
 			return getRuleContext(MultiplicativeExpressionContext.class,0);
@@ -1646,18 +1627,37 @@ public class picoCParser extends Parser {
 		public UnaryExpressionContext unaryExpression() {
 			return getRuleContext(UnaryExpressionContext.class,0);
 		}
-		public MulDivContext(MultiplicativeExpressionContext ctx) { copyFrom(ctx); }
+		public MulDivModContext(MultiplicativeExpressionContext ctx) { copyFrom(ctx); }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof picoCListener ) ((picoCListener)listener).enterMulDiv(this);
+			if ( listener instanceof picoCListener ) ((picoCListener)listener).enterMulDivMod(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof picoCListener ) ((picoCListener)listener).exitMulDiv(this);
+			if ( listener instanceof picoCListener ) ((picoCListener)listener).exitMulDivMod(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof picoCVisitor ) return ((picoCVisitor<? extends T>)visitor).visitMulDiv(this);
+			if ( visitor instanceof picoCVisitor ) return ((picoCVisitor<? extends T>)visitor).visitMulDivMod(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class DropMulDivModContext extends MultiplicativeExpressionContext {
+		public UnaryExpressionContext unaryExpression() {
+			return getRuleContext(UnaryExpressionContext.class,0);
+		}
+		public DropMulDivModContext(MultiplicativeExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof picoCListener ) ((picoCListener)listener).enterDropMulDivMod(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof picoCListener ) ((picoCListener)listener).exitDropMulDivMod(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof picoCVisitor ) return ((picoCVisitor<? extends T>)visitor).visitDropMulDivMod(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1679,7 +1679,7 @@ public class picoCParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			{
-			_localctx = new DropMulDivContext(_localctx);
+			_localctx = new DropMulDivModContext(_localctx);
 			_ctx = _localctx;
 			_prevctx = _localctx;
 
@@ -1696,15 +1696,15 @@ public class picoCParser extends Parser {
 					_prevctx = _localctx;
 					{
 					{
-					_localctx = new MulDivContext(new MultiplicativeExpressionContext(_parentctx, _parentState));
+					_localctx = new MulDivModContext(new MultiplicativeExpressionContext(_parentctx, _parentState));
 					pushNewRecursionContext(_localctx, _startState, RULE_multiplicativeExpression);
 					setState(201);
 					if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
 					setState(202);
-					((MulDivContext)_localctx).op = _input.LT(1);
+					((MulDivModContext)_localctx).op = _input.LT(1);
 					_la = _input.LA(1);
-					if ( !(_la==MUL || _la==DIV) ) {
-						((MulDivContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << MUL) | (1L << DIV) | (1L << MOD))) != 0)) ) {
+						((MulDivModContext)_localctx).op = (Token)_errHandler.recoverInline(this);
 					}
 					else {
 						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -2653,7 +2653,7 @@ public class picoCParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3 \u0121\4\2\t\2\4"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3!\u0121\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -2677,8 +2677,8 @@ public class picoCParser extends Parser {
 		"\35\u0109\13\35\3\36\3\36\3\36\3\36\5\36\u010f\n\36\3\37\3\37\3\37\3\37"+
 		"\3\37\3\37\7\37\u0117\n\37\f\37\16\37\u011a\13\37\3 \5 \u011d\n \3 \3"+
 		" \3 \2\13\4\34.\60\62\64\668<!\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36"+
-		" \"$&(*,.\60\62\64\668:<>\2\7\3\2\7\b\3\2\25\26\3\2\27\30\3\2\33\36\3"+
-		"\2\31\32\u0122\2A\3\2\2\2\4E\3\2\2\2\6S\3\2\2\2\bU\3\2\2\2\nb\3\2\2\2"+
+		" \"$&(*,.\60\62\64\668:<>\2\7\3\2\7\b\3\2\25\27\3\2\30\31\3\2\34\37\3"+
+		"\2\32\33\u0122\2A\3\2\2\2\4E\3\2\2\2\6S\3\2\2\2\bU\3\2\2\2\nb\3\2\2\2"+
 		"\fd\3\2\2\2\16m\3\2\2\2\20o\3\2\2\2\22q\3\2\2\2\24y\3\2\2\2\26|\3\2\2"+
 		"\2\30\u0082\3\2\2\2\32\u0084\3\2\2\2\34\u008a\3\2\2\2\36\u0096\3\2\2\2"+
 		" \u0098\3\2\2\2\"\u00a1\3\2\2\2$\u00a7\3\2\2\2&\u00ae\3\2\2\2(\u00b8\3"+
@@ -2718,7 +2718,7 @@ public class picoCParser extends Parser {
 		"\7\20\2\2\u00bc\u00c2\5$\23\2\u00bd\u00be\7\5\2\2\u00be\u00bf\5<\37\2"+
 		"\u00bf\u00c0\7\6\2\2\u00c0\u00c2\3\2\2\2\u00c1\u00ba\3\2\2\2\u00c1\u00bb"+
 		"\3\2\2\2\u00c1\u00bc\3\2\2\2\u00c1\u00bd\3\2\2\2\u00c2+\3\2\2\2\u00c3"+
-		"\u00c7\5*\26\2\u00c4\u00c5\7\30\2\2\u00c5\u00c7\5*\26\2\u00c6\u00c3\3"+
+		"\u00c7\5*\26\2\u00c4\u00c5\7\31\2\2\u00c5\u00c7\5*\26\2\u00c6\u00c3\3"+
 		"\2\2\2\u00c6\u00c4\3\2\2\2\u00c7-\3\2\2\2\u00c8\u00c9\b\30\1\2\u00c9\u00ca"+
 		"\5,\27\2\u00ca\u00d0\3\2\2\2\u00cb\u00cc\f\3\2\2\u00cc\u00cd\t\3\2\2\u00cd"+
 		"\u00cf\5,\27\2\u00ce\u00cb\3\2\2\2\u00cf\u00d2\3\2\2\2\u00d0\u00ce\3\2"+
@@ -2734,10 +2734,10 @@ public class picoCParser extends Parser {
 		"\6\2\2\u00ee\u00f0\5\62\32\2\u00ef\u00ec\3\2\2\2\u00f0\u00f3\3\2\2\2\u00f1"+
 		"\u00ef\3\2\2\2\u00f1\u00f2\3\2\2\2\u00f2\65\3\2\2\2\u00f3\u00f1\3\2\2"+
 		"\2\u00f4\u00f5\b\34\1\2\u00f5\u00f6\5\64\33\2\u00f6\u00fc\3\2\2\2\u00f7"+
-		"\u00f8\f\3\2\2\u00f8\u00f9\7\37\2\2\u00f9\u00fb\5\64\33\2\u00fa\u00f7"+
-		"\3\2\2\2\u00fb\u00fe\3\2\2\2\u00fc\u00fa\3\2\2\2\u00fc\u00fd\3\2\2\2\u00fd"+
+		"\u00f8\f\3\2\2\u00f8\u00f9\7 \2\2\u00f9\u00fb\5\64\33\2\u00fa\u00f7\3"+
+		"\2\2\2\u00fb\u00fe\3\2\2\2\u00fc\u00fa\3\2\2\2\u00fc\u00fd\3\2\2\2\u00fd"+
 		"\67\3\2\2\2\u00fe\u00fc\3\2\2\2\u00ff\u0100\b\35\1\2\u0100\u0101\5\66"+
-		"\34\2\u0101\u0107\3\2\2\2\u0102\u0103\f\3\2\2\u0103\u0104\7 \2\2\u0104"+
+		"\34\2\u0101\u0107\3\2\2\2\u0102\u0103\f\3\2\2\u0103\u0104\7!\2\2\u0104"+
 		"\u0106\5\66\34\2\u0105\u0102\3\2\2\2\u0106\u0109\3\2\2\2\u0107\u0105\3"+
 		"\2\2\2\u0107\u0108\3\2\2\2\u01089\3\2\2\2\u0109\u0107\3\2\2\2\u010a\u010f"+
 		"\58\35\2\u010b\u010c\7\17\2\2\u010c\u010d\7\16\2\2\u010d\u010f\5:\36\2"+

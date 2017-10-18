@@ -96,8 +96,8 @@ unaryExpression
     ;
 
 multiplicativeExpression 
-    :   unaryExpression                                           #DropMulDiv
-    |   multiplicativeExpression op=('*'|'/') unaryExpression     #MulDiv
+    :   unaryExpression                                               #DropMulDivMod
+    |   multiplicativeExpression op=('*'|'/'|'%') unaryExpression     #MulDivMod
     ;
 
 additiveExpression 
@@ -106,7 +106,7 @@ additiveExpression
     ;
 
 relationalExpression 
-    :   additiveExpression					             #DropRelational	
+    :   additiveExpression					         #DropRelational	
     |   relationalExpression rel=('<'|'<='|'>='|'>') additiveExpression  #Relation
     ;    
 
@@ -159,6 +159,7 @@ SINGLE_LINE_COMMENT
 
 MUL : '*' ;
 DIV : '/' ;
+MOD : '%' ;
 ADD : '+' ;
 SUB : '-' ;
 

@@ -173,19 +173,19 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNegation(picoCParser.NegationContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code DropMulDiv}
+	 * Visit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDropMulDiv(picoCParser.DropMulDivContext ctx);
+	T visitMulDivMod(picoCParser.MulDivModContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code MulDiv}
+	 * Visit a parse tree produced by the {@code DropMulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitMulDiv(picoCParser.MulDivContext ctx);
+	T visitDropMulDivMod(picoCParser.DropMulDivModContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code AddSub}
 	 * labeled alternative in {@link picoCParser#additiveExpression}.

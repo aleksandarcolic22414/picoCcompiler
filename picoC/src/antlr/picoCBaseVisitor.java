@@ -199,14 +199,14 @@ public class picoCBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements 
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitDropMulDiv(picoCParser.DropMulDivContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMulDivMod(picoCParser.MulDivModContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMulDiv(picoCParser.MulDivContext ctx) { return visitChildren(ctx); }
+	@Override public T visitDropMulDivMod(picoCParser.DropMulDivModContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

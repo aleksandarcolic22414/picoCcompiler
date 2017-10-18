@@ -19,7 +19,7 @@ public class Constants
     public static String STRING_WORD = "word";
     /* Represents value of double word in string */
     public static String STRING_DWORD = "dword";
-    /* Represents value of double word in string */
+    /* Represents value of quad word in string */
     public static String STRING_QWORD = "qword";
     /* path to Desktop for testing puropse. */
     /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */

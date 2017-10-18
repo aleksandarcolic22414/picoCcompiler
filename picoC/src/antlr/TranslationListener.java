@@ -68,7 +68,8 @@ public class TranslationListener extends picoCBaseListener
     }
     
     
-    
+    /* Get memoryClass to set current Declarator type for case of multiple
+        declarations of same type. Example: int a, b, c = 10; */
     @Override
     public void enterDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
@@ -86,16 +87,17 @@ public class TranslationListener extends picoCBaseListener
         curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
     }
 
+    /* If selectionStatement is visited, it's depth is stored in list
+        in LabelsHelper class. It is needed for calculating else if () statement 
+        labels. */
     @Override
     public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) {
-        System.out.println("enterSelectionStatement: " + LabelsHelper.selectionDepthCounter);
         LabelsHelper.insertDepth();
         LabelsHelper.increaseDepth();
     }
-
+    /* Counter of depth in LabelsHelper class is reset to 0. */
     @Override
     public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
-        System.out.println("enterSelectionStatement: " + LabelsHelper.selectionDepthCounter);
         LabelsHelper.resetSelectionDepthCounter();
     }
     

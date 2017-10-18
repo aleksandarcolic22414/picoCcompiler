@@ -577,7 +577,8 @@ public class NasmTools
     }
     
     
-    static void initializeNewPickers() {
+    static void initializeNewPickers() 
+    {
         ++registerPikcerCountersTop;
         ++regPickFlagsTop;
     }
@@ -648,7 +649,6 @@ public class NasmTools
             if (reg != 0) {
                 strReg = rtosMap8Bytes.get(reg);
                 Writers.emitInstruction("push", strReg);
-                System.out.println("push     " + strReg);
             }
         }
         /* Set flags to 0 */
@@ -668,7 +668,6 @@ public class NasmTools
             if (reg != 0) {
                 strReg = rtosMap8Bytes.get(reg);
                 Writers.emitInstruction("pop", strReg);
-                System.out.println("pop     " + strReg);
             }
         }
     }
@@ -771,8 +770,7 @@ public class NasmTools
             return inputRegister;
         int register = stringToRegister(inputRegister);
         String fourByteRegister = rtosMap4Bytes.get(register);
-        /* Zero extend register because  */
-        System.out.println("Emiting: " + "movzx " + fourByteRegister + " " + inputRegister);
+        /* Zero extend register */
         Writers.emitInstruction("movzx", fourByteRegister, inputRegister);
         return fourByteRegister;
     }
@@ -850,20 +848,8 @@ public class NasmTools
         return newVar;
     }
 
-    
-    public static void main(String[] args) 
+    public static void andExpressionEvaluation(String left, String right) 
     {
-        String var = "r9";
-        
-        var = NasmTools.castVariable(var, Constants.SIZE_OF_CHAR);
-        System.out.println(var);
-        var = NasmTools.castVariable(var, Constants.SIZE_OF_INT);
-        System.out.println(var);
-        var = NasmTools.castVariable(var, Constants.SIZE_OF_POINTER);
-        System.out.println(var);
-    }
-
-    public static void andExpressionEvaluation(String left, String right) {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
         labelTrue = LabelsHelper.getNextTrueLogicalLabel();
@@ -887,7 +873,8 @@ public class NasmTools
         Writers.emitLabel(afterFalseLabel);
     }
 
-    public static void orExpressionEvaluation(String left, String right) {
+    public static void orExpressionEvaluation(String left, String right) 
+    {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
         labelTrue = LabelsHelper.getNextTrueLogicalLabel();

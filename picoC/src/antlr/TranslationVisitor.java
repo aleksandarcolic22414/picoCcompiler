@@ -58,9 +58,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         } catch (IOException ex) {
             Logger.getLogger(TranslationVisitor.class.getName()).log(Level.SEVERE, null, ex);
         }
-        for (long i : LabelsHelper.ifElseLabelHelper) {
-            System.out.print(i + " ");
-        }
+        
         return null;
     }
     
@@ -283,8 +281,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         /* Set function has return  */
         curFuncAna.setHasReturn(true);
-        /* mov result to eax for return */
-        Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
+        /* mov result to eax for return if result is not eax */
+        if (!NasmTools.isRegister(res))
+            Writers.emitInstruction("mov", NasmTools.STRING_EAX, res);
         Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
         /* Free all registers for function exit */
         NasmTools.freeAllRegisters();
@@ -424,7 +423,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitMulDiv(picoCParser.MulDivContext ctx) 
+    public String visitMulDivMod(picoCParser.MulDivModContext ctx) 
     {
         boolean fake = false;
         String leftExpr;
@@ -451,18 +450,22 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                 NasmTools.free(nextFreeTemp);
             } else
                 Writers.emitInstruction("imul", leftExpr, rightExpr);
-        } else if (ctx.op.getType() == picoCParser.DIV) {
+        } else { /* It's div or mod */
             if (leftExpr.equals("eax")) {
                 if (NasmTools.isTakenRegisterDREG()) { /* Never true, but stil */
                     nextFreeTemp = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", nextFreeTemp, "edx");
                     Writers.emitInstruction("cdq");
                     Writers.emitInstruction("idiv", rightExpr);
+                    if (ctx.op.getType() == picoCParser.MOD) /* If it's mod, move remainder to eax */
+                        Writers.emitInstruction("mov", "eax", "edx");
                     Writers.emitInstruction("mov", "edx", nextFreeTemp);
                     NasmTools.free(nextFreeTemp);
                 } else {
                     Writers.emitInstruction("cdq");
                     Writers.emitInstruction("idiv", rightExpr);
+                    if (ctx.op.getType() == picoCParser.MOD) /* If it's mod, move remainder to eax */
+                        Writers.emitInstruction("mov", "eax", "edx");
                 }
             } else {    /* leftExpr operand is not eax */
                 /* edx needs to be fakely taken, so that getNextFreeTemp
@@ -483,14 +486,19 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
                     Writers.emitInstruction("mov", "eax", leftExpr); /* setting eax and edx for div */
                     Writers.emitInstruction("cdq");
                     
-                    /* If right operand od division is edx, than eax needs
+                    /* If right operand of division is edx, than eax needs
                         to be divided by moved edx, which is s2 */
                     if (!rightExpr.equals("edx"))
                         Writers.emitInstruction("idiv", rightExpr);
                     else
                         Writers.emitInstruction("idiv", s2);
-                    
-                    Writers.emitInstruction("mov", leftExpr, "eax"); /* restoring values */
+                    /* If it's div operation, move result (eax) to leftExpr, 
+                        else, move remainder(edx) to leftExpr */
+                    if (ctx.op.getType() == picoCParser.DIV) 
+                        Writers.emitInstruction("mov", leftExpr, "eax");
+                    if (ctx.op.getType() == picoCParser.MOD) 
+                        Writers.emitInstruction("mov", leftExpr, "edx");
+                     /* restoring values */
                     Writers.emitInstruction("mov", "eax", s1);
                     Writers.emitInstruction("mov", "edx", s2);
                     
@@ -637,7 +645,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.equalityExpression())) == null) 
             return null;
-        System.out.println("LogicalAND: Left: " + left + " right: " + right);
         
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
@@ -664,7 +671,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.logicalAndExpression())) == null) 
             return null;
-        System.out.println("LogicalOR: Left: " + left + " right: " + right);
         
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
@@ -710,13 +716,11 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (ctx.statement(1) != null)
             visit(ctx.statement(1));
         
-        /* If LabelsHelper alow after else label, emit it */
+        /* Stop multiple emiting of same label */
         if (depthIfElse == 0)
             Writers.emitLabel(labelAfterElse);
         
         return null;
     }
-    
-    
     
 }

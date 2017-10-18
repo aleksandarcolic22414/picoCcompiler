@@ -280,29 +280,29 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitNegation(picoCParser.NegationContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code DropMulDiv}
+	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 */
-	void enterDropMulDiv(picoCParser.DropMulDivContext ctx);
+	void enterMulDivMod(picoCParser.MulDivModContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code DropMulDiv}
+	 * Exit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 */
-	void exitDropMulDiv(picoCParser.DropMulDivContext ctx);
+	void exitMulDivMod(picoCParser.MulDivModContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code MulDiv}
+	 * Enter a parse tree produced by the {@code DropMulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 */
-	void enterMulDiv(picoCParser.MulDivContext ctx);
+	void enterDropMulDivMod(picoCParser.DropMulDivModContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code MulDiv}
+	 * Exit a parse tree produced by the {@code DropMulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree
 	 */
-	void exitMulDiv(picoCParser.MulDivContext ctx);
+	void exitDropMulDivMod(picoCParser.DropMulDivModContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code AddSub}
 	 * labeled alternative in {@link picoCParser#additiveExpression}.

@@ -328,25 +328,25 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDropMulDiv(picoCParser.DropMulDivContext ctx) { }
+	@Override public void enterMulDivMod(picoCParser.MulDivModContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitDropMulDiv(picoCParser.DropMulDivContext ctx) { }
+	@Override public void exitMulDivMod(picoCParser.MulDivModContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterMulDiv(picoCParser.MulDivContext ctx) { }
+	@Override public void enterDropMulDivMod(picoCParser.DropMulDivModContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitMulDiv(picoCParser.MulDivContext ctx) { }
+	@Override public void exitDropMulDivMod(picoCParser.DropMulDivModContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
