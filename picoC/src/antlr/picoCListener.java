@@ -168,6 +168,26 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterIterationStatement(picoCParser.IterationStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitIterationStatement(picoCParser.IterationStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#forCondition}.
+	 * @param ctx the parse tree
+	 */
+	void enterForCondition(picoCParser.ForConditionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#forCondition}.
+	 * @param ctx the parse tree
+	 */
+	void exitForCondition(picoCParser.ForConditionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
 	 */
@@ -256,6 +276,42 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitParens(picoCParser.ParensContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code PostDec}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostDec(picoCParser.PostDecContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PostDec}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostDec(picoCParser.PostDecContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code PostInc}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostInc(picoCParser.PostIncContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PostInc}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostInc(picoCParser.PostIncContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropPostfix}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropPostfix(picoCParser.DropPostfixContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropPostfix}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropPostfix(picoCParser.DropPostfixContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code DropUnary}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
@@ -279,6 +335,42 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Plus}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPlus(picoCParser.PlusContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Plus}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPlus(picoCParser.PlusContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code PreInc}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPreInc(picoCParser.PreIncContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PreInc}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPreInc(picoCParser.PreIncContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code PreDec}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPreDec(picoCParser.PreDecContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PreDec}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPreDec(picoCParser.PreDecContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.

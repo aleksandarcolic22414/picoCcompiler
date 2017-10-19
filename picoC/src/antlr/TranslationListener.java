@@ -6,7 +6,7 @@ import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import tools.LabelsHelper;
+import tools.LabelsMaker;
 
 
 /**
@@ -88,17 +88,17 @@ public class TranslationListener extends picoCBaseListener
     }
 
     /* If selectionStatement is visited, it's depth is stored in list
-        in LabelsHelper class. It is needed for calculating else if () statement 
+        in LabelsMaker class. It is needed for calculating else if () statement 
         labels. */
     @Override
     public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) {
-        LabelsHelper.insertDepth();
-        LabelsHelper.increaseDepth();
+        LabelsMaker.insertDepth();
+        LabelsMaker.increaseDepth();
     }
-    /* Counter of depth in LabelsHelper class is reset to 0. */
+    /* Counter of depth in LabelsMaker class is reset to 0. */
     @Override
     public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
-        LabelsHelper.resetSelectionDepthCounter();
+        LabelsMaker.resetSelectionDepthCounter();
     }
     
     

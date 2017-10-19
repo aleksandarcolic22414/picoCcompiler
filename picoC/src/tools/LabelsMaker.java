@@ -7,7 +7,7 @@ import java.util.List;
  *
  * @author aleksandar
  */
-public class LabelsHelper 
+public class LabelsMaker 
 {
     /* Variables holds information about next free logical label number */
     public static long logicalTrueCounter = 1;

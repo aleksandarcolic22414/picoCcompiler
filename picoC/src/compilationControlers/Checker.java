@@ -6,6 +6,7 @@ import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnumeration;
 import java.util.List;
+import nasm.NasmTools;
 
 /**
  *
@@ -180,5 +181,24 @@ public class Checker
         }
     }
 
+    public static boolean checkPreDec(String res, picoCParser.PreDecContext ctx) {
+        if (NasmTools.isRegister(res)) {
+            CompilationControler.errorOcured
+                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Only variables can be pre-decremened");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkPreInc(String res, picoCParser.PreIncContext ctx) {
+        if (NasmTools.isRegister(res)) {
+            CompilationControler.errorOcured
+                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Only variables can be pre-incremened");
+            return false;
+        }
+        return true;
+    }
     
 }

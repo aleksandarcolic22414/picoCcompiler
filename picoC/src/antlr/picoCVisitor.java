@@ -107,6 +107,18 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIterationStatement(picoCParser.IterationStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#forCondition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForCondition(picoCParser.ForConditionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -159,6 +171,27 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitParens(picoCParser.ParensContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code PostDec}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostDec(picoCParser.PostDecContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code PostInc}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostInc(picoCParser.PostIncContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropPostfix}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropPostfix(picoCParser.DropPostfixContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code DropUnary}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
@@ -172,6 +205,27 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Plus}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPlus(picoCParser.PlusContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code PreInc}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPreInc(picoCParser.PreIncContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code PreDec}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPreDec(picoCParser.PreDecContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.

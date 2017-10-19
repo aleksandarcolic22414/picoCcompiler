@@ -5,8 +5,6 @@ import antlr.picoCParser;
 import antlr.TranslationVisitor;
 import antlr.TranslationListener;
 import constants.Constants;
-
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,7 +31,6 @@ public class Main
             picoCLexer lexer = new picoCLexer(in);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             picoCParser parser = new picoCParser(tokens);
-            
             ParseTree tree = parser.compilationUnit();
             
             ParseTreeWalker walker = new ParseTreeWalker();

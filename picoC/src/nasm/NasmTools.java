@@ -10,7 +10,7 @@ import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import tools.LabelsHelper;
+import tools.LabelsMaker;
 
 /**
  *
@@ -426,7 +426,7 @@ public class NasmTools
     {
         int register = -1;
         /* If all registers are taken */
-        if (flags == ((1 << NUMBER_OF_REGISTERS) - 1)) 
+        if (!hasFreeRegisters()) 
             return getStackDisplacement();
         /* Look for first free register */
         
@@ -565,11 +565,12 @@ public class NasmTools
             /* Visit expression or STRING_LITERAL */
             res = visitor.visit(arguments.get(i));
             /* Get variable size based on register it is stored in */
-            memclass = getMemoryClassFromRegister(res);
+            int size = sizeOf(res);
+            memclass = NasmTools.getMemoryClassFromSize(size);
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
             reg = getNextRegForFuncCall(memclass);
-
+            
             /* Emit copying from registers to stack memory for arguments setup */
             Writers.emitInstruction("mov", reg, res);
         }
@@ -617,19 +618,17 @@ public class NasmTools
         --registerPikcerCountersTop;
     }
     
-    
-    /* Since result of expression and other operations is always stored in "a"
-        register, function checks which part of a register is used, and
-        based on that, return size of variable stored in it */
-    private static MemoryClassEnumeration getMemoryClassFromRegister(String res) 
+    private static MemoryClassEnumeration getMemoryClassFromSize(int size) 
     {
-        switch (res) {
-            case "rax":
-                return MemoryClassEnumeration.POINTER;
-            case "eax":
+        switch (size) {
+            case Constants.SIZE_OF_CHAR:
+                return MemoryClassEnumeration.CHAR;
+            case Constants.SIZE_OF_INT:
                 return MemoryClassEnumeration.INT;
-            default:    /* It is string literal name then: */
+            case Constants.SIZE_OF_POINTER:    /* It is string literal name then: */
                 return MemoryClassEnumeration.POINTER;
+            default:
+                return MemoryClassEnumeration.VOID;
         }
     }
     
@@ -716,7 +715,8 @@ public class NasmTools
             return 4;
         if (var.startsWith(Constants.STRING_DWORD))
             return 8;
-        return 0;
+        /* Default return for string literals */
+        return 8;
     }
 
     /* Cast variable to proper size */
@@ -852,9 +852,9 @@ public class NasmTools
     {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
-        labelTrue = LabelsHelper.getNextTrueLogicalLabel();
-        labelFalse = LabelsHelper.getNextFalseLogicalLabel();
-        afterFalseLabel = LabelsHelper.getNextAfterFalseLogicalLabel();
+        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
+        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
         
         /* Emit compare with zero, and jump if it is true */
         Writers.emitInstruction("cmp", left, "0");
@@ -877,9 +877,9 @@ public class NasmTools
     {
         String labelTrue, labelFalse, afterFalseLabel;
         /* Get labels */
-        labelTrue = LabelsHelper.getNextTrueLogicalLabel();
-        labelFalse = LabelsHelper.getNextFalseLogicalLabel();
-        afterFalseLabel = LabelsHelper.getNextAfterFalseLogicalLabel();
+        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
+        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
         
         /* Emit compare with zero, and jump if it is false */
         Writers.emitInstruction("cmp", left, "0");
@@ -891,11 +891,20 @@ public class NasmTools
         Writers.emitLabel(labelTrue);
         Writers.emitInstruction("mov", left, "1");
         Writers.emitInstruction("jmp", afterFalseLabel);
-        /* Emit false label, and store 0 to left register, meaning evaluated: false */
+        /* Emit false label */
         Writers.emitLabel(labelFalse);
-        Writers.emitInstruction("mov", left, "0");
+        /* Actually, mov left 0 doesn't need to be done, because left will always
+            be 0, if or condition is evaluated false */
+//        Writers.emitInstruction("mov", left, "0");
+
         /* Emit label for rest of the code */
         Writers.emitLabel(afterFalseLabel);
+    }
+
+    /* Function determines is there any free registers left */
+    public static boolean hasFreeRegisters() 
+    {
+        return flags != ((1 << NUMBER_OF_REGISTERS) - 1);
     }
     
 }

@@ -48,6 +48,7 @@ statement
     :   compoundStatement
     |   expressionStatement
     |   selectionStatement
+    |   iterationStatement
     |   returnStat                         
     ;
 
@@ -67,6 +68,12 @@ blockItem
 
 selectionStatement
     :   'if' '(' expression ')' statement ('else' statement)? ;
+
+iterationStatement
+    :   'for' '(' forCondition ')' statement ;
+
+forCondition 
+    :   expression? ';' expression? ';' expression? ;
 
 returnStat 
     :   'return' expression?  ';'  ;
@@ -90,9 +97,18 @@ primaryExpression
     |   '(' expression ')' #Parens
     ;
 
+postfixExpression
+    :   primaryExpression       #DropPostfix
+    |   postfixExpression '++'  #PostInc
+    |   postfixExpression '--'  #PostDec
+    ;
+
 unaryExpression 
-    :   primaryExpression      #DropUnary
-    |   '-' primaryExpression  #Negation
+    :   postfixExpression       #DropUnary
+    |   '-'  unaryExpression    #Negation
+    |   '+'  unaryExpression    #Plus
+    |   '++' unaryExpression    #PreInc
+    |   '--' unaryExpression    #PreDec
     ;
 
 multiplicativeExpression 

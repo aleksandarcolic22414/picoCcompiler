@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tools.LabelsHelper;
+import tools.LabelsMaker;
 
 /**
  *
@@ -224,7 +224,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitAssign(picoCParser.AssignContext ctx) {
+    public String visitAssign(picoCParser.AssignContext ctx) 
+    {
         /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -343,18 +344,20 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitArgumentList(picoCParser.ArgumentListContext ctx) {
+    public String visitArgumentList(picoCParser.ArgumentListContext ctx) 
+    {
         return super.visitArgumentList(ctx);
     }
 
     @Override
     public String visitArgument(picoCParser.ArgumentContext ctx) 
     {
-        /* If it is not string literal, then return value in a register! */
+        /* If it is not string literal, then return value is register of variable */
         if (ctx.STRING_LITERAL() == null) {
             String res = visit(ctx.assignmentExpression());
-            /* Free "a" register */
-            NasmTools.free(res);
+            /* Free "a" if it is register register */
+            if (NasmTools.isRegister(res))
+                NasmTools.free(res);
             return res;
         }
         String strlit = ctx.STRING_LITERAL().getText();
@@ -381,7 +384,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
     
     @Override
-    public String visitNegation(picoCParser.NegationContext ctx) {
+    public String visitNegation(picoCParser.NegationContext ctx) 
+    {
         /* Visit rest of expression */
         String res = super.visitNegation(ctx);
         /* Negate it */
@@ -394,14 +398,21 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitAddSub(picoCParser.AddSubContext ctx) 
     {
-        String leftExpr;
-        String rightExpr;
+        String leftExpr, rightExpr;
+        String nextFreeTemp;
         /* Try to visit children and recover if error ocured */
         if ((leftExpr = visit(ctx.additiveExpression())) == null)
             return null;
         if ((rightExpr = visit(ctx.multiplicativeExpression())) == null)
             return null;
-        String nextFreeTemp;
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!NasmTools.isRegister(leftExpr) && NasmTools.hasFreeRegisters()) {
+            nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, leftExpr);
+            leftExpr = nextFreeTemp;
+        }
+        
         String operation = NasmTools.getOperation(ctx.op.getType());
         
         /* If left operand is not register, then it needs to be moved to one.
@@ -426,15 +437,20 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitMulDivMod(picoCParser.MulDivModContext ctx) 
     {
         boolean fake = false;
-        String leftExpr;
-        String rightExpr;
+        String leftExpr, rightExpr, nextFreeTemp;;
         /* Try to visit children and recover if error ocured */
         if ((leftExpr = visit(ctx.multiplicativeExpression())) == null)
             return null;
         if ((rightExpr = visit(ctx.unaryExpression())) == null)
             return null;
-       
-        String nextFreeTemp;
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!NasmTools.isRegister(leftExpr) && NasmTools.hasFreeRegisters()) {
+            nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, leftExpr);
+            leftExpr = nextFreeTemp;
+        }
+        
         String s1, s2;
         String fakelyTaken = null;
         if (ctx.op.getType() == picoCParser.MUL) {
@@ -553,10 +569,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Get right stack position */
         stackPosition = curFuncAna.getAnyVariable(id).getStackPosition();
         
-        nextFreeTemp = NasmTools.getNextFreeTemp();
-        Writers.emitInstruction("mov", nextFreeTemp, stackPosition);
-        
-        return nextFreeTemp;
+        return stackPosition;
     }
     
     @Override
@@ -586,7 +599,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.additiveExpression())) == null)
             return null;
-        
+        /* If left expression is not register it needs to be moved to one */
+        if (!NasmTools.isRegister(left)) {
+            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, left);
+            left = nextFreeTemp;
+        }
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -601,7 +619,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Emit result of seting the least significant byte to register. */
         Writers.SetCCInstruction(left, ctx.rel.getType());
         
-        NasmTools.free(right);
+        if (NasmTools.isRegister(right))
+            NasmTools.free(right);
         return left;
     }
     
@@ -616,7 +635,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.relationalExpression())) == null)
             return null;
-        
+        /* If left expression is not register it needs to be moved to one */
+        if (!NasmTools.isRegister(left)) {
+            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, left);
+            left = nextFreeTemp;
+        }
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -631,7 +655,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Emit result of seting the least significant byte to register. */
         Writers.SetCCInstruction(left, ctx.rel.getType());
         
-        NasmTools.free(right);
+        if (NasmTools.isRegister(right))
+            NasmTools.free(right);
         return left;
     }
 
@@ -645,7 +670,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.equalityExpression())) == null) 
             return null;
-        
+        /* If left expression is not register it needs to be moved to one */
+        if (!NasmTools.isRegister(left)) {
+            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, left);
+            left = nextFreeTemp;
+        }
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -656,8 +686,9 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Call nasm tools to emit standard procedure for evaluating 'AND' expression */
         NasmTools.andExpressionEvaluation(left, right);
         
-        /* Free right and return left */
-        NasmTools.free(right);
+        /* Free right if it is regiser and return left */
+        if (NasmTools.isRegister(right))
+            NasmTools.free(right);
         return left;
     }
 
@@ -671,7 +702,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if ((right = visit(ctx.logicalAndExpression())) == null) 
             return null;
-        
+        /* If left expression is not register it needs to be moved to one */
+        if (!NasmTools.isRegister(left)) {
+            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, left);
+            left = nextFreeTemp;
+        }
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -683,20 +719,22 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         NasmTools.orExpressionEvaluation(left, right);
         
         /* Free right and return left */
-        NasmTools.free(right);
+        if (NasmTools.isRegister(right))
+            NasmTools.free(right);
         return left;
     }
 
     @Override
-    public String visitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+    public String visitSelectionStatement(picoCParser.SelectionStatementContext ctx) 
+    {
         String expr, right, labelIf, labelElse, labelAfterElse;
         long depthIfElse;
         /* Get depth of if else */
-        depthIfElse = LabelsHelper.getIfDepth();
+        depthIfElse = LabelsMaker.getIfDepth();
         /* Get all tree labels, to keep their counters equal for easier debugging */
-        labelIf = LabelsHelper.getNextIfLabel();
-        labelElse = LabelsHelper.getNextElseLabel();
-        labelAfterElse = LabelsHelper.getNextAfterElseLabel();
+        labelIf = LabelsMaker.getNextIfLabel();
+        labelElse = LabelsMaker.getNextElseLabel();
+        labelAfterElse = LabelsMaker.getNextAfterElseLabel();
         
         /* Visit statement and try to recover if error ocurs */
         if ((expr = visit(ctx.expression())) == null)
@@ -722,5 +760,48 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         return null;
     }
-    
+
+    @Override
+    public String visitPreInc(picoCParser.PreIncContext ctx) {
+        String res;
+        /* Visit expression and try to recover from error */
+        if ((res = visit(ctx.unaryExpression())) == null)   
+            return null;
+        /* Check if it is variable and add one to result */
+        if (!Checker.checkPreInc(res, ctx))
+            return null;
+        Writers.emitInstruction("add", res, "1");
+        
+        return res;
+    }
+
+    @Override
+    public String visitPreDec(picoCParser.PreDecContext ctx) {
+        String res;
+        /* Visit expression and try to recover from error */
+        if ((res = visit(ctx.unaryExpression())) == null)   
+            return null;
+        /* Check if it is variable and add one to result */
+        if (!Checker.checkPreDec(res, ctx))
+            return null;
+        Writers.emitInstruction("sub", res, "1");
+        
+        return res;
+    }
+
+    @Override
+    public String visitPostInc(picoCParser.PostIncContext ctx) {
+        return super.visitPostInc(ctx); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String visitPostDec(picoCParser.PostDecContext ctx) {
+        return super.visitPostDec(ctx); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String visitIterationStatement(picoCParser.IterationStatementContext ctx) {
+        return super.visitIterationStatement(ctx); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

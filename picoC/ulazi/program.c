@@ -1,19 +1,22 @@
-int fakt(int n)
+int gcd(int a, int b)
 {
-    if (n < 2)
-        return n;
-    int a = fakt(n-1);
-    printf("%d ", a);
-
-    return n * fakt(n-1);
+    if (a == 0 || b == 0)
+        return a + b;
+    return gcd(b, a%b);
 }
 
+int lcm(int a, int b)
+{
+    return a*b / gcd(a, b);
+}
 
 int main()
 {
-    int a;
-    a = fakt(100); 
-    printf("%d\n", a);
+    int a, b;
+    a = lcm(42, 68);
+    printf("%d %d\n", --a, ++a);
+    b = 15 + ++a;
+    printf("%d\n", b);
     return 0;
 }
 
@@ -28,5 +31,4 @@ int main()
     
     return (((2+2*2)+2)/2+2)/2 * 8/(12/2-6/(1+12/(4+8/(3+2/(1+4/(1+3))))));
 }
-
 */

@@ -64,7 +64,7 @@ public class Writers
         TEXT_SEGMENT.append(instruction);
         TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(arg1);
-        TEXT_SEGMENT.append(",");
+        TEXT_SEGMENT.append(", ");
         TEXT_SEGMENT.append(arg2);
         TEXT_SEGMENT.append("\n");
     }
@@ -77,9 +77,9 @@ public class Writers
         TEXT_SEGMENT.append(instruction);
         TEXT_SEGMENT.append("\t");
         TEXT_SEGMENT.append(arg1);
-        TEXT_SEGMENT.append(",");
+        TEXT_SEGMENT.append(", ");
         TEXT_SEGMENT.append(arg2);
-        TEXT_SEGMENT.append(",");
+        TEXT_SEGMENT.append(", ");
         TEXT_SEGMENT.append(arg3);
         TEXT_SEGMENT.append("\n");
     }
