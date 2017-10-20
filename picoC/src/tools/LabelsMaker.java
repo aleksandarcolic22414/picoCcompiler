@@ -18,6 +18,11 @@ public class LabelsMaker
     public static long logicalIfCounter = 1;
     public static long logicalElseCounter = 1;
     public static long logicalAfterElseCounter = 1;
+    
+    /* Variables holds information about next free 'for' label number */
+    public static long forStartCounter = 1;
+    public static long forCheckCounter = 1;
+    public static long forIncrementCounter = 1;
     /* Holds information about current depth of if else statement */
     public static long selectionDepthCounter = 0;
     /* List contains depths of all if else statements in program */
@@ -30,6 +35,9 @@ public class LabelsMaker
     public static final String IF_LABEL = "IF_LABEL_";
     public static final String ELSE_LABEL = "ELSE_LABEL_";
     public static final String AFTER_ELSE_LABEL = "AFTER_ELSE_LABEL_";
+    public static final String FOR_START_LABEL = "FOR_START_LABEL_";
+    public static final String FOR_CHECK_LABEL = "FOR_CHECK_LABEL_";
+    public static final String FOR_INCREMENT_LABEL = "FOR_INCREMENT_LABEL_";
     
             
     static {
@@ -121,6 +129,18 @@ public class LabelsMaker
     public static long getIfDepth()
     {
         return ifElseLabelHelper.get(0);
+    }
+
+    public static String getNextForStartLabel() {
+        return FOR_START_LABEL + Long.toString(forStartCounter++);
+    }
+
+    public static String getNextForCheckLabel() {
+        return FOR_CHECK_LABEL + Long.toString(forCheckCounter++);
+    }
+
+    public static String getNextForIncerementLabel() {
+        return FOR_INCREMENT_LABEL + Long.toString(forIncrementCounter++);
     }
     
 }

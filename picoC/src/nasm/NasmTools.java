@@ -4,6 +4,7 @@ package nasm;
 import antlr.picoCParser;
 import compilationControlers.Writers;
 import antlr.TranslationVisitor;
+import compilationControlers.Checker;
 import tools.FunctionsAnalyser;
 import constants.Constants;
 import constants.MemoryClassEnumeration;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import tools.LabelsMaker;
+import tools.RelationHelper;
 
 /**
  *
@@ -564,6 +566,8 @@ public class NasmTools
         for (int i = 0; i < lsize; ++i) {
             /* Visit expression or STRING_LITERAL */
             res = visitor.visit(arguments.get(i));
+            if (RelationHelper.isCompared())
+                res = NasmTools.castComparedVariable(res);
             /* Get variable size based on register it is stored in */
             int size = sizeOf(res);
             memclass = NasmTools.getMemoryClassFromSize(size);
@@ -646,6 +650,7 @@ public class NasmTools
             /* If register is used, than it needs to be pushed on stack */
             reg = flags & (1 << i);
             if (reg != 0) {
+                /* Always store whole register */
                 strReg = rtosMap8Bytes.get(reg);
                 Writers.emitInstruction("push", strReg);
             }
@@ -702,21 +707,30 @@ public class NasmTools
     /* Function returns size of variable or register in bytes */
     public static int sizeOf(String var) 
     {
+        /* If var only contains digit, than it is integer number */
+        if (isInteger(var))
+            return Constants.SIZE_OF_INT;
+        /* If there is mapping for 1 byte vars, size is 1 */
         if (storMap1Bytes.containsKey(var))
-            return 1;
+            return Constants.SIZE_OF_CHAR;
+        /* If there is mapping for 4 byte vars, size is 4 */
         if (storMap4Bytes.containsKey(var))
-            return 4;
+            return Constants.SIZE_OF_INT;
+        /* If there is mapping for 8 byte vars, size is 8 */
         if (storMap8Bytes.containsKey(var))
-            return 8;
+            return Constants.SIZE_OF_POINTER;
         /* If it is not register, then check stack position for variable */
+        /* If var has prefix cast to byte, then size is 1 */
         if (var.startsWith(Constants.STRING_BYTE))
-            return 1;
+            return Constants.SIZE_OF_CHAR;
+        /* If var has prefix cast to double word, then size is 4 */
         if (var.startsWith(Constants.STRING_DWORD))
-            return 4;
-        if (var.startsWith(Constants.STRING_DWORD))
-            return 8;
+            return Constants.SIZE_OF_INT;
+        /* If var has prefix cast to double word, then size is 4 */
+        if (var.startsWith(Constants.STRING_QWORD))
+            return Constants.SIZE_OF_POINTER;
         /* Default return for string literals */
-        return 8;
+        return Constants.SIZE_OF_POINTER;
     }
 
     /* Cast variable to proper size */
@@ -905,6 +919,97 @@ public class NasmTools
     public static boolean hasFreeRegisters() 
     {
         return flags != ((1 << NUMBER_OF_REGISTERS) - 1);
+    }
+
+    /* Function check wheather var is integer */
+    public static boolean isInteger(String var) 
+    {
+        return var.matches("\\d+");
+    }
+
+    /* Function check wheather var is Stack Variable */
+    public static boolean isStackVariable(String var) 
+    {
+        return var.matches(".?word( )*\\[.*\\]");
+    }
+    
+    /* Function calculates: left operation right, based on type of
+        operation  */
+    public static String calculate
+    (String left, String right, int typeOfOperation, picoCParser.MulDivModContext ctx) 
+    {
+        int a = Integer.parseInt(left);
+        int b = Integer.parseInt(right);
+        int res = 0;
+        if (typeOfOperation == picoCParser.DIV || typeOfOperation == picoCParser.MOD)
+            if (!Checker.checkDivisionByZero(a, b, ctx))
+                return null;
+        
+        switch(typeOfOperation) {
+            case picoCParser.MUL:
+                res = a*b;
+                break;
+            case picoCParser.DIV:
+                res = a/b;
+                break;
+            case picoCParser.MOD:
+                res = a%b;
+                break;
+        }
+        return Integer.toString(res);
+    }
+  
+    /* Function calculates: left operation right, based on type of
+        operation  */
+    public static String calculate
+    (String left, String right, int typeOfOperation, picoCParser.AddSubContext ctx) 
+    {
+        int a = Integer.parseInt(left);
+        int b = Integer.parseInt(right);
+        int res = 0;
+        
+        switch(typeOfOperation) {
+            case picoCParser.ADD:
+                res = a+b;
+                break;
+            case picoCParser.SUB:
+                res = a-b;
+                break;
+        }
+        return Integer.toString(res);
+    } 
+
+    /* If variable was in comparison, than it needs to be casted to size of 1 byte.
+        If variable is variable on stack or integer number, than it needs to be
+        moved to register */
+    public static String castComparedVariable(String left) 
+    {
+        if (isStackVariable(left) || isInteger(left)) {
+            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            Writers.emitInstruction("mov", nextFreeTemp, left);
+            left = nextFreeTemp;
+        }
+        return castVariable(left, Constants.SIZE_OF_CHAR);
+    }
+    
+    public static void main(String[] args) 
+    {
+        boolean b = isStackVariable("qword[]");
+        System.out.println(b);
+    }
+
+    public static String putInRegister(String expr) 
+    {
+        String nextFreeTemp = getNextFreeTemp();
+        Writers.emitInstruction("mov", nextFreeTemp, expr);
+        return nextFreeTemp;
+    }
+
+    public static void compareWithZero(String expr) 
+    {
+        if (isInteger(expr))
+            expr = putInRegister(expr);
+        Writers.emitInstruction("cmp", expr, "0");
     }
     
 }

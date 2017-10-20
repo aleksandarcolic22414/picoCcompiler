@@ -70,10 +70,7 @@ selectionStatement
     :   'if' '(' expression ')' statement ('else' statement)? ;
 
 iterationStatement
-    :   'for' '(' forCondition ')' statement ;
-
-forCondition 
-    :   expression? ';' expression? ';' expression? ;
+    :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
 
 returnStat 
     :   'return' expression?  ';'  ;

@@ -41,5 +41,11 @@ public class Constants
             + "                                 \n\tpop\trbp"
             + "                                 \n\tret";
     
+    /* These are string representations of arithmetic operators */
+    public static final String PLUS_SYMBOL = "+";
+    public static final String MINUS_SYMBOL = "-";
+    public static final String MULTIPLICATION_SYMBOL = "*";
+    public static final String DIVISION_SYMBOL = "/";
+    public static final String MODULO_SYMBOL = "%";
     
 }

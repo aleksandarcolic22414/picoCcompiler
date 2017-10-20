@@ -181,7 +181,8 @@ public class Checker
         }
     }
 
-    public static boolean checkPreDec(String res, picoCParser.PreDecContext ctx) {
+    public static boolean checkPreDec(String res, picoCParser.PreDecContext ctx) 
+    {
         if (NasmTools.isRegister(res)) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
@@ -191,11 +192,24 @@ public class Checker
         return true;
     }
 
-    public static boolean checkPreInc(String res, picoCParser.PreIncContext ctx) {
+    public static boolean checkPreInc(String res, picoCParser.PreIncContext ctx) 
+    {
         if (NasmTools.isRegister(res)) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be pre-incremened");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkDivisionByZero
+    (int a, int b, picoCParser.MulDivModContext ctx) 
+    {
+        if (b == 0) {
+            CompilationControler.errorOcured
+                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Division by zero error occurs");
             return false;
         }
         return true;

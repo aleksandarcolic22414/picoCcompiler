@@ -1,4 +1,4 @@
-int gcd(int a, int b)
+/*int gcd(int a, int b)
 {
     if (a == 0 || b == 0)
         return a + b;
@@ -10,13 +10,30 @@ int lcm(int a, int b)
     return a*b / gcd(a, b);
 }
 
+int fakt(int n)
+{
+    if (n < 2)
+        return 1;
+    int a = fakt(n-1);
+    printf("%d ", a);
+    return n * a;
+}
+
+int fib(int n)
+{
+    if (n < 2)
+        return n;
+    int a = fib(n-1);
+    int b = fib(n-2);
+    printf("%d %d %d", a, b, a+b);
+    return a + b;
+}
+*/
 int main()
 {
-    int a, b;
-    a = lcm(42, 68);
-    printf("%d %d\n", --a, ++a);
-    b = 15 + ++a;
-    printf("%d\n", b);
+    int i;
+    for (i = 10; i >= 0; --i)
+        printf("%d ", i);
     return 0;
 }
 

@@ -113,12 +113,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIterationStatement(picoCParser.IterationStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#forCondition}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForCondition(picoCParser.ForConditionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

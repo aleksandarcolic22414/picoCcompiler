@@ -7,7 +7,9 @@ package constants;
  */
 public enum TokenEnumeration 
 {
-    ID, STRING_LITERAL, INT, 
+    ID, 
+    STRING_LITERAL, 
+    INT, 
     EQUAL, 
     NOT_EQUAL,
     LESS,

@@ -178,16 +178,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitIterationStatement(picoCParser.IterationStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#forCondition}.
-	 * @param ctx the parse tree
-	 */
-	void enterForCondition(picoCParser.ForConditionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#forCondition}.
-	 * @param ctx the parse tree
-	 */
-	void exitForCondition(picoCParser.ForConditionContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link picoCParser#returnStat}.
 	 * @param ctx the parse tree
 	 */
