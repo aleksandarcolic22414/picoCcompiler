@@ -70,4 +70,9 @@ public class RelationHelper
         }
         return null;
     }
+
+    public static void setComparisonUsed() 
+    {
+        comparisonDone = false;
+    }
 }

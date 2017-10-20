@@ -806,7 +806,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Visit statement and try to recover if error ocurs */
         if ((expr = visit(ctx.expression())) == null)
             return null;
-        if (NasmTools.isStackVariable(expr) || NasmTools.isInteger(expr))
+        if (!RelationHelper.isCompared())
             NasmTools.compareWithZero(expr);
         /* Free all registers taken by calculating the expression */
         NasmTools.freeAllRegisters();
@@ -828,6 +828,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (depthIfElse == 0)
             Writers.emitLabel(labelAfterElse);
         
+        RelationHelper.setComparisonUsed();
         return null;
     }
 

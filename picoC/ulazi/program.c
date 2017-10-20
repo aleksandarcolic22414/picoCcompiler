@@ -31,9 +31,17 @@ int fib(int n)
 */
 int main()
 {
-    int i;
-    for (i = 10; i >= 0; --i)
-        printf("%d ", i);
+    int i = 10;
+    
+    if (i > 11) {
+        printf("i > 11\n");
+    } else if (i <= 5) {
+        printf("i < 5\n");
+    } else if (i == 10)
+        printf("i == 10");
+    else
+        printf("Else");
+
     return 0;
 }
 
