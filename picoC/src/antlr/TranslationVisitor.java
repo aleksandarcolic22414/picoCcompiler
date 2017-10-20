@@ -902,8 +902,12 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             visit(ctx.expression(2));
         /* Check label */
         Writers.emitLabel(forCheckLabel);
+        /* If comparison is not done, than result of visiting must be
+            compared to 0. Something like for (i = 100; i; --i) */
         if (ctx.expression(1) != null) {
             condition = visit(ctx.expression(1));
+            if (!RelationHelper.isCompared())
+                NasmTools.compareWithZero(condition);
             Writers.emitInstruction(RelationHelper.getTrueJump(), forStartLabel);
         }
         

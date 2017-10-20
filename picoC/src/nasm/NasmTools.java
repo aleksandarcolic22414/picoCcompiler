@@ -1010,6 +1010,10 @@ public class NasmTools
         if (isInteger(expr))
             expr = putInRegister(expr);
         Writers.emitInstruction("cmp", expr, "0");
+        /* Change state of relation in relationHelper.
+            That's done because now, function RelationHelper.getFalseJump()
+            will return jne */
+        RelationHelper.setRelation(picoCParser.NOT_EQUAL);
     }
     
 }
