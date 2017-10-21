@@ -170,6 +170,10 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     @Override
     public String visitDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
+        if (curFuncAna == null) {
+            DataSegment.DeclareExtern(null);
+            return null;
+        }
         /* Get memory class for declaration */
         String memoryClass = ctx.typeSpecifier().getText();
         MemoryClassEnumeration memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
@@ -379,10 +383,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     public String visitExpression(picoCParser.ExpressionContext ctx)
     {
         String s = super.visitExpression(ctx);
-        /* Writers.emitInstruction("xor", "eax", "eax");
-            doesn't need to be done, because for expression
-            the first instruction is  always "mov", and eax register shoud be saved
-            before enterance if it holds some significant value. */
+        NasmTools.freeAllRegisters();
         return s;
     }
 
@@ -402,6 +403,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             res = NasmTools.castComparedVariable(res);
         /* Negate it */
         Writers.emitInstruction("neg", res);
+        
         return res;
     }
     
@@ -450,6 +452,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         if (NasmTools.isRegister(rightExpr))
             NasmTools.free(rightExpr);
+        
         return leftExpr;
     }
 
@@ -567,7 +570,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         if (NasmTools.isRegister(rightExpr))
             NasmTools.free(rightExpr);
-        return leftExpr;    /* leftExpr register is returned */
+        return leftExpr;
     }
 
     /* TODO: Implement direct stack position to be returned. 
@@ -633,7 +636,6 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             return null;
         if (RelationHelper.isCompared())
             left = NasmTools.castComparedVariable(left);
-        
         if ((right = visit(ctx.additiveExpression())) == null)
             return null;
         if (RelationHelper.isCompared())
@@ -667,9 +669,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         RelationHelper.setComparisonDone();
         RelationHelper.setRelation(ctx.rel.getType());
         
-        if (NasmTools.isRegister(right))
-            NasmTools.free(right);
-        return left;
+        /* Try to optimize */
+        return NasmTools.chooseReturnRelation(left, right);
     }
     
     /* rel could be '==' '!=' */
@@ -714,9 +715,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         RelationHelper.setComparisonDone();
         RelationHelper.setRelation(ctx.rel.getType());
         
-        if (NasmTools.isRegister(right))
-            NasmTools.free(right);
-        return left;
+        /* Try to optimize */
+        return NasmTools.chooseReturnRelation(left, right);
     }
 
     @Override
@@ -818,7 +818,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         /* Insert code within if statement */
         visit(ctx.statement(0));
         /* Jump to after else label if expression is true */
-        Writers.emitInstruction("jmp", labelAfterElse);
+        Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, labelAfterElse);
         Writers.emitLabel(labelElse);
         /* Insert code within else statement if it is there */
         if (ctx.statement(1) != null)
@@ -833,7 +833,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitPreInc(picoCParser.PreIncContext ctx) {
+    public String visitPreInc(picoCParser.PreIncContext ctx) 
+    {
         String res;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.unaryExpression())) == null)   
@@ -849,7 +850,8 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
     }
 
     @Override
-    public String visitPreDec(picoCParser.PreDecContext ctx) {
+    public String visitPreDec(picoCParser.PreDecContext ctx) 
+    {
         String res;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.unaryExpression())) == null)   
@@ -863,22 +865,63 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         
         return res;
     }
-
+    
+    /* All that needs to be done for post incrementation is to first 
+        put variable's value in some register for further calculation, 
+        and than increment that variable. */
     @Override
-    public String visitPostInc(picoCParser.PostIncContext ctx) {
-        return super.visitPostInc(ctx); //To change body of generated methods, choose Tools | Templates.
+    public String visitPostInc(picoCParser.PostIncContext ctx) 
+    {
+        String res;
+        String nextFreeTemp;
+        /* Visit expression and try to recover from error */
+        if ((res = visit(ctx.postfixExpression())) == null)   
+            return null;
+        if (RelationHelper.isCompared())
+            res = NasmTools.castComparedVariable(res);
+        /* Check if it is variable */
+        if (!Checker.checkPostInc(res, ctx))
+            return null;
+        
+        /* Get next free register or stack position */
+        nextFreeTemp = NasmTools.getNextFreeTemp();
+        Writers.emitInstruction("mov", nextFreeTemp, res);
+        Writers.emitInstruction("add", res, "1");
+        
+        
+        return nextFreeTemp;
     }
 
+    /* All that needs to be done for post decrementation is to first 
+        put variable's value in some register for further calculation, 
+        and than decrement that variable. */
     @Override
-    public String visitPostDec(picoCParser.PostDecContext ctx) {
-        return super.visitPostDec(ctx); //To change body of generated methods, choose Tools | Templates.
+    public String visitPostDec(picoCParser.PostDecContext ctx) 
+    {
+        String res;
+        String nextFreeTemp;
+        /* Visit expression and try to recover from error */
+        if ((res = visit(ctx.postfixExpression())) == null)   
+            return null;
+        if (RelationHelper.isCompared())
+            res = NasmTools.castComparedVariable(res);
+        /* Check if it is variable */
+        if (!Checker.checkPostDec(res, ctx))
+            return null;
+        
+        /* Get next free register or stack position */
+        nextFreeTemp = NasmTools.getNextFreeTemp();
+        Writers.emitInstruction("mov", nextFreeTemp, res);
+        Writers.emitInstruction("sub", res, "1");
+        
+        return nextFreeTemp;
     }
 
     @Override
     public String visitIterationStatement
     (picoCParser.IterationStatementContext ctx) 
     {
-        String condition = null, expr1 = null; 
+        String condition = null, expr1 = null, jump; 
         String forStartLabel, forCheckLabel, forIncrementLabel;
         forStartLabel = LabelsMaker.getNextForStartLabel();
         forCheckLabel = LabelsMaker.getNextForCheckLabel();
@@ -890,7 +933,7 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
         if (RelationHelper.isCompared())
             NasmTools.castComparedVariable(expr1);
         /* Jump to check condition */
-        Writers.emitInstruction("jmp", forCheckLabel);
+        Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, forCheckLabel);
         /* Loop start */
         Writers.emitLabel(forStartLabel);
         /* Visit for body */
@@ -902,16 +945,20 @@ public class TranslationVisitor extends picoCBaseVisitor<String>
             visit(ctx.expression(2));
         /* Check label */
         Writers.emitLabel(forCheckLabel);
+        /* Default jump */
+        jump = Constants.JUMP_UNCODITIONAL;        
         /* If comparison is not done, than result of visiting must be
-            compared to 0. Something like for (i = 100; i; --i) */
+            compared to 0. Something like for (i = 100; i; --i); */
         if (ctx.expression(1) != null) {
             condition = visit(ctx.expression(1));
-            if (!RelationHelper.isCompared())
+            if (!RelationHelper.isCompared()) {
                 NasmTools.compareWithZero(condition);
-            Writers.emitInstruction(RelationHelper.getTrueJump(), forStartLabel);
+                jump = RelationHelper.getFalseJump();
+            } else
+                jump = RelationHelper.getTrueJump();
         }
-        
+        Writers.emitInstruction(jump, forStartLabel);
         return null;
-    }
-
+    }    
+    
 }

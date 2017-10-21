@@ -30,6 +30,6 @@ public class DataSegment
 
     public static void DeclareExtern(picoCParser.DeclarationContext ctx) 
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        System.out.println("External declaration!");
     }
 }

@@ -6,6 +6,7 @@ import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import nasm.DataSegment;
 import tools.LabelsMaker;
 
 
@@ -81,6 +82,10 @@ public class TranslationListener extends picoCBaseListener
     public void enterDeclaration(picoCParser.DeclarationContext ctx) 
     {
         /* Calculate space on stack for local variables  */
+        if (curFuncCtx == null) {
+            DataSegment.DeclareExtern(null);
+            return ;
+        }
         int locals = curFuncCtx.getSpaceForLocals();
         int sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         /* Set displacement in current function context */

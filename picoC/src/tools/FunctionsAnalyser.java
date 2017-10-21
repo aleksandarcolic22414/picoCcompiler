@@ -52,7 +52,8 @@ public class FunctionsAnalyser
     /* Represents memory class for declarationList */
     private MemoryClassEnumeration currentDeclaratorType = MemoryClassEnumeration.VOID;
 
-    public FunctionsAnalyser(String functionName) {
+    public FunctionsAnalyser(String functionName) 
+    {
         this.localVariables = new HashMap<>();
         this.parameterVariables = new HashMap<>();
         this.functionName = functionName;
@@ -167,7 +168,8 @@ public class FunctionsAnalyser
         }
     }
 
-    public String declareLocalVariable(MemoryClassEnumeration type) {
+    public String declareLocalVariable(MemoryClassEnumeration type) 
+    {
         /* Increase number of local variables */
         ++localVariablesCounter;
         
@@ -178,7 +180,8 @@ public class FunctionsAnalyser
         return "dword [rbp-" + Integer.toString(spaceForLocals) + "]";
     }
 
-    public String declareParameterVariable(MemoryClassEnumeration type) {
+    public String declareParameterVariable(MemoryClassEnumeration type) 
+    {
         /* Increase number of parameter variables */
         int sizeofvar = NasmTools.getSize(type);
         /* Take function name for further calculation */
@@ -192,7 +195,8 @@ public class FunctionsAnalyser
         return "dword [rbp-" + Integer.toString(taken + spaceForParams) + "]";
     }
 
-    public Variable getAnyVariable(String id) {
+    public Variable getAnyVariable(String id) 
+    {
         Variable var;
         if ((var = getLocalVariables().get(id)) != null)
             return var;
@@ -202,7 +206,8 @@ public class FunctionsAnalyser
     }
 
     /* Just return sum of space needed for parameters and local variables */
-    public int getSpaceForVariables() {
+    public int getSpaceForVariables() 
+    {
         return getSpaceForLocals() + getSpaceForParams();
     }
     

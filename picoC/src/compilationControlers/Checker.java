@@ -183,7 +183,7 @@ public class Checker
 
     public static boolean checkPreDec(String res, picoCParser.PreDecContext ctx) 
     {
-        if (NasmTools.isRegister(res)) {
+        if (!NasmTools.isStackVariable(res)) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be pre-decremened");
@@ -194,7 +194,7 @@ public class Checker
 
     public static boolean checkPreInc(String res, picoCParser.PreIncContext ctx) 
     {
-        if (NasmTools.isRegister(res)) {
+        if (!NasmTools.isStackVariable(res)) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be pre-incremened");
@@ -210,6 +210,27 @@ public class Checker
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Division by zero error occurs");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkPostInc(String res, picoCParser.PostIncContext ctx) 
+    {
+        if (!NasmTools.isStackVariable(res)) {
+            CompilationControler.errorOcured
+                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Only variables can be post-incremened");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkPostDec(String res, picoCParser.PostDecContext ctx) {
+        if (!NasmTools.isStackVariable(res)) {
+            CompilationControler.errorOcured
+                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Only variables can be post-decremened");
             return false;
         }
         return true;

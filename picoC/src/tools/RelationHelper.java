@@ -1,7 +1,7 @@
 package tools;
 
 import antlr.picoCParser;
-import constants.TokenEnumeration;
+import constants.Constants;
 
 /**
  *
@@ -37,17 +37,17 @@ public class RelationHelper
     {
         switch (lastRelation) {
             case picoCParser.EQUAL:
-                return "je";
+                return Constants.JUMP_EQUALS;
             case picoCParser.NOT_EQUAL:
-                return "jne";
+                return Constants.JUMP_NOT_EQUALS;
             case picoCParser.GREATER:
-                return "jg";
+                return Constants.JUMP_GREATER;
             case picoCParser.GREATER_EQUAL:
-                return "jge";
+                return Constants.JUMP_GREATER_EQUALS;
             case picoCParser.LESS:
-                return "jl";
+                return Constants.JUMP_LESS;
             case picoCParser.LESS_EQUAL:
-                return "jle";
+                return Constants.JUMP_LESS_EQUALS;
         }
         return null;
     }
@@ -56,17 +56,17 @@ public class RelationHelper
     {
         switch (lastRelation) {
             case picoCParser.EQUAL:
-                return "jne";
+                return Constants.JUMP_NOT_EQUALS;
             case picoCParser.NOT_EQUAL:
-                return "je";
+                return Constants.JUMP_EQUALS;
             case picoCParser.GREATER:
-                return "jle";
+                return Constants.JUMP_LESS_EQUALS;
             case picoCParser.GREATER_EQUAL:
-                return "jl";
+                return Constants.JUMP_LESS;
             case picoCParser.LESS:
-                return "jge";
+                return Constants.JUMP_GREATER_EQUALS;
             case picoCParser.LESS_EQUAL:
-                return "jg";
+                return Constants.JUMP_GREATER;
         }
         return null;
     }
@@ -74,5 +74,10 @@ public class RelationHelper
     public static void setComparisonUsed() 
     {
         comparisonDone = false;
+    }
+
+    public static int getRelation() 
+    {
+        return lastRelation;
     }
 }

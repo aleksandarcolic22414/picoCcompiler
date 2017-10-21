@@ -48,4 +48,12 @@ public class Constants
     public static final String DIVISION_SYMBOL = "/";
     public static final String MODULO_SYMBOL = "%";
     
+    /* These are string representations of jumps */
+    public static final String JUMP_UNCODITIONAL = "jmp";
+    public static final String JUMP_LESS = "jl";
+    public static final String JUMP_LESS_EQUALS = "jle";
+    public static final String JUMP_GREATER = "jg";
+    public static final String JUMP_GREATER_EQUALS = "jge";
+    public static final String JUMP_EQUALS = "je";
+    public static final String JUMP_NOT_EQUALS = "jne";
 }

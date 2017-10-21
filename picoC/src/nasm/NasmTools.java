@@ -984,18 +984,15 @@ public class NasmTools
         moved to register */
     public static String castComparedVariable(String left) 
     {
+        String lowestByte;
         if (isStackVariable(left) || isInteger(left)) {
             String nextFreeTemp = NasmTools.getNextFreeTemp();
             Writers.emitInstruction("mov", nextFreeTemp, left);
             left = nextFreeTemp;
         }
-        return castVariable(left, Constants.SIZE_OF_CHAR);
-    }
-    
-    public static void main(String[] args) 
-    {
-        boolean b = isStackVariable("qword[]");
-        System.out.println(b);
+        lowestByte = castVariable(left, Constants.SIZE_OF_CHAR);
+        Writers.SetCCInstruction(lowestByte, RelationHelper.getRelation());
+        return lowestByte;
     }
 
     public static String putInRegister(String expr) 
@@ -1005,15 +1002,45 @@ public class NasmTools
         return nextFreeTemp;
     }
 
+    /* Comparing with zero is used for expression like: if (a) which is equal
+        to if (a != 0) */
     public static void compareWithZero(String expr) 
     {
         if (isInteger(expr))
             expr = putInRegister(expr);
         Writers.emitInstruction("cmp", expr, "0");
-        /* Change state of relation in relationHelper.
-            That's done because now, function RelationHelper.getFalseJump()
-            will return jne */
         RelationHelper.setRelation(picoCParser.NOT_EQUAL);
+    }
+    
+    public static void main(String[] args) 
+    {
+        int i, j;
+        int N = 10;
+        for (i = 0; i <= N/2; i++) {
+            for (j = 0; j < N; j++) {
+                if (j >= N/2 - i && j <= N/2 + i)
+                    System.out.print("*");
+                else
+                    System.out.print(" ");
+            }
+            System.out.println("");
+        }
+        
+    }
+
+    /* Function tries to  */
+    public static String chooseReturnRelation(String left, String right) {
+        if (NasmTools.isRegister(left)) {
+            if (NasmTools.isRegister(right))
+                NasmTools.free(right);
+            return left;
+        } 
+        if (NasmTools.isRegister(right)) {
+            if (NasmTools.isRegister(left))
+                NasmTools.free(left);
+            return right;
+        }
+        return left;
     }
     
 }
