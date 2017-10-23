@@ -96,13 +96,15 @@ public class TranslationListener extends picoCBaseListener
         in LabelsMaker class. It is needed for calculating else if () statement 
         labels. */
     @Override
-    public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+    public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) 
+    {
         LabelsMaker.insertDepth();
         LabelsMaker.increaseDepth();
     }
     /* Counter of depth in LabelsMaker class is reset to 0. */
     @Override
-    public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) {
+    public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) 
+    {
         LabelsMaker.resetSelectionDepthCounter();
     }
     

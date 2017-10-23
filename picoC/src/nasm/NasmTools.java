@@ -11,6 +11,7 @@ import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import tools.ExpressionObject;
 import tools.LabelsMaker;
 import tools.RelationHelper;
 
@@ -535,7 +536,8 @@ public class NasmTools
                         getParameterVariables().get(paramName).getStackPosition();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            memclass = FunctionsAnalyser.getMemoryClass(parameters.get(i).typeSpecifier().getText());
+            memclass = FunctionsAnalyser.getMemoryClass(
+                            parameters.get(i).typeSpecifier().getText());
             reg = getNextRegForFuncCall(memclass);
 
             /* Emit copying from registers to stack for argument */
@@ -558,7 +560,8 @@ public class NasmTools
         if (arguments == null)
             return;
         int lsize = arguments.size();
-        String res, reg;
+        ExpressionObject res;
+        String reg;
         MemoryClassEnumeration memclass;
         /* Set pickers for next function */
         initializeNewPickers();
@@ -566,17 +569,15 @@ public class NasmTools
         for (int i = 0; i < lsize; ++i) {
             /* Visit expression or STRING_LITERAL */
             res = visitor.visit(arguments.get(i));
-            if (RelationHelper.isCompared())
-                res = NasmTools.castComparedVariable(res);
+            res.comparisonCheck();
             /* Get variable size based on register it is stored in */
-            int size = sizeOf(res);
-            memclass = NasmTools.getMemoryClassFromSize(size);
+            memclass = res.getType();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
             reg = getNextRegForFuncCall(memclass);
             
             /* Emit copying from registers to stack memory for arguments setup */
-            Writers.emitInstruction("mov", reg, res);
+            Writers.emitInstruction("mov", reg, res.getText());
         }
         resetRegisterPicker();
     }
@@ -1004,11 +1005,11 @@ public class NasmTools
 
     /* Comparing with zero is used for expression like: if (a) which is equal
         to if (a != 0) */
-    public static void compareWithZero(String expr) 
+    public static void compareWithZero(ExpressionObject expr) 
     {
-        if (isInteger(expr))
-            expr = putInRegister(expr);
-        Writers.emitInstruction("cmp", expr, "0");
+        if (expr.isInteger())
+            expr.putInRegister();
+        Writers.emitInstruction("cmp", expr.getText(), "0");
         RelationHelper.setRelation(picoCParser.NOT_EQUAL);
     }
     
@@ -1028,7 +1029,8 @@ public class NasmTools
         
     }
 
-    /* Function tries to  */
+    /* Function tries to optimize further calculation by returning register
+        from relation if there is any */
     public static String chooseReturnRelation(String left, String right) {
         if (NasmTools.isRegister(left)) {
             if (NasmTools.isRegister(right))

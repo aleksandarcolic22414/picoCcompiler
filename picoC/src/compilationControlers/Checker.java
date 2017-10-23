@@ -7,6 +7,7 @@ import tools.Variable;
 import constants.MemoryClassEnumeration;
 import java.util.List;
 import nasm.NasmTools;
+import tools.ExpressionObject;
 
 /**
  *
@@ -181,9 +182,9 @@ public class Checker
         }
     }
 
-    public static boolean checkPreDec(String res, picoCParser.PreDecContext ctx) 
+    public static boolean checkPreDec(ExpressionObject res, picoCParser.PreDecContext ctx) 
     {
-        if (!NasmTools.isStackVariable(res)) {
+        if (!res.isStackVariable()) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be pre-decremened");
@@ -192,9 +193,9 @@ public class Checker
         return true;
     }
 
-    public static boolean checkPreInc(String res, picoCParser.PreIncContext ctx) 
+    public static boolean checkPreInc(ExpressionObject res, picoCParser.PreIncContext ctx) 
     {
-        if (!NasmTools.isStackVariable(res)) {
+        if (!res.isStackVariable()) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be pre-incremened");
@@ -215,9 +216,9 @@ public class Checker
         return true;
     }
 
-    public static boolean checkPostInc(String res, picoCParser.PostIncContext ctx) 
+    public static boolean checkPostInc(ExpressionObject res, picoCParser.PostIncContext ctx) 
     {
-        if (!NasmTools.isStackVariable(res)) {
+        if (!res.isStackVariable()) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be post-incremened");
@@ -226,14 +227,19 @@ public class Checker
         return true;
     }
 
-    public static boolean checkPostDec(String res, picoCParser.PostDecContext ctx) {
-        if (!NasmTools.isStackVariable(res)) {
+    public static boolean checkPostDec(ExpressionObject res, picoCParser.PostDecContext ctx) 
+    {
+        if (!res.isStackVariable()) {
             CompilationControler.errorOcured
                     (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                             "Only variables can be post-decremened");
             return false;
         }
         return true;
+    }
+
+    public static void checkVarMatch(ExpressionObject left, ExpressionObject right) {
+        
     }
     
 }
