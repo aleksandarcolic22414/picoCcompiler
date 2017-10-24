@@ -1,19 +1,18 @@
-void func(int i, int j, int k)
-{
-    for (i = 0; i < 5; i++) {
-        for (j = 0; j < 5; j++) {
-            for (k = 0; k < 50; ++k)
-                printf("k = %d, ", k);
-            printf("\n");
-            printf("j = %d, ******************\n", j);
-        }
-        printf("i = %d, ******************\n", i);
-    }
-}
-
 int main()
 {
-    func(5, 5, 50);
+    int i, c = 15;
+    
+    for (i = 0; i < 50; i++) {
+        if (((i >= 20 && i <= 30) || i == 35) && c-- > -10)
+            continue;
+        else if (i == 40) {
+            int a = i*i;
+            printf("\nI je cetrdeset. a = %d\n", a);
+            break;
+        }
+        printf("%d ", i);
+    }
+
     return 0;
 }
 

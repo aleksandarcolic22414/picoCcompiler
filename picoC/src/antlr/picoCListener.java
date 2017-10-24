@@ -128,6 +128,42 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitStatement(picoCParser.StatementContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Return}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterReturn(picoCParser.ReturnContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Return}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitReturn(picoCParser.ReturnContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Break}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterBreak(picoCParser.BreakContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Break}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitBreak(picoCParser.BreakContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Continue}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterContinue(picoCParser.ContinueContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Continue}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitContinue(picoCParser.ContinueContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#compoundStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -177,16 +213,6 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIterationStatement(picoCParser.IterationStatementContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#returnStat}.
-	 * @param ctx the parse tree
-	 */
-	void enterReturnStat(picoCParser.ReturnStatContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#returnStat}.
-	 * @param ctx the parse tree
-	 */
-	void exitReturnStat(picoCParser.ReturnStatContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#functionCall}.
 	 * @param ctx the parse tree

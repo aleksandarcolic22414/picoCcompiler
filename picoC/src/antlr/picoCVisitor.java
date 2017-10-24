@@ -83,6 +83,27 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(picoCParser.StatementContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Return}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturn(picoCParser.ReturnContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Break}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBreak(picoCParser.BreakContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Continue}
+	 * labeled alternative in {@link picoCParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitContinue(picoCParser.ContinueContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#compoundStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -112,12 +133,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIterationStatement(picoCParser.IterationStatementContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#returnStat}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitReturnStat(picoCParser.ReturnStatContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#functionCall}.
 	 * @param ctx the parse tree

@@ -501,6 +501,8 @@ public class NasmTools
     public static int getSize(MemoryClassEnumeration typeSpecifier) 
     {
         switch (typeSpecifier) {
+            case CHAR:
+                return Constants.SIZE_OF_CHAR;
             case INT:
                 return Constants.SIZE_OF_INT;
             case POINTER:

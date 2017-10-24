@@ -23,10 +23,16 @@ public class LabelsMaker
     public static long forStartCounter = 1;
     public static long forCheckCounter = 1;
     public static long forIncrementCounter = 1;
+    public static long forEndCounter = 1;
     /* Holds information about current depth of if else statement */
     public static long selectionDepthCounter = 0;
     /* List contains depths of all if else statements in program */
     public static List<Long> ifElseLabelHelper;
+    
+    /* These two listes contains information about current for labels
+        in order to help with break and continue instructions */
+    public static LinkedList<String> currentForEndLabel;
+    public static LinkedList<String> currentForIncrementLabel;
     
     /* Next variables are string representation of labels */
     public static final String TRUE_LABEL = "TRUE_LABEL_";
@@ -38,10 +44,13 @@ public class LabelsMaker
     public static final String FOR_START_LABEL = "FOR_START_LABEL_";
     public static final String FOR_CHECK_LABEL = "FOR_CHECK_LABEL_";
     public static final String FOR_INCREMENT_LABEL = "FOR_INCREMENT_LABEL_";
+    public static final String FOR_END_LABEL = "FOR_END_LABEL_";
     
             
     static {
         ifElseLabelHelper = new LinkedList<>();
+        currentForEndLabel = new LinkedList<>();
+        currentForIncrementLabel = new LinkedList<>();
     }
     
     /* Function returns next free true label in logical expressions */
@@ -131,16 +140,44 @@ public class LabelsMaker
         return ifElseLabelHelper.get(0);
     }
 
-    public static String getNextForStartLabel() {
+    public static String getNextForStartLabel() 
+    {
         return FOR_START_LABEL + Long.toString(forStartCounter++);
     }
 
-    public static String getNextForCheckLabel() {
+    public static String getNextForCheckLabel() 
+    {
         return FOR_CHECK_LABEL + Long.toString(forCheckCounter++);
     }
 
-    public static String getNextForIncerementLabel() {
+    public static String getNextForIncerementLabel() 
+    {
         return FOR_INCREMENT_LABEL + Long.toString(forIncrementCounter++);
     }
     
+    public static String getNextForEndLabel() {
+        return FOR_END_LABEL + Long.toString(forEndCounter++);
+    }
+
+    public static void setCurrentForLabels(String forIncrementLabel, String forEndLabel) 
+    {
+        currentForEndLabel.push(forEndLabel);
+        currentForIncrementLabel.push(forIncrementLabel);
+    }
+
+    public static void unsetCurrentForLabels(String forIncrementLabel, String forEndLabel) 
+    {
+        currentForEndLabel.pop();
+        currentForIncrementLabel.pop();
+    }
+
+    public static String getLastForEndLabel() 
+    {
+        return currentForEndLabel.peek();
+    }
+    
+    public static String getLastForIncrementLabel() 
+    {
+        return currentForIncrementLabel.peek();
+    }
 }

@@ -77,14 +77,10 @@ public class ExpressionObject
         if (!isCompared())
             return ;
         /* If it is variable on stack or integer, move it to register */
-        if (isStackVariable() || isInteger()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, this.text);
-            this.text = nextFreeTemp;
-            this.flags = ExpressionObject.REGISTER;
-        }
+        if (isStackVariable() || isInteger()) 
+            putInRegister();
+        
         castVariable(MemoryClassEnumeration.CHAR);
-        this.type = MemoryClassEnumeration.CHAR;
         Writers.SetCCInstruction(this.text, RelationHelper.getRelation());
         setCompared(false);
     }
@@ -118,6 +114,7 @@ public class ExpressionObject
             return ;
         this.type = type;
         int sizeOfVar = NasmTools.getSize(type);
+        this.size = sizeOfVar;
         this.text = NasmTools.castVariable(text, sizeOfVar);
     }
 

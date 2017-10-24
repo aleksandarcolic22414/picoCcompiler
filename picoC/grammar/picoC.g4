@@ -49,7 +49,13 @@ statement
     |   expressionStatement
     |   selectionStatement
     |   iterationStatement
-    |   returnStat                         
+    |   jumpStatement                         
+    ;
+
+jumpStatement
+    :   'return' expression?  ';'      #Return
+    |   'break'               ';'      #Break
+    |   'continue'            ';'      #Continue
     ;
 
 compoundStatement
@@ -71,10 +77,6 @@ selectionStatement
 
 iterationStatement
     :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
-
-returnStat 
-    :   'return' expression?  ';'  ;
-
 
 functionCall 
     :   functionName '(' argumentList? ')' ;

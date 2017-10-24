@@ -6,7 +6,6 @@ import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnumeration;
 import java.util.List;
-import nasm.NasmTools;
 import tools.ExpressionObject;
 
 /**

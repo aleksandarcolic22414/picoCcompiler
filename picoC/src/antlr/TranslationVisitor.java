@@ -288,7 +288,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     }
     
     @Override
-    public ExpressionObject visitReturnStat(picoCParser.ReturnStatContext ctx) 
+    public ExpressionObject visitReturn(picoCParser.ReturnContext ctx) 
     {
         ExpressionObject expr;
         /* Try to recover from error */
@@ -395,7 +395,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitExpression(picoCParser.ExpressionContext ctx)
     {
         ExpressionObject expr = super.visitExpression(ctx);
-        NasmTools.freeAllRegisters();
         return expr;
     }
 
@@ -413,6 +412,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         ExpressionObject expr = super.visitNegation(ctx);
         expr.comparisonCheck();
         /* Negate it */
+        if (!expr.isRegister() || !expr.isStackVariable())
+            expr.putInRegister();
         Writers.emitInstruction("neg", expr.getText());
         
         return expr;
@@ -670,21 +671,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* If left and right expressions are stack variable, than one need to be
             moved to register in order to do cmp operation */
-        if (left.isStackVariable() && right.isStackVariable()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, left.getText());
-            left.setToRegister();
-            left.setText(nextFreeTemp);
-        }
+        if (left.isStackVariable() && right.isStackVariable())
+            left.putInRegister();
+        
         
         /* If left and right expressions are Integer number, than one need to be
             moved to register in order to do cmp operation */
-        if (left.isInteger() && right.isInteger()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, left.getText());
-            left.setToRegister();
-            left.setText(nextFreeTemp);
-        }
+        if (left.isInteger() && right.isInteger())
+            left.putInRegister();
+        
         
         /* If sizes of variables doesn't match, than they need to be casted.
             Next line does nothing if sizes of variables match.
@@ -939,11 +934,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject expr, condition;
         String jump; 
-        String forStartLabel, forCheckLabel, forIncrementLabel;
+        String forStartLabel, forCheckLabel, forIncrementLabel, forEndLabel;
         forStartLabel = LabelsMaker.getNextForStartLabel();
         forCheckLabel = LabelsMaker.getNextForCheckLabel();
         forIncrementLabel = LabelsMaker.getNextForIncerementLabel();
+        forEndLabel = LabelsMaker.getNextForEndLabel();
         expr = condition = null;
+        LabelsMaker.setCurrentForLabels(forIncrementLabel, forEndLabel);
         /* Do first expression witch is "initialization" (it could be 
             any expression off course) */
         if (ctx.expression(0) != null)
@@ -976,7 +973,29 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
                 jump = RelationHelper.getTrueJump();
         }
         Writers.emitInstruction(jump, forStartLabel);
+        Writers.emitLabel(forEndLabel);
+        LabelsMaker.unsetCurrentForLabels(forIncrementLabel, forEndLabel);
         return null;
     }    
+
+    @Override
+    public ExpressionObject visitBreak(picoCParser.BreakContext ctx) 
+    {
+        /* break instruction is just uncodition jump to the end of loop*/
+        String label = LabelsMaker.getLastForEndLabel();
+        Writers.emitInstruction("jmp", label);
+        return null;
+    }
+
+    @Override
+    public ExpressionObject visitContinue(picoCParser.ContinueContext ctx) 
+    {
+        /* continue instruction is just uncodition jump to the incrementation of loop*/
+        String label = LabelsMaker.getLastForIncrementLabel();
+        Writers.emitInstruction("jmp", label);
+        return null;
+    }
+    
+    
     
 }

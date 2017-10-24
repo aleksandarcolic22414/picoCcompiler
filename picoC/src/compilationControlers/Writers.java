@@ -39,6 +39,15 @@ public class Writers
         this.buff = new BufferedWriter(out);
     }
     
+    /* Function flushes all 3 string builders into output file. */
+    public void writeOutput() throws IOException 
+    {
+        buff.write(DATA_SEGMENT.toString());
+        buff.write(TEXT_SEGMENT.toString());
+        buff.write(BSS_SEGMENT.toString());
+        buff.flush();
+    }    
+    
     public static void emitInstruction(String instruction)
     {
         /* Make instructions readable */
@@ -114,29 +123,23 @@ public class Writers
     }
     
     /* Set text segment for function definition */
-    public static void emitFunctionSetup(String name) {
+    public static void emitFunctionSetup(String name) 
+    {
         Writers.emitText("\tglobal    " + name);
         Writers.emitText(name + ":");
         Writers.emitText(Constants.FUNCTION_ENTRY);
     }
     
-    public static void emitLabelReturn(String inProcess) {
+    public static void emitLabelReturn(String inProcess) 
+    {
         Writers.emitText(inProcess + "Exit:");
     }
     
-    public static void emitJumpToExit(String inProcess) {
+    public static void emitJumpToExit(String inProcess) 
+    {
         String exit = inProcess + "Exit";
         Writers.emitInstruction("jmp", exit);
     }
-    
-    /* Function flushes all 3 string builders into output file. */
-    public void writeOutput() throws IOException 
-    {
-        buff.write(DATA_SEGMENT.toString());
-        buff.write(TEXT_SEGMENT.toString());
-        buff.write(BSS_SEGMENT.toString());
-        buff.flush();
-    }    
     
     public static void SetCCInstruction(String left, int typeOfRelation) 
     {
