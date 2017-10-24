@@ -496,20 +496,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         }
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
-        if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, leftExpr.getText());
-            leftExpr.setToRegister();
-            leftExpr.setText(nextFreeTemp);
-        }
+        if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
+            leftExpr.putInRegister();
+        
         /* If right operand is integer number, than it needs to be moved to 
             regiser or stack. */
-        if (rightExpr.isInteger()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, rightExpr.getText());
-            rightExpr.setToRegister();
-            rightExpr.setText(nextFreeTemp);
-        }
+        if (rightExpr.isInteger())
+            rightExpr.putInRegister();
         
         
         String s1, s2;
@@ -528,7 +521,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             } else
                 Writers.emitInstruction("imul", leftExpr.getText(), rightExpr.getText());
         } else { /* It's div or mod */
-            if (leftExpr.equals("eax")) {
+            if (leftExpr.getText().equals("eax")) {
                 if (NasmTools.isTakenRegisterDREG()) { /* Never true, but stil */
                     nextFreeTemp = NasmTools.getNextFreeTemp();
                     Writers.emitInstruction("mov", nextFreeTemp, "edx");

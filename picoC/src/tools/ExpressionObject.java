@@ -72,7 +72,7 @@ public class ExpressionObject
     }
     
     /* Check if comparison is done and cast variable if it is */
-    public void comparisonCheck() 
+    public void comparisonCheck() throws Exception 
     {
         if (!isCompared())
             return ;
@@ -184,9 +184,11 @@ public class ExpressionObject
         return left;
     }
 
-    public void putInRegister() 
+    public void putInRegister() throws Exception 
     {
         String nextFreeTemp = getNextFreeTemp();
+        if (!NasmTools.isRegister(nextFreeTemp))
+            throw new Exception("Out of registers!");
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
         this.setText(nextFreeTemp);
