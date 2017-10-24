@@ -1,6 +1,7 @@
 package tools;
 
 import compilationControlers.Checker;
+import compilationControlers.CompilationControler;
 import compilationControlers.Writers;
 import constants.Constants;
 import constants.MemoryClassEnumeration;
@@ -72,7 +73,7 @@ public class ExpressionObject
     }
     
     /* Check if comparison is done and cast variable if it is */
-    public void comparisonCheck() throws Exception 
+    public void comparisonCheck() 
     {
         if (!isCompared())
             return ;
@@ -184,11 +185,11 @@ public class ExpressionObject
         return left;
     }
 
-    public void putInRegister() throws Exception 
+    public void putInRegister() 
     {
         String nextFreeTemp = getNextFreeTemp();
         if (!NasmTools.isRegister(nextFreeTemp))
-            throw new Exception("Out of registers!");
+            CompilationControler.errorOcured(null, null, "Out of registers!");
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
         this.setText(nextFreeTemp);
