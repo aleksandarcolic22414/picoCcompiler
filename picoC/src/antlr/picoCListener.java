@@ -556,6 +556,16 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitAssign(picoCParser.AssignContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#assignmentOperator}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssignmentOperator(picoCParser.AssignmentOperatorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#assignmentOperator}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssignmentOperator(picoCParser.AssignmentOperatorContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#expression}.
 	 * @param ctx the parse tree
 	 */

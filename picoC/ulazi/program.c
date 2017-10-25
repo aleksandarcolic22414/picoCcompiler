@@ -1,9 +1,9 @@
 int main()
 {
-    int a = 10, b = 10, c = 3;
-    b = a % c;
-    printf("%d %d %d\n", a, b, c);
+    int i;
     
-    return (((2+2*2)+2)/2+2)/2 * 8/(12/2-6/(1+12/(4+8/(3+2/(1+4/(1+3))))));
+    for (i = 0; i += 100; )
+        printf("i = %d\n", i);
+    
+    return 0;
 }
-

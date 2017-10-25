@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
 import tools.RelationHelper;
@@ -40,8 +41,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
     {
+        /* Compile */
         super.visitCompilationUnit(ctx); 
-        
+        /* Print informations about compilation */
         if (CompilationControler.warnings != 0) {
             System.err.println("Warnings : " + CompilationControler.warnings);
         }
@@ -51,7 +53,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         } else {
             System.err.println("Errors: " + CompilationControler.errors);
             System.err.println("Compilation failed!");
-            /* If output is not needed for testing, then -> 
+            /* If output is not needed for testing, then terminate process -> 
             System.exit(0); */
         }
         try {    
@@ -234,6 +236,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Expression */
         ExpressionObject expr;
+        /* Operation */
+        int operation = ctx.assignmentOperator().op.getType();
         /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -242,40 +246,49 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.varDeclCheck(ctx, id, var))
             return null;
         
-        /* Try to recover from error. */
+        /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
         
-        
         var.setInitialized(true);
-        
-        /* If size of return register doesn't match size of var than it needs
-            to be casted, so size of variable is taken and later, if it is register,
+        /* If size of return value doesn't match size of var than it needs
+            to be casted, so size of variable is taken and later, 
             it is casted to proper size */
         int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
         /* Get position of variable */
         String stackPos = var.getStackPosition();
-        /* Emit assign if right operand is register */
-            
-        if (expr.isRegister()) {
-            expr.castVariable(var.getTypeSpecifier());
-            Writers.emitInstruction("mov", stackPos, expr.getText());
-            NasmTools.free(expr.getText());
-        } else if (expr.isInteger()) {
-            Writers.emitInstruction("mov", stackPos, expr.getText());
-        } else {
-            String temp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", temp, expr.getText());
-            Writers.emitInstruction("mov", stackPos, temp);
-            NasmTools.free(temp);
-        }
+        /* Cast variable if needed */
+        expr.castVariable(var.getTypeSpecifier());
         
+        /* See which operator is used for assign and emit proper instruction */
+        switch (operation) {
+            case picoCParser.ASSIGN :
+                Emitter.assign(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_ADD :
+                Emitter.assignAdd(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_SUB :
+                Emitter.assignSub(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_MUL :
+                Emitter.assignMul(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_DIV :
+                Emitter.assignDivMod(expr, stackPos, operation);
+                break;
+            case picoCParser.ASSIGN_MOD :
+                Emitter.assignDivMod(expr, stackPos, operation);
+                break;
+        }
+        if (expr.isRegister())
+            expr.freeRegister();
         /* Return new Object */
         return new ExpressionObject
             (stackPos, 
              var.getTypeSpecifier(), 
-             sizeOfVar
+             ExpressionObject.VAR_STACK
             );
     }
     
@@ -297,8 +310,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         expr.comparisonCheck();
         /* Set function has return  */
         curFuncAna.setHasReturn(true);
+        /* Cast expression to proper size */
+        expr.castVariable(curFuncAna.getMemoryClass());
         /* mov result to eax for return if result is not eax */
-        if (!expr.isRegister())
+        if (!expr.isARegister())
             Writers.emitInstruction("mov", NasmTools.STRING_EAX, expr.getText());
         Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
         /* Free all registers for function exit */
@@ -318,8 +333,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         just check which is next register (or position on stack if registers are filed)
         which can hold value. After that, register's are saved on stack, 
         but before they are restored, real method for getting
-        registers is called which is getNextFreeTemp. It can't be done without
-        that, because, if getNextFreeTemp is called insted of showNextFreeTemp, then
+        registers is called which is getNextFreeTemp4Bytes. It can't be done without
+        that, because, if getNextFreeTemp4Bytes is called insted of showNextFreeTemp, then
         restoreRegisters from NasmTools would override it's value, because
         that value would be pushed on stack along with other registers as
         saved registers from function. */
@@ -352,7 +367,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!nextFreeTemp.equals("eax"))
             Writers.emitInstruction("mov", nextFreeTemp, "eax");
         NasmTools.restoreRegisters();
-        nextFreeTemp = NasmTools.getNextFreeTemp();
+        nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
         
         /* TODO: See in which part of register is return value from function */
         return new ExpressionObject
@@ -444,19 +459,18 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         }
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
-        if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp();
-            Writers.emitInstruction("mov", nextFreeTemp, leftExpr.getText());
-            leftExpr.setToRegister();
-            leftExpr.setText(nextFreeTemp);
-        }
+        if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
+            leftExpr.putInRegister();
+        
+        /* Cast to proper type if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
         String operation = NasmTools.getOperation(ctx.op.getType());
         
         /* If left operand is not register, then it needs to be moved to one.
             It's moved to eax, but first eax is saved on stack. */
         if (!leftExpr.isRegister()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp();
+            nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
             Writers.emitInstruction("mov", nextFreeTemp, "eax");
             Writers.emitInstruction("mov", "eax", leftExpr.getText());
             Writers.emitInstruction(operation, "eax", rightExpr.getText());
@@ -494,6 +508,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.setText(res);
             return leftExpr;
         }
+        
+        /* Cast to proper type if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
         if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
@@ -505,82 +523,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             rightExpr.putInRegister();
         
         
-        String s1, s2;
-        String fakelyTaken = null;
-        if (operation == picoCParser.MUL) {
-            /* Chech wheather leftExpr is register. If it's not then it needs to be
-                moved to one and then multiplied */
-            if (!leftExpr.isRegister()) {
-                nextFreeTemp = NasmTools.getNextFreeTemp();
-                Writers.emitInstruction("mov", nextFreeTemp, "eax");
-                Writers.emitInstruction("mov", "eax", leftExpr.getText());
-                Writers.emitInstruction("imul", "eax", rightExpr.getText());
-                Writers.emitInstruction("mov", leftExpr.getText(), "eax");
-                Writers.emitInstruction("mov", "eax", nextFreeTemp);
-                NasmTools.free(nextFreeTemp);
-            } else
-                Writers.emitInstruction("imul", leftExpr.getText(), rightExpr.getText());
-        } else { /* It's div or mod */
-            if (leftExpr.getText().equals("eax")) {
-                if (NasmTools.isTakenRegisterDREG()) { /* Never true, but stil */
-                    nextFreeTemp = NasmTools.getNextFreeTemp();
-                    Writers.emitInstruction("mov", nextFreeTemp, "edx");
-                    Writers.emitInstruction("cdq");
-                    Writers.emitInstruction("idiv", rightExpr.getText());
-                    if (operation == picoCParser.MOD) /* If it's mod, move remainder to eax */
-                        Writers.emitInstruction("mov", "eax", "edx");
-                    Writers.emitInstruction("mov", "edx", nextFreeTemp);
-                    NasmTools.free(nextFreeTemp);
-                } else {
-                    Writers.emitInstruction("cdq");
-                    Writers.emitInstruction("idiv", rightExpr.getText());
-                    if (operation == picoCParser.MOD) /* If it's mod, move remainder to eax */
-                        Writers.emitInstruction("mov", "eax", "edx");
-                }
-            } else {    /* leftExpr operand is not eax */
-                /* edx needs to be fakely taken, so that getNextFreeTemp
-                    would not save some register in edx, because it is needed
-                    for remainder of division. */
-                
-                if (!NasmTools.isTakenRegisterDREG()) {
-                    fake = true;
-                    fakelyTaken = NasmTools.getNextFreeTemp();
-                }
-                /* Always true -> */
-                if (NasmTools.isTakenRegisterAREG() && NasmTools.isTakenRegisterDREG()) {
-                    s1 = NasmTools.getNextFreeTemp();
-                    Writers.emitInstruction("mov", s1, "eax");  /* save eax value into s1 */
-                    s2 = NasmTools.getNextFreeTemp();
-                    Writers.emitInstruction("mov", s2, "edx");  /* save edx value into s2 */
-                    /* setting eax and edx for div */
-                    Writers.emitInstruction("mov", "eax", leftExpr.getText()); 
-                    Writers.emitInstruction("cdq");
-                    
-                    /* If right operand of division is edx, than eax needs
-                        to be divided by moved edx, which is s2 */
-                    if (!rightExpr.getText().equals("edx"))
-                        Writers.emitInstruction("idiv", rightExpr.getText());
-                    else
-                        Writers.emitInstruction("idiv", s2);
-                    /* If it's div operation, move result (eax) to leftExpr, 
-                        else, move remainder(edx) to leftExpr */
-                    if (ctx.op.getType() == picoCParser.DIV) 
-                        Writers.emitInstruction("mov", leftExpr.getText(), "eax");
-                    if (ctx.op.getType() == picoCParser.MOD) 
-                        Writers.emitInstruction("mov", leftExpr.getText(), "edx");
-                     /* restoring values */
-                    Writers.emitInstruction("mov", "eax", s1);
-                    Writers.emitInstruction("mov", "edx", s2);
-                    
-                    NasmTools.free(s2);
-                    NasmTools.free(s1);
-                }
-                
-                if (fake == true) {
-                    NasmTools.free(fakelyTaken);                    
-                }
-            }
-        }
+        if (operation == picoCParser.MUL) 
+            Emitter.multiply(leftExpr, rightExpr);
+        else 
+            Emitter.divideOrModulo(leftExpr, rightExpr, operation);
         
         if (rightExpr.isRegister())
             rightExpr.freeRegister();
@@ -707,7 +653,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* If left and right expressions are stack variable, than one need to be
             moved to register in order to do cmp operation */
         if (left.isStackVariable() && right.isStackVariable()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
             Writers.emitInstruction("mov", nextFreeTemp, left.getText());
             left.setToRegister();
             left.setText(nextFreeTemp);
@@ -715,7 +661,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* If left and right expressions are Integer number, than one need to be
             moved to register in order to do cmp operation */
         if (left.isInteger() && right.isInteger()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
             Writers.emitInstruction("mov", nextFreeTemp, left.getText());
             left.setToRegister();
             left.setText(nextFreeTemp);
@@ -959,11 +905,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             compared to 0. Something like for (i = 100; i; --i); */
         if (ctx.expression(1) != null) {
             condition = visit(ctx.expression(1));
-            if (!condition.isCompared()) {
+            if (!condition.isCompared())
                 NasmTools.compareWithZero(condition);
-                jump = RelationHelper.getFalseJump();
-            } else
-                jump = RelationHelper.getTrueJump();
+            jump = RelationHelper.getTrueJump();
         }
         Writers.emitInstruction(jump, forStartLabel);
         Writers.emitLabel(forEndLabel);

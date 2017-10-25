@@ -6,7 +6,7 @@ import compilationControlers.Writers;
 import constants.Constants;
 import constants.MemoryClassEnumeration;
 import nasm.NasmTools;
-import static nasm.NasmTools.getNextFreeTemp;
+import static nasm.NasmTools.getNextFreeTemp4Bytes;
 
 /**
  *
@@ -185,14 +185,24 @@ public class ExpressionObject
         return left;
     }
 
-    public void putInRegister() 
+    /* Function puts variable in register if there is any free registers */
+    public boolean putInRegister() 
     {
-        String nextFreeTemp = getNextFreeTemp();
+        if (this.flags == ExpressionObject.REGISTER)
+            return false;
+        String nextFreeTemp = getNextFreeTemp4Bytes();
         if (!NasmTools.isRegister(nextFreeTemp))
             CompilationControler.errorOcured(null, null, "Out of registers!");
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
         this.setText(nextFreeTemp);
+        return true;
+    }
+
+    /* Check wheather text is "a" register */
+    public boolean isARegister() 
+    {
+        return NasmTools.stringToRegister(this.text) == NasmTools.AREG;
     }
 
 }

@@ -334,6 +334,12 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAssign(picoCParser.AssignContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#assignmentOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssignmentOperator(picoCParser.AssignmentOperatorContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

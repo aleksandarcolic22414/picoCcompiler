@@ -425,7 +425,7 @@ public class NasmTools
     
     /* Return next free register if there is one. If there is no free registers
         function returns first free stack memory */
-    public static String getNextFreeTemp() 
+    public static String getNextFreeTemp4Bytes() 
     {
         int register = -1;
         /* If all registers are taken */
@@ -484,8 +484,9 @@ public class NasmTools
         return rtosMap4Bytes.get(register);
     }
     
-    /* Returns string representation of register */
-    private static int stringToRegister(String stringRegister) 
+    /* Returns string representation of register if input string is register.
+        Otherwise, -1 is returned */
+    public static int stringToRegister(String stringRegister) 
     {
         Integer register;
         if ((register = storMap1Bytes.get(stringRegister)) != null)
@@ -772,7 +773,6 @@ public class NasmTools
             return inputRegister;
         int register = stringToRegister(inputRegister);
         String oneByteRegister = rtosMap1Bytes.get(register);
-//      No cast is done:  Writers.emitInstruction("castInstruction", intValueOfReg, left);
         return oneByteRegister;
     }
     
@@ -787,8 +787,9 @@ public class NasmTools
             return inputRegister;
         int register = stringToRegister(inputRegister);
         String fourByteRegister = rtosMap4Bytes.get(register);
-        /* Zero extend register */
-        Writers.emitInstruction("movzx", fourByteRegister, inputRegister);
+        /* Zero extend register if it input register is one byte */
+        if (sizeOfInputRegister == Constants.SIZE_OF_CHAR)
+            Writers.emitInstruction("movzx", fourByteRegister, inputRegister);
         return fourByteRegister;
     }
     
@@ -989,7 +990,7 @@ public class NasmTools
     {
         String lowestByte;
         if (isStackVariable(left) || isInteger(left)) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp();
+            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
             Writers.emitInstruction("mov", nextFreeTemp, left);
             left = nextFreeTemp;
         }
@@ -1000,7 +1001,7 @@ public class NasmTools
 
     public static String putInRegister(String expr) 
     {
-        String nextFreeTemp = getNextFreeTemp();
+        String nextFreeTemp = getNextFreeTemp4Bytes();
         Writers.emitInstruction("mov", nextFreeTemp, expr);
         return nextFreeTemp;
     }
@@ -1014,26 +1015,12 @@ public class NasmTools
         Writers.emitInstruction("cmp", expr.getText(), "0");
         RelationHelper.setRelation(picoCParser.NOT_EQUAL);
     }
-    
-    public static void main(String[] args) 
-    {
-        int i, j;
-        int N = 10;
-        for (i = 0; i <= N/2; i++) {
-            for (j = 0; j < N; j++) {
-                if (j >= N/2 - i && j <= N/2 + i)
-                    System.out.print("*");
-                else
-                    System.out.print(" ");
-            }
-            System.out.println("");
-        }
-        
-    }
+
 
     /* Function tries to optimize further calculation by returning register
         from relation if there is any */
-    public static String chooseReturnRelation(String left, String right) {
+    public static String chooseReturnRelation(String left, String right) 
+    {
         if (NasmTools.isRegister(left)) {
             if (NasmTools.isRegister(right))
                 NasmTools.free(right);
@@ -1045,6 +1032,12 @@ public class NasmTools
             return right;
         }
         return left;
+    }
+
+    public static String get4ByteDRegister() 
+    {
+        flags |= DREG;
+        return rtosMap4Bytes.get(DREG);
     }
     
 }

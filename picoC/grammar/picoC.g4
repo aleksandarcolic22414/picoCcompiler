@@ -141,8 +141,12 @@ logicalOrExpression
     ;
 
 assignmentExpression
-    :   logicalOrExpression                     #DropAssign
-    |   ID '=' assignmentExpression             #Assign
+    :   logicalOrExpression                           #DropAssign
+    |   ID assignmentOperator assignmentExpression    #Assign
+    ;
+
+assignmentOperator
+    :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=')
     ;
 
 expression
@@ -177,6 +181,13 @@ DIV : '/' ;
 MOD : '%' ;
 ADD : '+' ;
 SUB : '-' ;
+
+ASSIGN     : '=' ;
+ASSIGN_ADD : '+=' ;
+ASSIGN_SUB : '-=' ;
+ASSIGN_MUL : '*=' ;
+ASSIGN_DIV : '/=' ;
+ASSIGN_MOD : '%=' ;
 
 EQUAL :          '==' ;
 NOT_EQUAL :      '!=' ;
