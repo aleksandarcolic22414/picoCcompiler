@@ -320,6 +320,20 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLogicalOR(picoCParser.LogicalORContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code DropConditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropConditional(picoCParser.DropConditionalContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Conditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConditional(picoCParser.ConditionalContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code DropAssign}
 	 * labeled alternative in {@link picoCParser#assignmentExpression}.
 	 * @param ctx the parse tree

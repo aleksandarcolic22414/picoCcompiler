@@ -185,9 +185,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         super.visitDeclarationList(ctx);
         /* Set declarator to void (neutral) */
         curFuncAna.setCurrentDeclaratorType(MemoryClassEnumeration.VOID);
+        
         return null;
     }
 
+    
     @Override
     public ExpressionObject visitDeclaration(picoCParser.DeclarationContext ctx) 
     {
@@ -236,9 +238,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Expression */
         ExpressionObject expr;
-        /* Operation */
         int operation = ctx.assignmentOperator().op.getType();
-        /* Get id value */
         String id = ctx.ID().getText();
         /* Get variable context */
         Variable var = curFuncAna.getAnyVariable(id);
@@ -252,36 +252,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         expr.comparisonCheck();
         
         var.setInitialized(true);
-        /* If size of return value doesn't match size of var than it needs
-            to be casted, so size of variable is taken and later, 
-            it is casted to proper size */
         int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
-        /* Get position of variable */
         String stackPos = var.getStackPosition();
         /* Cast variable if needed */
         expr.castVariable(var.getTypeSpecifier());
         
         /* See which operator is used for assign and emit proper instruction */
-        switch (operation) {
-            case picoCParser.ASSIGN :
-                Emitter.assign(expr, stackPos);
-                break;
-            case picoCParser.ASSIGN_ADD :
-                Emitter.assignAdd(expr, stackPos);
-                break;
-            case picoCParser.ASSIGN_SUB :
-                Emitter.assignSub(expr, stackPos);
-                break;
-            case picoCParser.ASSIGN_MUL :
-                Emitter.assignMul(expr, stackPos);
-                break;
-            case picoCParser.ASSIGN_DIV :
-                Emitter.assignDivMod(expr, stackPos, operation);
-                break;
-            case picoCParser.ASSIGN_MOD :
-                Emitter.assignDivMod(expr, stackPos, operation);
-                break;
-        }
+        Emitter.decideAssign(expr, stackPos, operation);
+        
         if (expr.isRegister())
             expr.freeRegister();
         /* Return new Object */
@@ -296,7 +274,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitStatement(picoCParser.StatementContext ctx) 
     {
         super.visitStatement(ctx); 
-        NasmTools.freeAllRegisters();
+//        NasmTools.freeAllRegisters();
         return null;
     }
     
@@ -313,7 +291,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast expression to proper size */
         expr.castVariable(curFuncAna.getMemoryClass());
         /* mov result to eax for return if result is not eax */
-        if (!expr.isARegister())
+        if (!expr.isRegisterA())
             Writers.emitInstruction("mov", NasmTools.STRING_EAX, expr.getText());
         Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
         /* Free all registers for function exit */
@@ -354,7 +332,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Little thing: View which is next free register for further calculation
-            and move function's return value to it, to continue calculating */
+            and move function's return value to it, to continue calculating.
+            Function getNextFreeTemp4Bytes can't be used here because that
+            function takes next free register if there is one and he'll be
+            saved on stack with rest of registers with saveRegistersOnStack.
+            Instead, just peek to see which is next free register and after
+            function call move function return value to it. */
         String nextFreeTemp = NasmTools.showNextFreeTemp();
         /* Registers are saved and freed for further use */
         NasmTools.saveRegistersOnStack();
@@ -391,9 +374,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             ExpressionObject expr = visit(ctx.assignmentExpression());
             expr.comparisonCheck();
             
-            /* Free "a" if it is register */
-            if (expr.isRegister())
-                expr.freeRegister();
             return expr;
         }
         String strlit = ctx.STRING_LITERAL().getText();
@@ -931,6 +911,44 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         String label = LabelsMaker.getLastForIncrementLabel();
         Writers.emitInstruction("jmp", label);
         return null;
+    }
+    /*            expr1             expr2               expr3       */
+    /*    logicalOrExpression '?' expression ':' conditionalExpression    */
+    @Override
+    public ExpressionObject visitConditional(picoCParser.ConditionalContext ctx) 
+    {
+        ExpressionObject expr1, expr2, expr3;
+        /* Visit all children and do compare operation if it is not done */
+        /* First visit conditional expression (expr3) */
+        if ((expr3 = visit(ctx.conditionalExpression())) == null)
+            return null;
+        if (expr3.isInteger())  // right operand of cmovcc instruction can't be integer
+            expr3.putInRegister();
+        /* Than visit expression (expr2) */
+        if ((expr2 = visit(ctx.expression())) == null)
+            return null;
+        /* And finaly logicalOrExpression (expr1) */
+        if ((expr1 = visit(ctx.logicalOrExpression())) == null)
+            return null;
+        if (!expr1.isCompared())
+            NasmTools.compareWithZero(expr1); // do comparison if it is not done
+        if (expr1.isRegister())              // free taken register
+            expr1.freeRegister();
+        
+        if (!expr2.isRegister())    // and left must be register
+            expr2.putInRegister();
+        
+        ExpressionObject.castVariablesToMaxSize(expr2, expr3);
+        Emitter.setConditionalMoveOperator(expr2, expr3);
+        
+        return expr2;
+    }
+
+    @Override
+    public ExpressionObject visitBlockItem(picoCParser.BlockItemContext ctx) {
+        ExpressionObject expr = super.visitBlockItem(ctx); 
+        NasmTools.freeAllRegisters();
+        return expr;
     }
     
     

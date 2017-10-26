@@ -11,6 +11,7 @@ import constants.MemoryClassEnumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
 import tools.RelationHelper;
@@ -156,7 +157,7 @@ public class NasmTools
         storMap1Bytes.put(STRING_AL, AREG);
         storMap1Bytes.put(STRING_BL, BREG);
         storMap1Bytes.put(STRING_CL, CREG);
-        storMap1Bytes.put(STRING_CL, DREG);
+        storMap1Bytes.put(STRING_DL, DREG);
         storMap1Bytes.put(STRING_SIL, SIREG);
         storMap1Bytes.put(STRING_DIL, DIREG);
         storMap1Bytes.put(STRING_R8B, R8REG);
@@ -581,6 +582,8 @@ public class NasmTools
             
             /* Emit copying from registers to stack memory for arguments setup */
             Writers.emitInstruction("mov", reg, res.getText());
+            if (res.isRegister())
+                res.freeRegister();
         }
         resetRegisterPicker();
     }
@@ -995,7 +998,7 @@ public class NasmTools
             left = nextFreeTemp;
         }
         lowestByte = castVariable(left, Constants.SIZE_OF_CHAR);
-        Writers.SetCCInstruction(lowestByte, RelationHelper.getRelation());
+        Emitter.SetCCInstruction(lowestByte, RelationHelper.getRelation());
         return lowestByte;
     }
 

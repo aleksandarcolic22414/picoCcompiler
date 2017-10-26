@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package tools;
 
 import antlr.picoCParser;
@@ -123,6 +119,8 @@ public class Emitter
         return leftExpr;
     }
     
+    /* This function represent set of steps needed for calculating
+        assignment expression */
     public static void assign(ExpressionObject expr, String stackPos) 
     {
         if (expr.isRegister() || expr.isInteger()) {
@@ -135,6 +133,8 @@ public class Emitter
         }
     }
 
+    /* This function represent set of steps needed for calculating
+        assignment-add expression */
     public static void assignAdd(ExpressionObject expr, String stackPos) 
     {
         if (expr.isRegister()) {
@@ -150,6 +150,8 @@ public class Emitter
         }
     }
 
+    /* This function represent set of steps needed for calculating
+        assignment-sub expression */
     public static void assignSub(ExpressionObject expr, String stackPos) 
     {
         if (expr.isRegister()) {
@@ -165,6 +167,8 @@ public class Emitter
         }
     }
 
+    /* This function represent set of steps needed for calculating
+        assignment-mul expression */
     public static void assignMul(ExpressionObject expr, String stackPos) 
     {
         /* Make expression object that contains var from stack 
@@ -179,6 +183,8 @@ public class Emitter
         var.freeRegister();
     }
     
+    /* This function represent set of steps needed for calculating
+        assignment-div/mod expression */
     public static void assignDivMod
     (ExpressionObject expr, String stackPos, int operation) 
     {
@@ -187,12 +193,90 @@ public class Emitter
         ExpressionObject var = new ExpressionObject
             (stackPos, MemoryClassEnumeration.INT, ExpressionObject.VAR_STACK);
         var.putInRegister();
-        /* Emitter divideOrModulo will return same value pased as first argument, 
-            but in case that that change in a future, let's store it in var */
+        /* Emitter divideOrModulo will return same value passed as first argument, 
+            but in case that that could change in a future, let's store it in var */
         var = Emitter.divideOrModulo(var, expr, operation);
         Writers.emitInstruction("mov", stackPos, var.getText());
         var.freeRegister();
     }
 
+    public static void SetCCInstruction(String left, int typeOfRelation) 
+    {
+        switch (typeOfRelation) {
+            case picoCParser.LESS :
+                Writers.emitInstruction("setl", left);
+                break;
+            case picoCParser.LESS_EQUAL :
+                Writers.emitInstruction("setle", left);
+                break;
+            case picoCParser.GREATER :
+                Writers.emitInstruction("setg", left);
+                break;
+            case picoCParser.GREATER_EQUAL :
+                Writers.emitInstruction("setge", left);
+                break;
+            case picoCParser.EQUAL :
+                Writers.emitInstruction("sete", left);
+                break;
+            case picoCParser.NOT_EQUAL :
+                Writers.emitInstruction("setne", left);
+                break;
+        }
+    }
+
+    /* Function checks which operator is used, and based on that, 
+        emits set of instructions */
+    public static void decideAssign
+    (ExpressionObject expr, String stackPos, int operation) 
+    {
+        switch (operation) {
+            case picoCParser.ASSIGN :
+                Emitter.assign(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_ADD :
+                Emitter.assignAdd(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_SUB :
+                Emitter.assignSub(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_MUL :
+                Emitter.assignMul(expr, stackPos);
+                break;
+            case picoCParser.ASSIGN_DIV :
+                Emitter.assignDivMod(expr, stackPos, operation);
+                break;
+            case picoCParser.ASSIGN_MOD :
+                Emitter.assignDivMod(expr, stackPos, operation);
+                break;
+        }
+    }
+
+    /* Function emits conditional move operation based on previous
+        comparation. It always emits opposite of true condition. */
+    public static void setConditionalMoveOperator
+    (ExpressionObject expr2, ExpressionObject expr3) 
+    {
+        int typeOfRelation = RelationHelper.getRelation();
+        switch (typeOfRelation) {
+            case picoCParser.LESS :
+                Writers.emitInstruction("cmovge", expr2.getText(), expr3.getText());
+                break;
+            case picoCParser.LESS_EQUAL :
+                Writers.emitInstruction("cmovg", expr2.getText(), expr3.getText());
+                break;
+            case picoCParser.GREATER :
+                Writers.emitInstruction("cmovle", expr2.getText(), expr3.getText());
+                break;
+            case picoCParser.GREATER_EQUAL :
+                Writers.emitInstruction("cmovl", expr2.getText(), expr3.getText());
+                break;
+            case picoCParser.EQUAL :
+                Writers.emitInstruction("cmovne", expr2.getText(), expr3.getText());
+                break;
+            case picoCParser.NOT_EQUAL :
+                Writers.emitInstruction("cmove", expr2.getText(), expr3.getText());
+                break;
+        }
+    }
     
 }

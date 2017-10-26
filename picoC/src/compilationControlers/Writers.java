@@ -140,30 +140,6 @@ public class Writers
         String exit = inProcess + "Exit";
         Writers.emitInstruction("jmp", exit);
     }
-    
-    public static void SetCCInstruction(String left, int typeOfRelation) 
-    {
-        switch (typeOfRelation) {
-            case picoCParser.LESS :
-                Writers.emitInstruction("setl", left);
-                break;
-            case picoCParser.LESS_EQUAL :
-                Writers.emitInstruction("setle", left);
-                break;
-            case picoCParser.GREATER :
-                Writers.emitInstruction("setg", left);
-                break;
-            case picoCParser.GREATER_EQUAL :
-                Writers.emitInstruction("setge", left);
-                break;
-            case picoCParser.EQUAL :
-                Writers.emitInstruction("sete", left);
-                break;
-            case picoCParser.NOT_EQUAL :
-                Writers.emitInstruction("setne", left);
-                break;
-        }
-    }
 
     /* Function just emits label, but it is logicaly 
         separated from emitText */

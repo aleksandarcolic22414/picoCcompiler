@@ -237,7 +237,8 @@ public class Checker
         return true;
     }
 
-    public static void checkVarMatch(ExpressionObject left, ExpressionObject right) {
+    public static void checkVarMatch(ExpressionObject left, ExpressionObject right) 
+    {
         
     }
     

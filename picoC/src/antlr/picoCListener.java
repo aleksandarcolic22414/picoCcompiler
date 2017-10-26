@@ -532,6 +532,30 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitLogicalOR(picoCParser.LogicalORContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code DropConditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropConditional(picoCParser.DropConditionalContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropConditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropConditional(picoCParser.DropConditionalContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Conditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterConditional(picoCParser.ConditionalContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Conditional}
+	 * labeled alternative in {@link picoCParser#conditionalExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitConditional(picoCParser.ConditionalContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code DropAssign}
 	 * labeled alternative in {@link picoCParser#assignmentExpression}.
 	 * @param ctx the parse tree

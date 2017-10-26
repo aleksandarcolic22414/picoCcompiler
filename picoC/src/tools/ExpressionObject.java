@@ -82,7 +82,7 @@ public class ExpressionObject
             putInRegister();
         
         castVariable(MemoryClassEnumeration.CHAR);
-        Writers.SetCCInstruction(this.text, RelationHelper.getRelation());
+        Emitter.SetCCInstruction(this.text, RelationHelper.getRelation());
         setCompared(false);
     }
 
@@ -107,16 +107,17 @@ public class ExpressionObject
         return compared;
     }
 
-    /* Cast variable to specific size */
-    public void castVariable(MemoryClassEnumeration type) 
+    /* Cast variable to specific size nad return wheather it is casted */
+    public boolean castVariable(MemoryClassEnumeration type) 
     {
         /* Check if cast is needed */
         if (this.type == type)
-            return ;
+            return false;
         this.type = type;
         int sizeOfVar = NasmTools.getSize(type);
         this.size = sizeOfVar;
         this.text = NasmTools.castVariable(text, sizeOfVar);
+        return true;
     }
 
     public void freeRegister() 
@@ -200,7 +201,7 @@ public class ExpressionObject
     }
 
     /* Check wheather text is "a" register */
-    public boolean isARegister() 
+    public boolean isRegisterA() 
     {
         return NasmTools.stringToRegister(this.text) == NasmTools.AREG;
     }

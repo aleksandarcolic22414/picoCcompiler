@@ -140,8 +140,13 @@ logicalOrExpression
     |   logicalOrExpression '||' logicalAndExpression       #LogicalOR
     ;
 
+conditionalExpression
+    :   logicalOrExpression                                           #DropConditional
+    |   logicalOrExpression '?' expression ':' conditionalExpression  #Conditional
+    ;
+
 assignmentExpression
-    :   logicalOrExpression                           #DropAssign
+    :   conditionalExpression                         #DropAssign
     |   ID assignmentOperator assignmentExpression    #Assign
     ;
 
@@ -153,7 +158,6 @@ expression
     :   assignmentExpression
     |   expression ',' assignmentExpression
     ;      
-
 
 expressionStatement 
     :   expression? ';'  ;
