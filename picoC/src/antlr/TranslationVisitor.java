@@ -38,6 +38,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         functions = new HashMap<>();
     }
     
+    /*  
+        compilationUnit 
+            :   translationUnit? EOF  ;       
+    */
     @Override
     public ExpressionObject visitCompilationUnit(picoCParser.CompilationUnitContext ctx) 
     {
@@ -66,6 +70,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
     
+    /*  
+        functionDefinition 
+            :    typeSpecifier functionName '(' parameterList? ')' functionBody  
+    */
     @Override
     public ExpressionObject visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
@@ -121,6 +129,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
 
+    /*  
+        parameterList 
+            :   parameter (',' parameter)*  
+    */
     @Override
     public ExpressionObject visitParameterList(picoCParser.ParameterListContext ctx) 
     {
@@ -137,6 +149,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
 
+    /* parameter 
+          :   typeSpecifier ID   
+    */
     @Override
     public ExpressionObject visitParameter(picoCParser.ParameterContext ctx) 
     {
@@ -170,6 +185,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return super.visitParameter(ctx);
     }
 
+    /* 
+        declarationList 
+            :   typeSpecifier declaration (',' declaration)*  ';'  ; 
+    */
     @Override
     public ExpressionObject visitDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
@@ -189,7 +208,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
 
-    
+
+    /*  
+        declaration 
+            :   ID
+            |   assignmentExpression 
+            ;   
+    */
     @Override
     public ExpressionObject visitDeclaration(picoCParser.DeclarationContext ctx) 
     {
@@ -233,6 +258,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return super.visitDeclaration(ctx);
     }
 
+    /*
+        assignmentExpression
+            :   ID assignmentOperator assignmentExpression    #Assign
+            ;
+    */
     @Override
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
@@ -270,14 +300,27 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             );
     }
     
+    /*
+        statement 
+            :   compoundStatement
+            |   expressionStatement
+            |   selectionStatement
+            |   iterationStatement
+            |   jumpStatement                         
+            ;
+    */
     @Override
     public ExpressionObject visitStatement(picoCParser.StatementContext ctx) 
     {
         super.visitStatement(ctx); 
-//        NasmTools.freeAllRegisters();
-        return null;
+        return null;    // Let garbage collector free all expression objects
     }
     
+    /*
+        jumpStatement
+            :   'return' expression?  ';'      #Return
+            ;
+    */
     @Override
     public ExpressionObject visitReturn(picoCParser.ReturnContext ctx) 
     {
@@ -316,11 +359,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         restoreRegisters from NasmTools would override it's value, because
         that value would be pushed on stack along with other registers as
         saved registers from function. */
+    /*
+        postfixExpression
+            :   postfixExpression '(' argumentList? ')'  #FuncCall
+            ;
+    */
     @Override
-    public ExpressionObject visitFunctionCall(picoCParser.FunctionCallContext ctx) 
+    public ExpressionObject visitFuncCall(picoCParser.FuncCallContext ctx) 
     {
         List<picoCParser.ArgumentContext> argumentList;
-        String functionName = ctx.functionName().getText();
+        String functionName = ctx.postfixExpression().getText();
         /* Check if there is arguments */
         if (ctx.argumentList() != null) {
             argumentList = ctx.argumentList().argument();
@@ -360,12 +408,23 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             );
     }
 
+    
+    /*
+        argumentList 
+            :   argument (',' argument)*  ;
+    */
     @Override
     public ExpressionObject visitArgumentList(picoCParser.ArgumentListContext ctx) 
     {
         return super.visitArgumentList(ctx);
     }
 
+    /*
+        argument 
+            : assignmentExpression 
+            | STRING_LITERAL
+            ;    
+    */
     @Override
     public ExpressionObject visitArgument(picoCParser.ArgumentContext ctx) 
     {
@@ -385,7 +444,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
              ExpressionObject.STRING_LITERAL
             );
     }
-    
+    /*
+        expression
+            :   assignmentExpression
+            |   expression ',' assignmentExpression
+            ;      
+    */
     @Override
     public ExpressionObject visitExpression(picoCParser.ExpressionContext ctx)
     {
@@ -393,6 +457,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr;
     }
 
+    /*
+        primaryExpression 
+            :   '(' expression ')' #Parens
+            ;
+    */
     @Override
     public ExpressionObject visitParens(picoCParser.ParensContext ctx) 
     {
@@ -400,11 +469,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr;
     }
     
+    /*
+        unaryExpression 
+            :   '-'  unaryExpression    #Minus
+            ;
+    */
     @Override
-    public ExpressionObject visitNegation(picoCParser.NegationContext ctx) 
+    public ExpressionObject visitMinus(picoCParser.MinusContext ctx) 
     {
         /* Visit rest of expression */
-        ExpressionObject expr = super.visitNegation(ctx);
+        ExpressionObject expr = super.visitMinus(ctx);
         expr.comparisonCheck();
         /* Negate it */
         if (!expr.isRegister() || !expr.isStackVariable())
@@ -414,6 +488,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr;
     }
     
+    /*
+        additiveExpression 
+            :   additiveExpression op=('+'|'-') multiplicativeExpression  #AddSub
+            ;
+    */
     @Override
     public ExpressionObject visitAddSub(picoCParser.AddSubContext ctx) 
     {
@@ -466,6 +545,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return leftExpr;
     }
 
+    /*
+        multiplicativeExpression 
+            :   multiplicativeExpression op=('*'|'/'|'%') unaryExpression  #MulDivMod
+            ;
+    */
     @Override
     public ExpressionObject visitMulDivMod(picoCParser.MulDivModContext ctx) 
     {
@@ -513,8 +597,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return leftExpr;
     }
 
-    /* TODO: Implement direct stack position to be returned. 
-        Division must be changed in weird case of EDXTaken. */
+    /*
+        primaryExpression 
+            :   ID                 #Id
+            ;
+    */
     @Override
     public ExpressionObject visitId(picoCParser.IdContext ctx) 
     {
@@ -557,6 +644,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             );
     }
     
+    /*
+        primaryExpression 
+            :   INT       #Int
+            ;
+    */
     @Override
     public ExpressionObject visitInt(picoCParser.IntContext ctx) 
     {
@@ -569,12 +661,18 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     }
     
     
-    /* relation could be '<' '<=' '>' '>=' */
-    /* Result of some comparison is stored in least significant part of register
+    /*  Relation could be: '<' '<=' '>' '>=' ;
+           
+        Result of some comparison is stored in least significant part of register
         and in order to perform cmp operation, proper part of registers must be
         compared. For example: if left expression returned eax, and right 
         returned bl, than bl must be converted to ebx (4 byte size) in order
-        to do comparison between them */
+        to do comparison between them. 
+    
+        relationalExpression 
+            :   relationalExpression rel=('<'|'<='|'>='|'>') additiveExpression  #Relation
+            ;    
+    */
     @Override
     public ExpressionObject visitRelation(picoCParser.RelationContext ctx) 
     {
@@ -616,7 +714,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return ExpressionObject.freeOneOfTwo(left, right);
     }
     
-    /* rel could be '==' '!=' */
+    /*  Relation could be: '==' '!=' ; 
+    
+        equalityExpression
+            :   equalityExpression rel=('=='|'!=') relationalExpression    #Equality
+            ;
+    */
     @Override
     public ExpressionObject visitEquality(picoCParser.EqualityContext ctx) 
     {
@@ -662,6 +765,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return ExpressionObject.freeOneOfTwo(left, right);
     }
 
+    /*
+        logicalAndExpression
+            :   logicalAndExpression '&&' equalityExpression        #LogicalAND
+            ;
+    */
     @Override
     public ExpressionObject visitLogicalAND(picoCParser.LogicalANDContext ctx) 
     {
@@ -678,7 +786,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* If left expression is not register it needs to be moved to one */
         if (!left.isRegister())
             left.putInRegister();
-        
+        if (right.isInteger())
+            right.putInRegister();
         /* If sizes of variables doesn't match, than they need to be casted.
             Next line does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -693,6 +802,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return left;
     }
 
+    /*
+        logicalOrExpression
+            :   logicalOrExpression '||' logicalAndExpression       #LogicalOR
+            ;
+    */
     @Override
     public ExpressionObject visitLogicalOR(picoCParser.LogicalORContext ctx) 
     {
@@ -709,7 +823,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* If left expression is not register it needs to be moved to one */
         if (!left.isRegister())
             left.putInRegister();
-        
+        if (right.isInteger())
+            right.putInRegister();
         /* If sizes of variables doesn't match, than they need to be casted.
             Next three lines does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -724,6 +839,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return left;
     }
 
+    /*
+        selectionStatement
+            :   'if' '(' expression ')' statement ('else' statement)? ;
+    */
     @Override
     public ExpressionObject visitSelectionStatement(picoCParser.SelectionStatementContext ctx) 
     {
@@ -741,7 +860,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if ((expr = visit(ctx.expression())) == null)
             return null;
         if (!expr.isCompared())
-            NasmTools.compareWithZero(expr);
+            expr.compareWithZero();
         /* Free all registers taken by calculating the expression */
         NasmTools.freeAllRegisters();
         /* Get opposite jump */
@@ -767,6 +886,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
 
+    /*
+        unaryExpression 
+            :   '++' unaryExpression    #PreInc
+            ;
+    */
     @Override
     public ExpressionObject visitPreInc(picoCParser.PreIncContext ctx) 
     {
@@ -783,6 +907,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return res;
     }
 
+    /*
+        unaryExpression 
+            :   '--' unaryExpression    #PreDec
+            ;
+    */
     @Override
     public ExpressionObject visitPreDec(picoCParser.PreDecContext ctx) 
     {
@@ -801,7 +930,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     
     /* All that needs to be done for post incrementation is to first 
         put variable's value in some register for further calculation, 
-        and than increment that variable. */
+        and than increment that variable.
+    
+        postfixExpression
+            :   postfixExpression '++'                   #PostInc
+            ;
+    */
     @Override
     public ExpressionObject visitPostInc(picoCParser.PostIncContext ctx) 
     {
@@ -825,7 +959,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     /* All that needs to be done for post decrementation is to first 
         put variable's value in some register for further calculation, 
-        and than decrement that variable. */
+        and than decrement that variable. 
+        
+        postfixExpression
+            :   postfixExpression '--'                   #PostDec
+            ;
+    */
     @Override
     public ExpressionObject visitPostDec(picoCParser.PostDecContext ctx) 
     {
@@ -847,6 +986,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return res;
     }
 
+    /*
+        iterationStatement
+            :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
+    */
     @Override
     public ExpressionObject visitIterationStatement
     (picoCParser.IterationStatementContext ctx) 
@@ -886,7 +1029,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (ctx.expression(1) != null) {
             condition = visit(ctx.expression(1));
             if (!condition.isCompared())
-                NasmTools.compareWithZero(condition);
+                condition.compareWithZero();
             jump = RelationHelper.getTrueJump();
         }
         Writers.emitInstruction(jump, forStartLabel);
@@ -895,6 +1038,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }    
 
+    /*
+        jumpStatement
+            :   'break'     ';'      #Break
+            ;
+    */
     @Override
     public ExpressionObject visitBreak(picoCParser.BreakContext ctx) 
     {
@@ -904,6 +1052,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return null;
     }
 
+    /*
+        jumpStatement
+            :   'continue'     ';'      #Continue
+            ;
+    */
     @Override
     public ExpressionObject visitContinue(picoCParser.ContinueContext ctx) 
     {
@@ -912,8 +1065,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         Writers.emitInstruction("jmp", label);
         return null;
     }
-    /*            expr1             expr2               expr3       */
-    /*    logicalOrExpression '?' expression ':' conditionalExpression    */
+    
+    
+    /*
+        conditionalExpression
+            :   logicalOrExpression '?' expression ':' conditionalExpression  #Conditional
+            ;
+                    expr1                 expr2                expr3       
+    */
     @Override
     public ExpressionObject visitConditional(picoCParser.ConditionalContext ctx) 
     {
@@ -931,7 +1090,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if ((expr1 = visit(ctx.logicalOrExpression())) == null)
             return null;
         if (!expr1.isCompared())
-            NasmTools.compareWithZero(expr1); // do comparison if it is not done
+            expr1.compareWithZero(); // do comparison if it is not done
         if (expr1.isRegister())              // free taken register
             expr1.freeRegister();
         
@@ -944,13 +1103,45 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr2;
     }
 
+    /*
+        blockItem
+            :   declarationList
+            |   statement
+            ;
+    */
     @Override
-    public ExpressionObject visitBlockItem(picoCParser.BlockItemContext ctx) {
+    public ExpressionObject visitBlockItem(picoCParser.BlockItemContext ctx) 
+    {
         ExpressionObject expr = super.visitBlockItem(ctx); 
         NasmTools.freeAllRegisters();
         return expr;
     }
+
+    /* Negation is done simply by comparing variable with zero and then
+        "conditional equal set" is done (setcc where cc is condition). 
+        Something like:
+        cmp     eax, 0
+        sete    al     
+        So if eax was any other than 0 it becomes zero.
+        If eax was 0 it becomes 1.
     
-    
+        unaryExpression 
+            :   '!'  unaryExpression    #Negation
+            ;
+    */
+    @Override
+    public ExpressionObject visitNegation(picoCParser.NegationContext ctx) 
+    {
+        ExpressionObject expr;
+        /* Visiti expression and try to recover */
+        if ((expr = visit(ctx.unaryExpression())) == null)
+            return null;
+        expr.comparisonCheck();
+        /* Compare it with zero and emit proper instruction */
+        expr.compareWithZero();
+        expr.setNegation();
+        
+        return expr;
+    }
     
 }

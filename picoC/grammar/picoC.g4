@@ -78,36 +78,26 @@ selectionStatement
 iterationStatement
     :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
 
-functionCall 
-    :   functionName '(' argumentList? ')' ;
-
-argumentList 
-    :   argument (',' argument)*  ;
-
-argument 
-    : assignmentExpression 
-    | STRING_LITERAL
-    ;    
-
 primaryExpression 
     :   ID                 #Id
     |   INT                #Int
-    |   functionCall       #FuncCall
     |   '(' expression ')' #Parens
     ;
 
 postfixExpression
-    :   primaryExpression       #DropPostfix
-    |   postfixExpression '++'  #PostInc
-    |   postfixExpression '--'  #PostDec
+    :   primaryExpression                        #DropPostfix
+    |   postfixExpression '(' argumentList? ')'  #FuncCall
+    |   postfixExpression '++'                   #PostInc
+    |   postfixExpression '--'                   #PostDec
     ;
 
 unaryExpression 
     :   postfixExpression       #DropUnary
-    |   '-'  unaryExpression    #Negation
+    |   '-'  unaryExpression    #Minus
     |   '+'  unaryExpression    #Plus
     |   '++' unaryExpression    #PreInc
     |   '--' unaryExpression    #PreDec
+    |   '!'  unaryExpression    #Negation
     ;
 
 multiplicativeExpression 
@@ -161,6 +151,15 @@ expression
 
 expressionStatement 
     :   expression? ';'  ;
+
+
+argumentList 
+    :   argument (',' argument)*  ;
+
+argument 
+    : assignmentExpression 
+    | STRING_LITERAL
+    ;    
 
 ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
 INT     : [0-9]+ ;

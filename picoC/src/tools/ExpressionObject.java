@@ -1,5 +1,6 @@
 package tools;
 
+import antlr.picoCParser;
 import compilationControlers.Checker;
 import compilationControlers.CompilationControler;
 import compilationControlers.Writers;
@@ -206,4 +207,25 @@ public class ExpressionObject
         return NasmTools.stringToRegister(this.text) == NasmTools.AREG;
     }
 
+    /* Comparing with zero is used for expression like: if (a) which is equal
+        to: if (a != 0) */
+    public void compareWithZero() 
+    {
+        if (isInteger())
+            putInRegister();
+        Writers.emitInstruction("cmp", getText(), "0");
+        RelationHelper.setRelation(picoCParser.NOT_EQUAL);
+    }
+
+    /* Function cast's variable and emits proper instruction for negation */
+    public void setNegation() 
+    {
+        if (isInteger() || isStackVariable())
+            putInRegister();
+        
+        castVariable(MemoryClassEnumeration.CHAR);
+        Emitter.SetCCInstruction(this.text, picoCParser.EQUAL);
+        setCompared(false);
+    }
+    
 }

@@ -256,42 +256,6 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFunctionCall(picoCParser.FunctionCallContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFunctionCall(picoCParser.FunctionCallContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArgumentList(picoCParser.ArgumentListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArgumentList(picoCParser.ArgumentListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArgument(picoCParser.ArgumentContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArgument(picoCParser.ArgumentContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterId(picoCParser.IdContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -316,18 +280,6 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFuncCall(picoCParser.FuncCallContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFuncCall(picoCParser.FuncCallContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterParens(picoCParser.ParensContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -335,6 +287,18 @@ public class picoCBaseListener implements picoCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitParens(picoCParser.ParensContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFuncCall(picoCParser.FuncCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFuncCall(picoCParser.FuncCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -388,13 +352,13 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterNegation(picoCParser.NegationContext ctx) { }
+	@Override public void enterMinus(picoCParser.MinusContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitNegation(picoCParser.NegationContext ctx) { }
+	@Override public void exitMinus(picoCParser.MinusContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -431,6 +395,18 @@ public class picoCBaseListener implements picoCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPreDec(picoCParser.PreDecContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterNegation(picoCParser.NegationContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNegation(picoCParser.NegationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -659,6 +635,30 @@ public class picoCBaseListener implements picoCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpressionStatement(picoCParser.ExpressionStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArgumentList(picoCParser.ArgumentListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArgumentList(picoCParser.ArgumentListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArgument(picoCParser.ArgumentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArgument(picoCParser.ArgumentContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

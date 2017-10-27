@@ -915,8 +915,9 @@ public class NasmTools
         /* Emit false label */
         Writers.emitLabel(labelFalse);
         /* Actually, mov left 0 doesn't need to be done, because left will always
-            be 0, if or condition is evaluated false */
-//        Writers.emitInstruction("mov", left, "0");
+            be 0, if "OR" condition is evaluated false. But it is there for  
+            easier debugging */
+        Writers.emitInstruction("mov", left, "0");
 
         /* Emit label for rest of the code */
         Writers.emitLabel(afterFalseLabel);
@@ -1007,16 +1008,6 @@ public class NasmTools
         String nextFreeTemp = getNextFreeTemp4Bytes();
         Writers.emitInstruction("mov", nextFreeTemp, expr);
         return nextFreeTemp;
-    }
-
-    /* Comparing with zero is used for expression like: if (a) which is equal
-        to if (a != 0) */
-    public static void compareWithZero(ExpressionObject expr) 
-    {
-        if (expr.isInteger())
-            expr.putInRegister();
-        Writers.emitInstruction("cmp", expr.getText(), "0");
-        RelationHelper.setRelation(picoCParser.NOT_EQUAL);
     }
 
 

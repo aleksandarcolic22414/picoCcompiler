@@ -214,36 +214,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitIterationStatement(picoCParser.IterationStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionCall(picoCParser.FunctionCallContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionCall(picoCParser.FunctionCallContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#argumentList}.
-	 * @param ctx the parse tree
-	 */
-	void enterArgumentList(picoCParser.ArgumentListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#argumentList}.
-	 * @param ctx the parse tree
-	 */
-	void exitArgumentList(picoCParser.ArgumentListContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#argument}.
-	 * @param ctx the parse tree
-	 */
-	void enterArgument(picoCParser.ArgumentContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#argument}.
-	 * @param ctx the parse tree
-	 */
-	void exitArgument(picoCParser.ArgumentContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code Id}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
@@ -268,18 +238,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitInt(picoCParser.IntContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code FuncCall}
-	 * labeled alternative in {@link picoCParser#primaryExpression}.
-	 * @param ctx the parse tree
-	 */
-	void enterFuncCall(picoCParser.FuncCallContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code FuncCall}
-	 * labeled alternative in {@link picoCParser#primaryExpression}.
-	 * @param ctx the parse tree
-	 */
-	void exitFuncCall(picoCParser.FuncCallContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code Parens}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
@@ -291,6 +249,18 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitParens(picoCParser.ParensContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code FuncCall}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterFuncCall(picoCParser.FuncCallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code FuncCall}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitFuncCall(picoCParser.FuncCallContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code PostDec}
 	 * labeled alternative in {@link picoCParser#postfixExpression}.
@@ -340,17 +310,17 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitDropUnary(picoCParser.DropUnaryContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code Negation}
+	 * Enter a parse tree produced by the {@code Minus}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
 	 */
-	void enterNegation(picoCParser.NegationContext ctx);
+	void enterMinus(picoCParser.MinusContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code Negation}
+	 * Exit a parse tree produced by the {@code Minus}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
 	 */
-	void exitNegation(picoCParser.NegationContext ctx);
+	void exitMinus(picoCParser.MinusContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code Plus}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
@@ -387,6 +357,18 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPreDec(picoCParser.PreDecContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Negation}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterNegation(picoCParser.NegationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Negation}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitNegation(picoCParser.NegationContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
@@ -609,4 +591,24 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpressionStatement(picoCParser.ExpressionStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#argumentList}.
+	 * @param ctx the parse tree
+	 */
+	void enterArgumentList(picoCParser.ArgumentListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#argumentList}.
+	 * @param ctx the parse tree
+	 */
+	void exitArgumentList(picoCParser.ArgumentListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#argument}.
+	 * @param ctx the parse tree
+	 */
+	void enterArgument(picoCParser.ArgumentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#argument}.
+	 * @param ctx the parse tree
+	 */
+	void exitArgument(picoCParser.ArgumentContext ctx);
 }

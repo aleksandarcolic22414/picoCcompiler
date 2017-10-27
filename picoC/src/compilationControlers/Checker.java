@@ -16,11 +16,11 @@ public class Checker
 {
 
     public static boolean functionCallCheck
-    (picoCParser.FunctionCallContext ctx, List<picoCParser.ArgumentContext> argumentList) 
+    (picoCParser.FuncCallContext ctx, List<picoCParser.ArgumentContext> argumentList) 
     {
         int paramCount;
         FunctionsAnalyser funcAnalyser;
-        String functionName = ctx.functionName().getText();
+        String functionName = ctx.postfixExpression().getText();
         if (Checker.externalFunctionCheck(functionName))
             return true;
         if ((funcAnalyser = TranslationVisitor.functions.get(functionName)) == null) {
