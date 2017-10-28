@@ -7,8 +7,9 @@ import antlr.TranslationVisitor;
 import compilationControlers.Checker;
 import tools.FunctionsAnalyser;
 import constants.Constants;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import tools.Emitter;
@@ -36,7 +37,7 @@ public class NasmTools
     private static final int savedRegisters[] = new int[256];
     
     /* This variable represents maping for arguments of function. */
-    public static final Map<Integer, Map<MemoryClassEnumeration, String>> registersPicker;
+    public static final Map<Integer, Map<MemoryClassEnum, String>> registersPicker;
     
     /* This array holds information about registers
         that are used by picker (during argument calculations). 
@@ -67,6 +68,13 @@ public class NasmTools
     
     /* Represents number of saved registers on stack for computation. */
     public static int pushedRegistersOnStack = 0;
+    
+    /* List represents sizes of saved registers on stack for computation.
+        It works as stack. */
+    public static LinkedList<Integer> pushedRegistersSizes;
+    
+    /* Represents total size of saved registers on stack for computation */
+    public static int sizeOfPushedRegisters = 0;
     
     /* String to registers mapping for least significant byte of registers */
     private static final Map<String, Integer> storMap1Bytes;
@@ -151,8 +159,10 @@ public class NasmTools
     public static final String STRING_R14B = "r14b";
     public static final String STRING_R15B = "r15b";
     
-    /* Initialize mapping */
+    /* Initialize mapping and pushed registers list */
     static {
+        pushedRegistersSizes = new LinkedList<>();
+        
         storMap1Bytes = new HashMap<>();
         storMap1Bytes.put(STRING_AL, AREG);
         storMap1Bytes.put(STRING_BL, BREG);
@@ -252,34 +262,40 @@ public class NasmTools
         /* Register picker intialization ****************************/
         
         /* Initialize map for rdi register */
-        Map<MemoryClassEnumeration, String> diMap = new HashMap<>();
-        diMap.put(MemoryClassEnumeration.INT, "edi");
-        diMap.put(MemoryClassEnumeration.POINTER, "rdi");
+        Map<MemoryClassEnum, String> diMap = new HashMap<>();
+        diMap.put(MemoryClassEnum.CHAR, "dil");
+        diMap.put(MemoryClassEnum.INT, "edi");
+        diMap.put(MemoryClassEnum.POINTER, "rdi");
         
         /* Initialize map for rsi register */
-        Map<MemoryClassEnumeration, String> siMap = new HashMap<>();
-        siMap.put(MemoryClassEnumeration.INT, "esi");
-        siMap.put(MemoryClassEnumeration.POINTER, "rsi");
+        Map<MemoryClassEnum, String> siMap = new HashMap<>();
+        siMap.put(MemoryClassEnum.CHAR, "sil");
+        siMap.put(MemoryClassEnum.INT, "esi");
+        siMap.put(MemoryClassEnum.POINTER, "rsi");
         
         /* Initialize map for rdx register */
-        Map<MemoryClassEnumeration, String> dxMap = new HashMap<>();
-        dxMap.put(MemoryClassEnumeration.INT, "edx");
-        dxMap.put(MemoryClassEnumeration.POINTER, "rdx");
+        Map<MemoryClassEnum, String> dxMap = new HashMap<>();
+        dxMap.put(MemoryClassEnum.CHAR, "dl");
+        dxMap.put(MemoryClassEnum.INT, "edx");
+        dxMap.put(MemoryClassEnum.POINTER, "rdx");
         
         /* Initialize map for rcx register */
-        Map<MemoryClassEnumeration, String> cxMap = new HashMap<>();
-        cxMap.put(MemoryClassEnumeration.INT, "ecx");
-        cxMap.put(MemoryClassEnumeration.POINTER, "rcx");
+        Map<MemoryClassEnum, String> cxMap = new HashMap<>();
+        cxMap.put(MemoryClassEnum.CHAR, "cl");
+        cxMap.put(MemoryClassEnum.INT, "ecx");
+        cxMap.put(MemoryClassEnum.POINTER, "rcx");
         
         /* Initialize map for r8 register */
-        Map<MemoryClassEnumeration, String> r8Map = new HashMap<>();
-        r8Map.put(MemoryClassEnumeration.INT, "r8d");
-        r8Map.put(MemoryClassEnumeration.POINTER, "r8");
+        Map<MemoryClassEnum, String> r8Map = new HashMap<>();
+        r8Map.put(MemoryClassEnum.CHAR, "r8b");
+        r8Map.put(MemoryClassEnum.INT, "r8d");
+        r8Map.put(MemoryClassEnum.POINTER, "r8");
         
         /* Initialize map for r9 register */
-        Map<MemoryClassEnumeration, String> r9Map = new HashMap<>();
-        r9Map.put(MemoryClassEnumeration.INT, "r9d");
-        r9Map.put(MemoryClassEnumeration.POINTER, "r9");
+        Map<MemoryClassEnum, String> r9Map = new HashMap<>();
+        r9Map.put(MemoryClassEnum.CHAR, "r9b");
+        r9Map.put(MemoryClassEnum.INT, "r9d");
+        r9Map.put(MemoryClassEnum.POINTER, "r9");
         
         registersPicker = new HashMap<>();
         registersPicker.put(0, diMap);
@@ -351,53 +367,71 @@ public class NasmTools
     
 
     /* Function determines which is next position on stack
-        that can hold value. */
-    private static String getStackDisplacement() 
+        that can hold value and returns Expression object with that information. */
+    public static ExpressionObject getStackDisp(MemoryClassEnum type) 
     {
         /* Get function analyser */
         FunctionsAnalyser fa; 
         fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
         /* Calculate taken memory on stack */
         int taken = fa.getSpaceForLocals() + fa.getSpaceForParams();
-        
+        int size = NasmTools.getSize(type);
         /* Make room for integer */
         Writers.emitInstruction(
-                "sub", "rsp", Integer.toString(Constants.SIZE_OF_INT));
-        /* First free location is ebp-4. So every next is calculated by
-            multipliing pushedRegisters and sizeof(int).
-            Also taken must be added consider already taken place on stack. */
-        int disp = 
-                taken + 
-                Constants.SIZE_OF_INT + 
-                Constants.SIZE_OF_INT * pushedRegistersOnStack;
-        
+                "sub", "rsp", Integer.toString(size));
+        /* New location on stack in calculated by adding taken memory on
+            stack for local variables and parameters, 
+            and memory for pushed registers. */
+        sizeOfPushedRegisters += size;
+        int disp = taken + sizeOfPushedRegisters;
+        pushedRegistersSizes.push(size);
         ++pushedRegistersOnStack;
-        /* [rbp - displacement] is returned casted to dword
-            TODO: Determine which cast should be used  */
-        return "dword [rbp-" + Integer.toString(disp) + "]";
+        /* Cast variable to proper type */
+        String cast = NasmTools.getCast(type);
+        String text = cast + " [rbp-" + Integer.toString(disp) + "]";
+        return new ExpressionObject(text, type, ExpressionObject.VAR_STACK);
     }
 
-    /* Function determines which is next position on stack
-        that can hold value. */
-    private static String showStackDisplacement() {
+    public static String getStackDispStr(MemoryClassEnum type) 
+    {
         /* Get function analyser */
         FunctionsAnalyser fa; 
         fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
         /* Calculate taken memory on stack */
         int taken = fa.getSpaceForLocals() + fa.getSpaceForParams();
-        
-        /* First free location is ebp-4. So every next is calculated by
-            multipliing pushedRegisters and sizeof(int).
-            Also taken must be added consider already taken place on stack. */
-        int disp = 
-                taken + 
-                Constants.SIZE_OF_INT + 
-                Constants.SIZE_OF_INT * pushedRegistersOnStack;
-        
-        /* [rbp - displacement] is returned casted to dword
-            TODO: Determine which cast should be used  */
-        return "dword [rbp-" + Integer.toString(disp) + "]";
+        int size = NasmTools.getSize(type);
+        /* Make room for integer */
+        Writers.emitInstruction(
+                "sub", "rsp", Integer.toString(size));
+        /* New location on stack in calculated by adding taken memory on
+            stack for local variables and parameters, 
+            and memory for pushed registers. */
+        sizeOfPushedRegisters += size;
+        int disp = taken + sizeOfPushedRegisters;
+        pushedRegistersSizes.push(size);
+        ++pushedRegistersOnStack;
+        /* Cast variable to proper type */
+        String cast = NasmTools.getCast(type);
+        String text = cast + " [rbp-" + Integer.toString(disp) + "]";
+        return text;
     }
+ 
+    public static String showStackDispl(MemoryClassEnum type) 
+    {
+        /* Get function analyser */
+        FunctionsAnalyser fa; 
+        fa = TranslationVisitor.functions.get(FunctionsAnalyser.getInProcess());
+        /* Calculate taken memory on stack */
+        int taken = fa.getSpaceForLocals() + fa.getSpaceForParams();
+        int size = NasmTools.getSize(type);
+        int disp = taken + sizeOfPushedRegisters;
+        
+        /* Cast variable to proper type */
+        String cast = NasmTools.getCast(type);
+        String text = cast + " [rbp-" + Integer.toString(disp) + "]";
+        return text;
+    }
+    
     
     public static boolean isRegister(String left) 
     {
@@ -424,43 +458,39 @@ public class NasmTools
         }
     }
     
-    /* Return next free register if there is one. If there is no free registers
-        function returns first free stack memory */
-    public static String getNextFreeTemp4Bytes() 
-    {
-        int register = -1;
-        /* If all registers are taken */
-        if (!hasFreeRegisters()) 
-            return getStackDisplacement();
-        /* Look for first free register */
-        
-        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
-            if ((flags & (1 << i)) == 0) {
-                register = 1 << i;
-                flags |= register;
-                break;
-            }
-        }
-        return NasmTools.registerToString4Bytes(register);
-    }
-    
     /* Shows next free register if there is one. If there is no free registers
         function returns first free stack memory */
-    public static String showNextFreeTemp() 
+    public static String showNextFreeTemp(MemoryClassEnum type) 
     {
         int register = -1;
         /* If all registers are taken */
         if (flags == ((1 << NUMBER_OF_REGISTERS) - 1)) 
-            return showStackDisplacement();
-        /* Look for first free register */
-        
+            return showStackDispl(type);
+        /* Else, look for first free register */
         for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
             if ((flags & (1 << i)) == 0) {
                 register = 1 << i;
                 break;
             }
         }
-        return NasmTools.registerToString4Bytes(register);
+        return NasmTools.registerToString(register, type);
+    }
+    
+    /* Funtion cleans up memory location that is used for computations. 
+        That can be register or some value on stack. */
+    public static void free(ExpressionObject expr) 
+    {
+        /* If there is no saved values on stack */
+        if (expr.isRegister()) {
+            int register;
+            register = NasmTools.stringToRegister(expr.getText());
+            flags ^= register;
+        } else {
+            String s = Integer.toString(expr.getSize());
+            Writers.emitInstruction("add", "rsp", s);
+            --pushedRegistersOnStack;
+            sizeOfPushedRegisters -= pushedRegistersSizes.pop();
+        }
     }
     
     /* Funtion cleans up memory location that is used for computations. 
@@ -473,16 +503,30 @@ public class NasmTools
             register = NasmTools.stringToRegister(source);
             flags ^= register;
         } else {
-            String s = Integer.toString(Constants.SIZE_OF_INT);
+            int size = NasmTools.sizeOf(source);
+            String s = Integer.toString(size);
             Writers.emitInstruction("add", "rsp", s);
             --pushedRegistersOnStack;
+            sizeOfPushedRegisters -= pushedRegistersSizes.pop();
         }
     }
     
+    /* Returns string representation of 1 byte register */
+    public static String registerToString1Bytes(int register) 
+    {
+        return rtosMap1Bytes.get(register);
+    }
+    
     /* Returns string representation of 4 byte register */
-    private static String registerToString4Bytes(int register) 
+    public static String registerToString4Bytes(int register) 
     {
         return rtosMap4Bytes.get(register);
+    }
+    
+    /* Returns string representation of 8 byte register */
+    public static String registerToString8Bytes(int register) 
+    {
+        return rtosMap8Bytes.get(register);
     }
     
     /* Returns string representation of register if input string is register.
@@ -500,7 +544,7 @@ public class NasmTools
     }
 
     /* Returns size of type specifier */
-    public static int getSize(MemoryClassEnumeration typeSpecifier) 
+    public static int getSize(MemoryClassEnum typeSpecifier) 
     {
         switch (typeSpecifier) {
             case CHAR:
@@ -531,7 +575,7 @@ public class NasmTools
         initializeNewPickers();
         int lsize = parameters.size();
         String reg, paramName, paramPos;
-        MemoryClassEnumeration memclass;
+        MemoryClassEnum memclass;
         for (int i = 0; i < lsize; ++i) {
             /* argument name needed for it's position on stack */
             paramName = parameters.get(i).ID().getText();
@@ -540,8 +584,8 @@ public class NasmTools
                         getParameterVariables().get(paramName).getStackPosition();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            memclass = FunctionsAnalyser.getMemoryClass(
-                            parameters.get(i).typeSpecifier().getText());
+            int tokenType = parameters.get(i).typeSpecifier().type.getType();
+            memclass = NasmTools.getTypeOfVar(tokenType);
             reg = getNextRegForFuncCall(memclass);
 
             /* Emit copying from registers to stack for argument */
@@ -566,7 +610,7 @@ public class NasmTools
         int lsize = arguments.size();
         ExpressionObject res;
         String reg;
-        MemoryClassEnumeration memclass;
+        MemoryClassEnum memclass;
         /* Set pickers for next function */
         initializeNewPickers();
         
@@ -575,10 +619,11 @@ public class NasmTools
             res = visitor.visit(arguments.get(i));
             res.comparisonCheck();
             /* Get variable size based on register it is stored in */
-            memclass = res.getType();
+            if (res.getType() == MemoryClassEnum.CHAR)
+                res.castVariable(MemoryClassEnum.INT);
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            reg = getNextRegForFuncCall(memclass);
+            reg = getNextRegForFuncCall(res.getType());
             
             /* Emit copying from registers to stack memory for arguments setup */
             Writers.emitInstruction("mov", reg, res.getText());
@@ -603,7 +648,7 @@ public class NasmTools
     Warning: 
         If there is more than 6 non floating variables passed to function, than
         they are pushed in reverse order. This case won't work! */
-    private static String getNextRegForFuncCall(MemoryClassEnumeration memclass) 
+    public static String getNextRegForFuncCall(MemoryClassEnum memclass) 
     {
         /* If all registers is taken, than argument is passed on stack */
         if (registersPickerCounters[registerPikcerCountersTop] > 5)
@@ -621,7 +666,7 @@ public class NasmTools
     }
     
     /* Resets register counter for further usage and free flags */
-    private static void resetRegisterPicker() 
+    public static void resetRegisterPicker() 
     {
         registersPickerCounters[registerPikcerCountersTop] = 0;
         registerPikcersFlags[regPickFlagsTop] = 0x0;
@@ -629,17 +674,17 @@ public class NasmTools
         --registerPikcerCountersTop;
     }
     
-    private static MemoryClassEnumeration getMemoryClassFromSize(int size) 
+    public static MemoryClassEnum getMemoryClassFromSize(int size) 
     {
         switch (size) {
             case Constants.SIZE_OF_CHAR:
-                return MemoryClassEnumeration.CHAR;
+                return MemoryClassEnum.CHAR;
             case Constants.SIZE_OF_INT:
-                return MemoryClassEnumeration.INT;
+                return MemoryClassEnum.INT;
             case Constants.SIZE_OF_POINTER:    /* It is string literal name then: */
-                return MemoryClassEnumeration.POINTER;
+                return MemoryClassEnum.POINTER;
             default:
-                return MemoryClassEnumeration.VOID;
+                return MemoryClassEnum.VOID;
         }
     }
     
@@ -684,7 +729,7 @@ public class NasmTools
     }
 
     /* Not implemented yet */
-    private static String pushArgumentOnStack(MemoryClassEnumeration memclass) 
+    public static String pushArgumentOnStack(MemoryClassEnum memclass) 
     {
         return null;
     }
@@ -751,14 +796,7 @@ public class NasmTools
                 return castRegisterToInt(var);
             if (size == Constants.SIZE_OF_POINTER)
                 return castRegisterToPointer(var);
-        } else {  /* else it is variable */
-            if (size == Constants.SIZE_OF_CHAR)
-                return castVarToChar(var);
-            if (size == Constants.SIZE_OF_INT)
-                return castVarToInt(var);
-            if (size == Constants.SIZE_OF_POINTER)
-                return castVarToPointer(var);
-        }
+        } 
         return null;
     }
 
@@ -769,7 +807,7 @@ public class NasmTools
         return 1 byte representation of register. This is usually used for
         converting 4 byte register representation to 1 byte register
         representation for evaluating comparison of some kind. */
-    private static String castRegisterToChar(String inputRegister) 
+    public static String castRegisterToChar(String inputRegister) 
     {
         int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
         if (sizeOfInputRegister == Constants.SIZE_OF_CHAR)
@@ -783,7 +821,7 @@ public class NasmTools
         If register is already 4 byte register, than function returns 
         input register. Function also emits converting instruction if size
         of input register is less than 4 bytes */
-    private static String castRegisterToInt(String inputRegister) 
+    public static String castRegisterToInt(String inputRegister) 
     {
         int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
         if (sizeOfInputRegister == Constants.SIZE_OF_INT)
@@ -792,14 +830,14 @@ public class NasmTools
         String fourByteRegister = rtosMap4Bytes.get(register);
         /* Zero extend register if it input register is one byte */
         if (sizeOfInputRegister == Constants.SIZE_OF_CHAR)
-            Writers.emitInstruction("movzx", fourByteRegister, inputRegister);
+            Writers.emitInstruction("movsx", fourByteRegister, inputRegister);
         return fourByteRegister;
     }
     
     /* Function takes register, and converts it to it's 8 byte representation.
         If register is already 8 byte register, than function returns 
         input register */
-    private static String castRegisterToPointer(String inputRegister) 
+    public static String castRegisterToPointer(String inputRegister) 
     {
         int sizeOfInputRegister = NasmTools.sizeOf(inputRegister);
         if (sizeOfInputRegister == Constants.SIZE_OF_POINTER)
@@ -822,7 +860,7 @@ public class NasmTools
 
     /* Function casts input variable to char variable. If input variable is
        already a char variable, then input variable is returned */
-    private static String castVarToChar(String inputVar) 
+    public static String castVarToChar(String inputVar) 
     {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_CHAR)
@@ -831,7 +869,7 @@ public class NasmTools
     }
     /* Function casts input variable to int variable. If input variable is
        already a int variable, then input variable is returned */
-    private static String castVarToInt(String inputVar) 
+    public static String castVarToInt(String inputVar) 
     {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_INT)
@@ -841,7 +879,7 @@ public class NasmTools
 
     /* Function casts input variable to pointer variable. If input variable is
        already a pointer variable, then input variable is returned */
-    private static String castVarToPointer(String inputVar) 
+    public static String castVarToPointer(String inputVar) 
     {
         int sizeOfInputVar = NasmTools.sizeOf(inputVar);
         if (sizeOfInputVar == Constants.SIZE_OF_POINTER)
@@ -850,7 +888,7 @@ public class NasmTools
     }
     
     /* Function casts variable to proper size. */
-    private static String castVarToSizeOf(String inputVar, int size) 
+    public static String castVarToSizeOf(String inputVar, int size) 
     {
         String newVar = inputVar.substring(inputVar.indexOf("["));
         switch (size) {
@@ -868,61 +906,7 @@ public class NasmTools
         }
         return newVar;
     }
-
-    public static void andExpressionEvaluation(String left, String right) 
-    {
-        String labelTrue, labelFalse, afterFalseLabel;
-        /* Get labels */
-        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
-        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
-        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
-        
-        /* Emit compare with zero, and jump if it is true */
-        Writers.emitInstruction("cmp", left, "0");
-        Writers.emitInstruction("je", labelFalse);
-        /* Now compare right with 0 and jump if it is true */
-        Writers.emitInstruction("cmp", right, "0");
-        Writers.emitInstruction("je", labelFalse);
-        /* Emit true label and store 1 to left register, meaning evaluated: true */
-        Writers.emitLabel(labelTrue);
-        Writers.emitInstruction("mov", left, "1");
-        Writers.emitInstruction("jmp", afterFalseLabel);
-        /* Emit false label, and store 0 to left register, meaning evaluated: false */
-        Writers.emitLabel(labelFalse);
-        Writers.emitInstruction("mov", left, "0");
-        /* Emit label for rest of the code */
-        Writers.emitLabel(afterFalseLabel);
-    }
-
-    public static void orExpressionEvaluation(String left, String right) 
-    {
-        String labelTrue, labelFalse, afterFalseLabel;
-        /* Get labels */
-        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
-        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
-        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
-        
-        /* Emit compare with zero, and jump if it is false */
-        Writers.emitInstruction("cmp", left, "0");
-        Writers.emitInstruction("jne", labelTrue);
-        /* Now compare right with 0 and jump if it is true */
-        Writers.emitInstruction("cmp", right, "0");
-        Writers.emitInstruction("je", labelFalse);
-        /* Emit true label and store 1 to left register, meaning evaluated: true */
-        Writers.emitLabel(labelTrue);
-        Writers.emitInstruction("mov", left, "1");
-        Writers.emitInstruction("jmp", afterFalseLabel);
-        /* Emit false label */
-        Writers.emitLabel(labelFalse);
-        /* Actually, mov left 0 doesn't need to be done, because left will always
-            be 0, if "OR" condition is evaluated false. But it is there for  
-            easier debugging */
-        Writers.emitInstruction("mov", left, "0");
-
-        /* Emit label for rest of the code */
-        Writers.emitLabel(afterFalseLabel);
-    }
-
+    
     /* Function determines is there any free registers left */
     public static boolean hasFreeRegisters() 
     {
@@ -987,42 +971,19 @@ public class NasmTools
         return Integer.toString(res);
     } 
 
-    /* If variable was in comparison, than it needs to be casted to size of 1 byte.
-        If variable is variable on stack or integer number, than it needs to be
-        moved to register */
-    public static String castComparedVariable(String left) 
-    {
-        String lowestByte;
-        if (isStackVariable(left) || isInteger(left)) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
-            Writers.emitInstruction("mov", nextFreeTemp, left);
-            left = nextFreeTemp;
-        }
-        lowestByte = castVariable(left, Constants.SIZE_OF_CHAR);
-        Emitter.SetCCInstruction(lowestByte, RelationHelper.getRelation());
-        return lowestByte;
-    }
-
-    public static String putInRegister(String expr) 
-    {
-        String nextFreeTemp = getNextFreeTemp4Bytes();
-        Writers.emitInstruction("mov", nextFreeTemp, expr);
-        return nextFreeTemp;
-    }
-
-
     /* Function tries to optimize further calculation by returning register
         from relation if there is any */
-    public static String chooseReturnRelation(String left, String right) 
+    public static ExpressionObject chooseReturnRelation
+    (ExpressionObject left, ExpressionObject right) 
     {
-        if (NasmTools.isRegister(left)) {
-            if (NasmTools.isRegister(right))
-                NasmTools.free(right);
+        if (left.isInteger()) {
+            if (right.isRegister())
+                right.freeRegister();
             return left;
         } 
-        if (NasmTools.isRegister(right)) {
-            if (NasmTools.isRegister(left))
-                NasmTools.free(left);
+        if (right.isInteger()) {
+            if (left.isRegister())
+                left.freeRegister();
             return right;
         }
         return left;
@@ -1032,6 +993,101 @@ public class NasmTools
     {
         flags |= DREG;
         return rtosMap4Bytes.get(DREG);
+    }
+
+    public static MemoryClassEnum getTypeOfVar(int tokenType) 
+    {
+        switch (tokenType) {
+            case picoCParser.VOIDTYPE :
+                return MemoryClassEnum.VOID;
+            case picoCParser.CHARTYPE :
+                return MemoryClassEnum.CHAR;
+            case picoCParser.INTTYPE :
+                return MemoryClassEnum.INT;
+            case picoCParser.STRING_LITERAL : 
+                return MemoryClassEnum.POINTER;
+        }
+        return null;
+    }
+
+    /* Gets cast that should be used for casting pointer when accesing
+        variable on stack. For example, var could be int variable:
+        dword [rbp-4], so this function is responsible for "dword" cast  */
+    public static String getCast(MemoryClassEnum type) 
+    {
+        switch (type) {
+            case CHAR :
+                return Constants.STRING_BYTE;
+            case INT :
+                return Constants.STRING_DWORD;
+            case POINTER :
+                return Constants.STRING_QWORD;
+        }
+        return null;
+    }
+
+    public static ExpressionObject getNextFreeTempObj(MemoryClassEnum type) 
+    {
+        int register = -1;
+        /* If all registers are taken */
+        if (!hasFreeRegisters()) 
+            return getStackDisp(type);
+        /* Look for first free register */
+        
+        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+            if ((flags & (1 << i)) == 0) {
+                register = 1 << i;
+                flags |= register;
+                break;
+            }
+        }
+        String text = NasmTools.registerToString(register, type);
+        return new ExpressionObject(text, type, ExpressionObject.REGISTER);
+    }
+
+    public static String getNextFreeTempStr(MemoryClassEnum type) 
+    {
+        int register = -1;
+        /* If all registers are taken */
+        if (!hasFreeRegisters()) 
+            return getStackDispStr(type);
+        /* Look for first free register */
+        
+        for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+            if ((flags & (1 << i)) == 0) {
+                register = 1 << i;
+                flags |= register;
+                break;
+            }
+        }
+        String text = NasmTools.registerToString(register, type);
+        return text;
+    }
+    
+    public static String registerToString(int register, MemoryClassEnum type) 
+    {
+        switch (type) {
+            case CHAR :
+                return registerToString1Bytes(register);
+            case INT :
+                return registerToString4Bytes(register);
+            case POINTER :
+                return registerToString8Bytes(register);
+        }
+        return null;
+    }
+
+    public static boolean isRegisterA(String strRegister) 
+    {
+        int register = stringToRegister(strRegister);
+        return register == AREG;
+    }
+
+   
+    public static void main(String[] args) 
+    {
+        int a = 0b10000000;
+        System.out.println(a);
     }
     
 }

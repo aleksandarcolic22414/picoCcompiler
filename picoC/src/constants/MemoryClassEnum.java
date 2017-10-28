@@ -5,7 +5,7 @@ package constants;
  *
  * @author Aleksandar Colic
  */
-public enum MemoryClassEnumeration {
+public enum MemoryClassEnum {
     CHAR,
     INT,
     POINTER,

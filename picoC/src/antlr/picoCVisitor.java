@@ -29,18 +29,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#declaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDeclaration(picoCParser.DeclarationContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link picoCParser#functionDefinition}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -58,6 +46,18 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#declarationList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeclarationList(picoCParser.DeclarationListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#declaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeclaration(picoCParser.DeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

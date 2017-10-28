@@ -1,7 +1,7 @@
 package tools;
 
 
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 
 
 /**
@@ -22,10 +22,10 @@ public class Variable
     private boolean initialized;
 
     /* Memory class of variable */
-    private MemoryClassEnumeration typeSpecifier;
+    private MemoryClassEnum typeSpecifier;
 
     public Variable
-    (String name, String stackPosition, boolean initialized, MemoryClassEnumeration type) 
+    (String name, String stackPosition, boolean initialized, MemoryClassEnum type) 
     {
         this.name = name;
         this.stackPosition = stackPosition;
@@ -63,12 +63,12 @@ public class Variable
         this.initialized = initialized;
     }
 
-    public MemoryClassEnumeration getTypeSpecifier() 
+    public MemoryClassEnum getTypeSpecifier() 
     {
         return typeSpecifier;
     }
 
-    public void setTypeSpecifier(MemoryClassEnumeration typeSpecifier) 
+    public void setTypeSpecifier(MemoryClassEnum typeSpecifier) 
     {
         this.typeSpecifier = typeSpecifier;
     }

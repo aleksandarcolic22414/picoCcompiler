@@ -3,7 +3,7 @@ package tools;
 
 import antlr.picoCParser;
 import compilationControlers.Writers;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import nasm.NasmTools;
 
 /**
@@ -19,10 +19,11 @@ public class Emitter
     (ExpressionObject leftExpr, ExpressionObject rightExpr) 
     {
         String nextFreeTemp;
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         /* Chech wheather leftExpr is register. If it's not then it needs to be
             moved to one and then multiplied */
         if (!leftExpr.isRegister()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
+            nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
             Writers.emitInstruction("mov", nextFreeTemp, "eax");
             Writers.emitInstruction("mov", "eax", leftExpr.getText());
             Writers.emitInstruction("imul", "eax", rightExpr.getText());
@@ -42,11 +43,12 @@ public class Emitter
     {
         String nextFreeTemp, s1, s2, fakelyTaken = null;
         boolean fake = false;
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
         if (leftExpr.getText().equals("eax")) {
             if (NasmTools.isTakenRegisterDREG()) {
                 /* Never true, but stil */
-                nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
+                nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
                 Writers.emitInstruction("mov", nextFreeTemp, "edx");
                 Writers.emitInstruction("cdq");
                 Writers.emitInstruction("idiv", rightExpr.getText());
@@ -74,10 +76,10 @@ public class Emitter
             }
             /* Always true -> */
             if (NasmTools.isTakenRegisterAREG() && NasmTools.isTakenRegisterDREG()) {
-                s1 = NasmTools.getNextFreeTemp4Bytes();
+                s1 = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
                 Writers.emitInstruction("mov", s1, "eax");
                 /* save eax value into s1 */
-                s2 = NasmTools.getNextFreeTemp4Bytes();
+                s2 = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
                 Writers.emitInstruction("mov", s2, "edx");
                 /* save edx value into s2 */
                 /* setting eax and edx for div */
@@ -119,14 +121,70 @@ public class Emitter
         return leftExpr;
     }
     
+    public static void andExpressionEvaluation(String left, String right) 
+    {
+        String labelTrue, labelFalse, afterFalseLabel;
+        /* Get labels */
+        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
+        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
+        
+        /* Emit compare with zero, and jump if it is true */
+        Writers.emitInstruction("cmp", left, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Now compare right with 0 and jump if it is true */
+        Writers.emitInstruction("cmp", right, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Emit true label and store 1 to left register, meaning evaluated: true */
+        Writers.emitLabel(labelTrue);
+        Writers.emitInstruction("mov", left, "1");
+        Writers.emitInstruction("jmp", afterFalseLabel);
+        /* Emit false label, and store 0 to left register, meaning evaluated: false */
+        Writers.emitLabel(labelFalse);
+        Writers.emitInstruction("mov", left, "0");
+        /* Emit label for rest of the code */
+        Writers.emitLabel(afterFalseLabel);
+    }
+
+    public static void orExpressionEvaluation(String left, String right) 
+    {
+        String labelTrue, labelFalse, afterFalseLabel;
+        /* Get labels */
+        labelTrue = LabelsMaker.getNextTrueLogicalLabel();
+        labelFalse = LabelsMaker.getNextFalseLogicalLabel();
+        afterFalseLabel = LabelsMaker.getNextAfterFalseLogicalLabel();
+        
+        /* Emit compare with zero, and jump if it is false */
+        Writers.emitInstruction("cmp", left, "0");
+        Writers.emitInstruction("jne", labelTrue);
+        /* Now compare right with 0 and jump if it is true */
+        Writers.emitInstruction("cmp", right, "0");
+        Writers.emitInstruction("je", labelFalse);
+        /* Emit true label and store 1 to left register, meaning evaluated: true */
+        Writers.emitLabel(labelTrue);
+        Writers.emitInstruction("mov", left, "1");
+        Writers.emitInstruction("jmp", afterFalseLabel);
+        /* Emit false label */
+        Writers.emitLabel(labelFalse);
+        /* Actually, mov left 0 doesn't need to be done, because left will always
+            be 0, if "OR" condition is evaluated false. But it is there for  
+            easier debugging */
+        Writers.emitInstruction("mov", left, "0");
+
+        /* Emit label for rest of the code */
+        Writers.emitLabel(afterFalseLabel);
+    }
+
+    
     /* This function represent set of steps needed for calculating
         assignment expression */
-    public static void assign(ExpressionObject expr, String stackPos) 
+    public static void assign
+    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
     {
         if (expr.isRegister() || expr.isInteger()) {
             Writers.emitInstruction("mov", stackPos, expr.getText());
         } else {
-            String temp = NasmTools.getNextFreeTemp4Bytes();
+            String temp = NasmTools.getNextFreeTempStr(type);
             Writers.emitInstruction("mov", temp, expr.getText());
             Writers.emitInstruction("mov", stackPos, temp);
             NasmTools.free(temp);
@@ -135,7 +193,8 @@ public class Emitter
 
     /* This function represent set of steps needed for calculating
         assignment-add expression */
-    public static void assignAdd(ExpressionObject expr, String stackPos) 
+    public static void assignAdd
+    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
     {
         if (expr.isRegister()) {
             Writers.emitInstruction("add", stackPos, expr.getText());
@@ -143,7 +202,7 @@ public class Emitter
         } else if (expr.isInteger()) {
             Writers.emitInstruction("add", stackPos, expr.getText());
         } else {
-            String temp = NasmTools.getNextFreeTemp4Bytes();
+            String temp = NasmTools.getNextFreeTempStr(type);
             Writers.emitInstruction("mov", temp, expr.getText());
             Writers.emitInstruction("add", stackPos, temp);
             NasmTools.free(temp);
@@ -152,7 +211,8 @@ public class Emitter
 
     /* This function represent set of steps needed for calculating
         assignment-sub expression */
-    public static void assignSub(ExpressionObject expr, String stackPos) 
+    public static void assignSub
+    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
     {
         if (expr.isRegister()) {
             Writers.emitInstruction("sub", stackPos, expr.getText());
@@ -160,7 +220,7 @@ public class Emitter
         } else if (expr.isInteger()) {
             Writers.emitInstruction("sub", stackPos, expr.getText());
         } else {
-            String temp = NasmTools.getNextFreeTemp4Bytes();
+            String temp = NasmTools.getNextFreeTempStr(type);
             Writers.emitInstruction("mov", temp, expr.getText());
             Writers.emitInstruction("sub", stackPos, temp);
             NasmTools.free(temp);
@@ -174,7 +234,7 @@ public class Emitter
         /* Make expression object that contains var from stack 
             and put it in register */
         ExpressionObject var = new ExpressionObject
-            (stackPos, MemoryClassEnumeration.INT, ExpressionObject.VAR_STACK);
+            (stackPos, MemoryClassEnum.INT, ExpressionObject.VAR_STACK);
         var.putInRegister();
         /* Emitter multiply will return same value pased as first argument, 
             but in case that that change in a future, let's store it in var */
@@ -191,7 +251,7 @@ public class Emitter
         /* Make expression object that contain var from stack 
             and put var in register */
         ExpressionObject var = new ExpressionObject
-            (stackPos, MemoryClassEnumeration.INT, ExpressionObject.VAR_STACK);
+            (stackPos, MemoryClassEnum.INT, ExpressionObject.VAR_STACK);
         var.putInRegister();
         /* Emitter divideOrModulo will return same value passed as first argument, 
             but in case that that could change in a future, let's store it in var */
@@ -227,17 +287,17 @@ public class Emitter
     /* Function checks which operator is used, and based on that, 
         emits set of instructions */
     public static void decideAssign
-    (ExpressionObject expr, String stackPos, int operation) 
+    (ExpressionObject expr, String stackPos, int operation, MemoryClassEnum type) 
     {
         switch (operation) {
             case picoCParser.ASSIGN :
-                Emitter.assign(expr, stackPos);
+                Emitter.assign(expr, stackPos, type);
                 break;
             case picoCParser.ASSIGN_ADD :
-                Emitter.assignAdd(expr, stackPos);
+                Emitter.assignAdd(expr, stackPos, type);
                 break;
             case picoCParser.ASSIGN_SUB :
-                Emitter.assignSub(expr, stackPos);
+                Emitter.assignSub(expr, stackPos, type);
                 break;
             case picoCParser.ASSIGN_MUL :
                 Emitter.assignMul(expr, stackPos);

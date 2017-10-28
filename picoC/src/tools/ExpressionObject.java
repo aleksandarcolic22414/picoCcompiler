@@ -5,9 +5,8 @@ import compilationControlers.Checker;
 import compilationControlers.CompilationControler;
 import compilationControlers.Writers;
 import constants.Constants;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import nasm.NasmTools;
-import static nasm.NasmTools.getNextFreeTemp4Bytes;
 
 /**
  *
@@ -20,7 +19,7 @@ public class ExpressionObject
     /* Internal informations */
     public int flags = 0x0;
     /* Memory class of expression evaluated */
-    MemoryClassEnumeration type = MemoryClassEnumeration.VOID;
+    MemoryClassEnum type = MemoryClassEnum.VOID;
     /* Shows if variable was in relation or equality context */
     private boolean compared = false;
     /* Size of var */
@@ -34,7 +33,7 @@ public class ExpressionObject
     
     /* Constructor */
     public ExpressionObject
-    (String text, MemoryClassEnumeration type, int info) 
+    (String text, MemoryClassEnum type, int info) 
     {
         this.text = text;
         this.type = type;
@@ -50,11 +49,11 @@ public class ExpressionObject
         this.text = text;
     }
 
-    public MemoryClassEnumeration getType() {
+    public MemoryClassEnum getType() {
         return type;
     }
 
-    public void setType(MemoryClassEnumeration type) 
+    public void setType(MemoryClassEnum type) 
     {
         this.type = type;
         /* Set proper size */
@@ -82,7 +81,7 @@ public class ExpressionObject
         if (isStackVariable() || isInteger()) 
             putInRegister();
         
-        castVariable(MemoryClassEnumeration.CHAR);
+        castVariable(MemoryClassEnum.CHAR);
         Emitter.SetCCInstruction(this.text, RelationHelper.getRelation());
         setCompared(false);
     }
@@ -108,12 +107,14 @@ public class ExpressionObject
         return compared;
     }
 
-    /* Cast variable to specific size nad return wheather it is casted */
-    public boolean castVariable(MemoryClassEnumeration type) 
+    /* Cast variable to specific size and return wheather it is casted in */
+    public boolean castVariable(MemoryClassEnum type) 
     {
         /* Check if cast is needed */
         if (this.type == type)
             return false;
+        if (!this.isRegister())
+            this.putInRegister();
         this.type = type;
         int sizeOfVar = NasmTools.getSize(type);
         this.size = sizeOfVar;
@@ -123,14 +124,13 @@ public class ExpressionObject
 
     public void freeRegister() 
     {
-        NasmTools.free(text);
+        NasmTools.free(this);
     }
 
     public void setToRegister() 
     {
         this.flags = ExpressionObject.REGISTER;
     }
-
     
     public static void castVariablesToMaxSize
     (ExpressionObject left, ExpressionObject right) 
@@ -143,10 +143,12 @@ public class ExpressionObject
         Checker.checkVarMatch(left, right);
         int maxSizeOfVars = left.size < right.size ? right.size : left.size;
         if (left.size == maxSizeOfVars) {  // right needs to be casted
+            right.putInRegister();
             casted = NasmTools.castVariable(right.getText(), maxSizeOfVars);
             right.setText(casted);
             right.setType(left.getType());
         } else {  // left needs to be casted
+            left.putInRegister();
             casted = NasmTools.castVariable(left.getText(), maxSizeOfVars);
             left.setText(casted);
             left.setType(right.getType());
@@ -155,7 +157,7 @@ public class ExpressionObject
     }
     
     /* Set size of variable */
-    private void setSize(MemoryClassEnumeration type) 
+    public void setSize(MemoryClassEnum type) 
     {
         switch (type) {
             case CHAR:
@@ -192,7 +194,7 @@ public class ExpressionObject
     {
         if (this.flags == ExpressionObject.REGISTER)
             return false;
-        String nextFreeTemp = getNextFreeTemp4Bytes();
+        String nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
         if (!NasmTools.isRegister(nextFreeTemp))
             CompilationControler.errorOcured(null, null, "Out of registers!");
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
@@ -223,7 +225,7 @@ public class ExpressionObject
         if (isInteger() || isStackVariable())
             putInRegister();
         
-        castVariable(MemoryClassEnumeration.CHAR);
+        castVariable(MemoryClassEnum.CHAR);
         Emitter.SetCCInstruction(this.text, picoCParser.EQUAL);
         setCompared(false);
     }

@@ -1,7 +1,7 @@
 package antlr;
 
 import tools.FunctionsAnalyser;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +25,7 @@ public class TranslationListener extends picoCBaseListener
     /* Curent function context.  */
     public static FunctionsAnalyser curFuncCtx = null;
     
-    public static MemoryClassEnumeration currentDeclaratorType;
+    public static MemoryClassEnum currentDeclaratorType;
     
     public TranslationListener()
     {
@@ -56,15 +56,15 @@ public class TranslationListener extends picoCBaseListener
         
         /* Iterate over list and calculate total size of parameters in bytes */
         for (i = 0; i < paramsNum; ++i) {
-            /* Get type specifier's name and convert it to bytes */
-            String paramText = parameterList.get(i).typeSpecifier().getText();
-            MemoryClassEnumeration type = FunctionsAnalyser.getMemoryClass(paramText);
+            /* Get type of var and convert it to bytes */
+            int tokenType = parameterList.get(i).typeSpecifier().type.getType();
+            MemoryClassEnum type = NasmTools.getTypeOfVar(tokenType);
             sizeOfVar = NasmTools.getSize(type);
             /* Add it to overall size */
             sizeOfParams += sizeOfVar;
         }
         /* Set in function analyser */
-        curFuncCtx.setNumberOfParameters(sizeOfParams);
+        curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
     }
     
@@ -74,8 +74,8 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterDeclarationList(picoCParser.DeclarationListContext ctx) 
     {
-        currentDeclaratorType = 
-                FunctionsAnalyser.getMemoryClass(ctx.typeSpecifier().getText());
+        int tokenType = ctx.typeSpecifier().type.getType();
+        currentDeclaratorType = NasmTools.getTypeOfVar(tokenType);
     }
 
     @Override

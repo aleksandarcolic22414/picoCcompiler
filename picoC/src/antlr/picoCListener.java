@@ -38,26 +38,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclaration(picoCParser.DeclarationContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclaration(picoCParser.DeclarationContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link picoCParser#functionDefinition}.
 	 * @param ctx the parse tree
 	 */
@@ -87,6 +67,26 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#declarationList}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclarationList(picoCParser.DeclarationListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#declarationList}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclarationList(picoCParser.DeclarationListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclaration(picoCParser.DeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclaration(picoCParser.DeclarationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

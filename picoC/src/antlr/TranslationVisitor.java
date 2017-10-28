@@ -7,7 +7,7 @@ import nasm.DataSegment;
 import compilationControlers.Checker;
 import compilationControlers.CompilationControler;
 import constants.Constants;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import nasm.NasmTools;
 import java.io.IOException;
 import java.util.HashMap;
@@ -79,9 +79,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Get name and memory class of function */
         String name = ctx.functionName().getText();
-        String memoryClass = ctx.typeSpecifier().getText();
-        MemoryClassEnumeration memclass;
-        memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
+        int tokenType = ctx.typeSpecifier().type.getType();
+        MemoryClassEnum memclass;
+        memclass = NasmTools.getTypeOfVar(tokenType);
         
         /* Chech weather function is already defined */
         if (!Checker.funcDefCheck(ctx, name))
@@ -163,9 +163,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Get variable's memory class  */
-        String type = ctx.typeSpecifier().getText();
-        MemoryClassEnumeration typeSpecifier;
-        typeSpecifier = FunctionsAnalyser.getMemoryClass(type);
+        int type = ctx.typeSpecifier().type.getType();
+        MemoryClassEnum typeSpecifier;
+        typeSpecifier = NasmTools.getTypeOfVar(type);
         
         /* Get stack position */
         String stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
@@ -197,13 +197,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         }
         /* Get memory class for declaration */
-        String memoryClass = ctx.typeSpecifier().getText();
-        MemoryClassEnumeration memclass = FunctionsAnalyser.getMemoryClass(memoryClass);
+        int tokenType = ctx.typeSpecifier().type.getType();
+        MemoryClassEnum memclass = NasmTools.getTypeOfVar(tokenType);
         curFuncAna.setCurrentDeclaratorType(memclass);
         /* Keep declaring rest of the list */
         super.visitDeclarationList(ctx);
         /* Set declarator to void (neutral) */
-        curFuncAna.setCurrentDeclaratorType(MemoryClassEnumeration.VOID);
+        curFuncAna.setCurrentDeclaratorType(MemoryClassEnum.VOID);
         
         return null;
     }
@@ -237,7 +237,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Get variable's memory class  */
-        MemoryClassEnumeration typeSpecifier;
+        MemoryClassEnum typeSpecifier;
         typeSpecifier = curFuncAna.getCurrentDeclaratorType();
         
         /* Get stack position */
@@ -285,10 +285,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
         String stackPos = var.getStackPosition();
         /* Cast variable if needed */
-        expr.castVariable(var.getTypeSpecifier());
+        if (!expr.isInteger())
+            expr.castVariable(var.getTypeSpecifier());
         
         /* See which operator is used for assign and emit proper instruction */
-        Emitter.decideAssign(expr, stackPos, operation);
+        Emitter.decideAssign(expr, stackPos, operation, var.getTypeSpecifier());
         
         if (expr.isRegister())
             expr.freeRegister();
@@ -386,7 +387,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             saved on stack with rest of registers with saveRegistersOnStack.
             Instead, just peek to see which is next free register and after
             function call move function return value to it. */
-        String nextFreeTemp = NasmTools.showNextFreeTemp();
+        MemoryClassEnum type = MemoryClassEnum.INT;
+        if (!NasmTools.isFunctionFromLib(functionName))
+            type = functions.get(functionName).getMemoryClass();
+        String nextFreeTemp = NasmTools.showNextFreeTemp(type);
+        String areg = NasmTools.registerToString(NasmTools.AREG, type);
         /* Registers are saved and freed for further use */
         NasmTools.saveRegistersOnStack();
         NasmTools.moveArgsToRegisters(this, argumentList);
@@ -395,15 +400,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             Writers.emitInstruction("mov", "eax", "0");
         Writers.emitInstruction("call", functionName);
         /* Avoid unnecessary move */
-        if (!nextFreeTemp.equals("eax"))
-            Writers.emitInstruction("mov", nextFreeTemp, "eax");
+        if (!NasmTools.isRegisterA(nextFreeTemp))
+            Writers.emitInstruction("mov", nextFreeTemp, areg);
         NasmTools.restoreRegisters();
-        nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
+        nextFreeTemp = NasmTools.getNextFreeTempStr(type);
         
         /* TODO: See in which part of register is return value from function */
         return new ExpressionObject
             (nextFreeTemp, 
-             MemoryClassEnumeration.INT, 
+             type, 
              ExpressionObject.REGISTER
             );
     }
@@ -440,7 +445,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Return string literal */
         return new ExpressionObject
             (literalName, 
-             MemoryClassEnumeration.POINTER, 
+             MemoryClassEnum.POINTER, 
              ExpressionObject.STRING_LITERAL
             );
     }
@@ -520,7 +525,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             to be moved to one */
         if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
             leftExpr.putInRegister();
-        
+        if (leftExpr.getType() == MemoryClassEnum.CHAR
+                && rightExpr.getType() == MemoryClassEnum.CHAR)
+            leftExpr.castVariable(MemoryClassEnum.INT);
         /* Cast to proper type if needed */
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
@@ -529,7 +536,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* If left operand is not register, then it needs to be moved to one.
             It's moved to eax, but first eax is saved on stack. */
         if (!leftExpr.isRegister()) {
-            nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
+            nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
             Writers.emitInstruction("mov", nextFreeTemp, "eax");
             Writers.emitInstruction("mov", "eax", leftExpr.getText());
             Writers.emitInstruction(operation, "eax", rightExpr.getText());
@@ -572,14 +579,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.setText(res);
             return leftExpr;
         }
-        
-        /* Cast to proper type if needed */
-        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
-        
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
         if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
             leftExpr.putInRegister();
+        
+        if (leftExpr.getType() == MemoryClassEnum.CHAR
+                && rightExpr.getType() == MemoryClassEnum.CHAR)
+            leftExpr.castVariable(MemoryClassEnum.INT);
+        /* Cast to proper type if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
         /* If right operand is integer number, than it needs to be moved to 
             regiser or stack. */
@@ -655,7 +664,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         String val = ctx.INT().getText();
         return new ExpressionObject
             (val, 
-             MemoryClassEnumeration.INT, 
+             MemoryClassEnum.INT, 
              ExpressionObject.INTEGER
             );
     }
@@ -735,20 +744,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* If left and right expressions are stack variable, than one need to be
             moved to register in order to do cmp operation */
-        if (left.isStackVariable() && right.isStackVariable()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
-            Writers.emitInstruction("mov", nextFreeTemp, left.getText());
-            left.setToRegister();
-            left.setText(nextFreeTemp);
-        }
+        if (left.isStackVariable() && right.isStackVariable())
+            left.putInRegister();
+        
         /* If left and right expressions are Integer number, than one need to be
             moved to register in order to do cmp operation */
-        if (left.isInteger() && right.isInteger()) {
-            String nextFreeTemp = NasmTools.getNextFreeTemp4Bytes();
-            Writers.emitInstruction("mov", nextFreeTemp, left.getText());
-            left.setToRegister();
-            left.setText(nextFreeTemp);
-        }
+        if (left.isInteger() && right.isInteger())
+            left.putInRegister();
         /* If sizes of variables doesn't match, than they need to be casted.
             Next line does nothing if sizes of variables match.
             Variable could be register or variable on stack. */
@@ -794,7 +796,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         ExpressionObject.castVariablesToMaxSize(left, right);
         
         /* Call nasm tools to emit standard procedure for evaluating 'AND' expression */
-        NasmTools.andExpressionEvaluation(left.getText(), right.getText());
+        Emitter.andExpressionEvaluation(left.getText(), right.getText());
         
         /* Free right if it is regiser and return left */
         if (right.isRegister())
@@ -831,7 +833,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         ExpressionObject.castVariablesToMaxSize(left, right);
         
         /* Call nasm tools to emit standard procedure for evaluating 'OR' expression */
-        NasmTools.orExpressionEvaluation(left.getText(), right.getText());
+        Emitter.orExpressionEvaluation(left.getText(), right.getText());
         
         /* Free right and return left */
         if (right.isRegister())

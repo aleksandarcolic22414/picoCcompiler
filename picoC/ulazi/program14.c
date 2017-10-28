@@ -1,4 +1,4 @@
-char f(char a, char b, int c, char d, int e, int f)
+int f(char a, char b, int c, char d, int e, int f)
 {
     return a+b+c+d+e+f;
 }
@@ -20,6 +20,6 @@ int main()
 }
 
 /*  Izlaz:
-    -46
+    210
     1
 */

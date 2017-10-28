@@ -4,7 +4,7 @@ import antlr.TranslationVisitor;
 import antlr.picoCParser;
 import tools.FunctionsAnalyser;
 import tools.Variable;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import java.util.List;
 import tools.ExpressionObject;
 
@@ -81,7 +81,7 @@ public class Checker
 
     public static void funcRetStatCheck(picoCParser.FunctionDefinitionContext ctx) 
     {
-        if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnumeration.VOID && 
+        if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnum.VOID && 
                 !TranslationVisitor.curFuncAna.isHasReturn()) 
         {
             CompilationControler.warningOcured

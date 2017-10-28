@@ -3,7 +3,7 @@ package tools;
 
 import antlr.TranslationListener;
 import antlr.TranslationVisitor;
-import constants.MemoryClassEnumeration;
+import constants.MemoryClassEnum;
 import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,13 +44,13 @@ public class FunctionsAnalyser
     private int spaceForParams = 0;
     
     /* One of memory class identifiers used for return value */
-    private MemoryClassEnumeration memoryClass = MemoryClassEnumeration.VOID;
+    private MemoryClassEnum memoryClass = MemoryClassEnum.VOID;
 
     /* Wheather function has return statement */
     private boolean hasReturn = false;
     
     /* Represents memory class for declarationList */
-    private MemoryClassEnumeration currentDeclaratorType = MemoryClassEnumeration.VOID;
+    private MemoryClassEnum currentDeclaratorType = MemoryClassEnum.VOID;
 
     public FunctionsAnalyser(String functionName) 
     {
@@ -92,7 +92,7 @@ public class FunctionsAnalyser
         this.localVariablesCounter = localVariablesCounter;
     }
     
-    public void setMemoryClass(MemoryClassEnumeration memoryClass) {
+    public void setMemoryClass(MemoryClassEnum memoryClass) {
         this.memoryClass = memoryClass;
     }
 
@@ -116,7 +116,7 @@ public class FunctionsAnalyser
         return localVariablesCounter;
     }
 
-    public MemoryClassEnumeration getMemoryClass() {
+    public MemoryClassEnum getMemoryClass() {
         return memoryClass;
     }
 
@@ -124,11 +124,11 @@ public class FunctionsAnalyser
         return hasReturn;
     }
 
-    public MemoryClassEnumeration getCurrentDeclaratorType() {
+    public MemoryClassEnum getCurrentDeclaratorType() {
         return currentDeclaratorType;
     }
 
-    public void setCurrentDeclaratorType(MemoryClassEnumeration currentDeclaratorType) {
+    public void setCurrentDeclaratorType(MemoryClassEnum currentDeclaratorType) {
         this.currentDeclaratorType = currentDeclaratorType;
     }
 
@@ -156,19 +156,7 @@ public class FunctionsAnalyser
         this.spaceForParams = spaceForParams;
     }
 
-    public static MemoryClassEnumeration getMemoryClass(String memclass)
-    {
-        switch (memclass) {
-            case "int":
-                return MemoryClassEnumeration.INT;
-            case "void":
-                return MemoryClassEnumeration.VOID;
-            default:
-                return null;
-        }
-    }
-
-    public String declareLocalVariable(MemoryClassEnumeration type) 
+    public String declareLocalVariable(MemoryClassEnum type) 
     {
         /* Increase number of local variables */
         ++localVariablesCounter;
@@ -177,10 +165,11 @@ public class FunctionsAnalyser
         /* Calculate new stack displacement */
         spaceForLocals += sizeofvar;
         /* TODO: Determine which cast should be used */
-        return "dword [rbp-" + Integer.toString(spaceForLocals) + "]";
+        String cast = NasmTools.getCast(type);
+        return cast + " [rbp-" + Integer.toString(spaceForLocals) + "]";
     }
 
-    public String declareParameterVariable(MemoryClassEnumeration type) 
+    public String declareParameterVariable(MemoryClassEnum type) 
     {
         /* Increase number of parameter variables */
         int sizeofvar = NasmTools.getSize(type);
@@ -191,8 +180,8 @@ public class FunctionsAnalyser
         int taken = TranslationListener.lisFuncAna.get(fname).getSpaceForLocals();
         /* Calculate new place on stack */
         spaceForParams += sizeofvar;
-        /* TODO: Determine which cast should be used */
-        return "dword [rbp-" + Integer.toString(taken + spaceForParams) + "]";
+        String cast = NasmTools.getCast(type);
+        return cast + " [rbp-" + Integer.toString(taken + spaceForParams) + "]";
     }
 
     public Variable getAnyVariable(String id) 

@@ -10,10 +10,25 @@ translationUnit
 
 externalDeclaration 
     :   functionDefinition
-    |   declarationList
     |   expressionStatement
+    |   declarationList
     |   ';'
     ;
+
+functionDefinition 
+    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
+    ;
+
+typeSpecifier 
+    : type=('int'
+           | 'char'
+           | 'void')
+    ;
+
+functionName 
+    :   ID 
+    ;
+
 
 declarationList 
     :   typeSpecifier declaration (',' declaration)*  ';'  ;
@@ -22,18 +37,6 @@ declaration
     :   ID
     |   assignmentExpression
     ;
-
-functionDefinition 
-    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
-    ;
-
-typeSpecifier 
-    :   'int'   
-    |   'void'
-    ;
-
-functionName 
-    :   ID ;
 
 parameterList 
     :   parameter (',' parameter)*  ;
@@ -161,23 +164,11 @@ argument
     | STRING_LITERAL
     ;    
 
-ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
-INT     : [0-9]+ ;
-WS      : [ \t\r\n]+ -> skip;
 
-STRING_LITERAL  : '"' (ESC|.)*? '"' ;
-
-fragment
-ESC     : '\\"' | '\\\\' ; // 2-char sequences \" and \\
-
-/* COMMENT used to be -> channel(HIDDEN) but it is skiped for now */
-MULTY_LINE_COMMENT
-    :   '/*' .*? '*/'       -> skip // match anything between /* and */
-    ;
-
-SINGLE_LINE_COMMENT
-    :   '//' .*? '\r'? '\n' -> skip  // match anything after // until newline
-    ;
+/* Type specifiers */
+VOIDTYPE : 'void' ;
+INTTYPE  : 'int'  ;
+CHARTYPE : 'char' ;
 
 MUL : '*' ;
 DIV : '/' ;
@@ -202,8 +193,22 @@ GREATER_EQUAL :  '>=' ;
 LOGICAL_AND :   '&&'  ;
 LOGICAL_OR  :   '||'  ; 
 
-/* Type specifiers */
+ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
+INT     : [0-9]+ ;
+WS      : [ \t\r\n]+ -> skip;
+
+STRING_LITERAL  : '"' (ESC|.)*? '"' ;
+
 fragment
-VOIDTYPE : 'void' ;
-fragment
-INTTYPE  : 'int'  ;
+ESC     : '\\"' | '\\\\' ; // 2-char sequences \" and \\
+
+/* COMMENT used to be -> channel(HIDDEN) but it is skiped for now */
+MULTY_LINE_COMMENT
+    :   '/*' .*? '*/'       -> skip // match anything between /* and */
+    ;
+
+SINGLE_LINE_COMMENT
+    :   '//' .*? '\r'? '\n' -> skip  // match anything after // until newline
+    ;
+
+
