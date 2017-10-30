@@ -370,6 +370,18 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitNegation(picoCParser.NegationContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Address}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterAddress(picoCParser.AddressContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Address}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitAddress(picoCParser.AddressContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree

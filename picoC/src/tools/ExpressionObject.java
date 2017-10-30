@@ -6,6 +6,7 @@ import compilationControlers.CompilationControler;
 import compilationControlers.Writers;
 import constants.Constants;
 import constants.MemoryClassEnum;
+import java.util.LinkedList;
 import nasm.NasmTools;
 
 /**
@@ -24,6 +25,13 @@ public class ExpressionObject
     private boolean compared = false;
     /* Size of var */
     private int size;
+    /* Stack displacement for stack variables */
+    private String stackDisp = null;
+    /* Pointers information. This variable operates as stack. The top of
+        stack is current memory type that this variable points to.
+        If some variable is pointer to: pointer to a char, than this
+        list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
+    private LinkedList<MemoryClassEnum> pointerType;
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
@@ -39,8 +47,29 @@ public class ExpressionObject
         this.type = type;
         flags |= info;
         setSize(type);
+        if ((info & VAR_STACK) != 0) {
+            this.text = castStackVar(text, type);
+            stackDisp = text;
+        } 
+        this.pointerType = new LinkedList<>();
     }
 
+    /* Constructor to pointer */
+    public ExpressionObject
+    (String text, MemoryClassEnum type, int info, MemoryClassEnum pointer) 
+    {
+        this.text = text;
+        this.type = type;
+        flags |= info;
+        setSize(type);
+        if ((info & VAR_STACK) != 0) {
+            this.text = castStackVar(text, type);
+            stackDisp = text;
+        } 
+        this.pointerType = new LinkedList<>();
+        this.insertPointerType(pointer);
+    }
+    
     public String getText() {
         return text;
     }
@@ -101,10 +130,21 @@ public class ExpressionObject
         return (flags & ExpressionObject.INTEGER) != 0;
     }
     
-    
-    public boolean isCompared() 
+    public boolean isExternVariable()
     {
+        return (flags & VAR_EXTERN) != 0;
+    }
+    
+    public boolean isCompared() {
         return compared;
+    }
+    
+    public String getStackDisp() {
+        return stackDisp;
+    }
+
+    public void setStackDisp(String stackDisp) {
+        this.stackDisp = stackDisp;
     }
 
     /* Cast variable to specific size and return wheather it is casted in */
@@ -157,7 +197,7 @@ public class ExpressionObject
     }
     
     /* Set size of variable */
-    public void setSize(MemoryClassEnum type) 
+    public final void setSize(MemoryClassEnum type) 
     {
         switch (type) {
             case CHAR:
@@ -228,6 +268,22 @@ public class ExpressionObject
         castVariable(MemoryClassEnum.CHAR);
         Emitter.SetCCInstruction(this.text, picoCParser.EQUAL);
         setCompared(false);
+    }
+
+    private static String castStackVar(String stackPosition, MemoryClassEnum type) 
+    {
+        String cast = NasmTools.getCast(type);
+        return cast + " [" + stackPosition + "]";
+    }
+    
+    public final void insertPointerType(MemoryClassEnum type)
+    {
+        pointerType.push(type);
+    }
+    
+    public MemoryClassEnum getTypeOfPointer()
+    {
+        return pointerType.peek();
     }
     
 }

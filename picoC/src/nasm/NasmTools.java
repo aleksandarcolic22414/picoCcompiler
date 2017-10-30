@@ -568,27 +568,28 @@ public class NasmTools
     /* Function that copyes all parameters on stack for further use 
         It is used in function definition. 
     Warning: 
-        If there is more than 6 non floating variables passed to function, than
-        they are pushed in reverse order. This case won't work! */
+        Function may contain 6 parameters at most! */
     public static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
     {
         initializeNewPickers();
         int lsize = parameters.size();
-        String reg, paramName, paramPos;
+        String reg, paramName, stackPos, paramPos, cast;
         MemoryClassEnum memclass;
         for (int i = 0; i < lsize; ++i) {
             /* argument name needed for it's position on stack */
             paramName = parameters.get(i).ID().getText();
             /* get argument's position on stack */
-            paramPos = TranslationVisitor.curFuncAna.
+            stackPos = TranslationVisitor.curFuncAna.
                         getParameterVariables().get(paramName).getStackPosition();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
             int tokenType = parameters.get(i).typeSpecifier().type.getType();
             memclass = NasmTools.getTypeOfVar(tokenType);
+            cast = NasmTools.getCast(memclass);
+            paramPos = cast + " [" + stackPos + "]";
             reg = getNextRegForFuncCall(memclass);
-
-            /* Emit copying from registers to stack for argument */
+            
+            /* Emit copying from registers to stack for arguments */
             Writers.emitInstruction("mov", paramPos, reg);
         }
         resetRegisterPicker();
@@ -610,7 +611,7 @@ public class NasmTools
         int lsize = arguments.size();
         ExpressionObject res;
         String reg;
-        MemoryClassEnum memclass;
+        MemoryClassEnum type;
         /* Set pickers for next function */
         initializeNewPickers();
         
@@ -618,15 +619,23 @@ public class NasmTools
             /* Visit expression or STRING_LITERAL */
             res = visitor.visit(arguments.get(i));
             res.comparisonCheck();
-            /* Get variable size based on register it is stored in */
-            if (res.getType() == MemoryClassEnum.CHAR)
-                res.castVariable(MemoryClassEnum.INT);
-            /* Get memory class of typeSpecifier and register 
-                in which it is passed to function */
-            reg = getNextRegForFuncCall(res.getType());
+            /* Get variable size based on register it is stored in.
+                Minimum size for argument is 4 bytes which is INT type */
+            type = res.getType();
+            if (type == MemoryClassEnum.CHAR || type == MemoryClassEnum.INT) {
+                reg = getNextRegForFuncCall(MemoryClassEnum.INT);
+            } else {
+                /* TODO: Pointer types */
+                reg = getNextRegForFuncCall(type);
+            }
             
-            /* Emit copying from registers to stack memory for arguments setup */
-            Writers.emitInstruction("mov", reg, res.getText());
+            /* Emit copying from memory/registers to registers for arguments setup.
+                If argument is char type than movsx instruction is emited. */
+            if (type == MemoryClassEnum.CHAR)
+                Writers.emitInstruction("movsx", reg, res.getText());
+            else
+                Writers.emitInstruction("mov", reg, res.getText());
+            
             if (res.isRegister())
                 res.freeRegister();
         }
@@ -732,18 +741,6 @@ public class NasmTools
     public static String pushArgumentOnStack(MemoryClassEnum memclass) 
     {
         return null;
-    }
-
-    /* TODO: Make map of C standard library functions, 
-        and just call map.get(fname) != null */
-    public static boolean isFunctionFromLib(String functionName) 
-    {
-        switch (functionName) {
-            case "printf":
-                return true;
-            default:
-                return false;
-        }
     }
 
     /* Function determines wheather 4 general purpose registers a, b, c and are
@@ -1086,8 +1083,9 @@ public class NasmTools
    
     public static void main(String[] args) 
     {
-        int a = 0b10000000;
-        System.out.println(a);
+        String text = "[rbp-4]";
+        text = text.substring(text.indexOf("[") + 1, text.indexOf("]"));
+        System.out.println(text);
     }
     
 }

@@ -225,6 +225,13 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNegation(picoCParser.NegationContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Address}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAddress(picoCParser.AddressContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree

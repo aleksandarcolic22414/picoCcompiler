@@ -6,6 +6,7 @@ import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnum;
 import java.util.List;
+import nasm.NasmTools;
 import tools.ExpressionObject;
 
 /**
@@ -60,9 +61,10 @@ public class Checker
         switch (functionName) {
             case "printf":
                 return true;
-            default:
-                return false;
+            case "scanf":
+                return true;
         }
+        return false;
     }
     /* Check for multiple definitions of function */
     public static boolean funcDefCheck(picoCParser.FunctionDefinitionContext ctx, String name) 
@@ -230,8 +232,8 @@ public class Checker
     {
         if (!res.isStackVariable()) {
             CompilationControler.errorOcured
-                    (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Only variables can be post-decremened");
+                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                    "Only variables can be post-decremened");
             return false;
         }
         return true;
@@ -240,6 +242,17 @@ public class Checker
     public static void checkVarMatch(ExpressionObject left, ExpressionObject right) 
     {
         
+    }
+
+    public static boolean checkAddress(ExpressionObject expr, picoCParser.AddressContext ctx) 
+    {
+        if (!expr.isStackVariable() && !expr.isExternVariable()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(), 
+                        "Address of non-variable type");
+            return false;
+        }
+        return true;
     }
     
 }

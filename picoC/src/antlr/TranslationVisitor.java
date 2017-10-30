@@ -267,7 +267,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
         /* Expression */
-        ExpressionObject expr;
+        ExpressionObject expr, newVariable;
         int operation = ctx.assignmentOperator().op.getType();
         String id = ctx.ID().getText();
         /* Get variable context */
@@ -276,29 +276,31 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.varDeclCheck(ctx, id, var))
             return null;
         
+        /* Initialize new Expression object */
+        var.setInitialized(true);
+        int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
+        String stackPos = var.getStackPosition();
+        newVariable = new ExpressionObject
+            (stackPos, 
+             var.getTypeSpecifier(), 
+             ExpressionObject.VAR_STACK
+            );
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
-        
-        var.setInitialized(true);
-        int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
-        String stackPos = var.getStackPosition();
         /* Cast variable if needed */
         if (!expr.isInteger())
             expr.castVariable(var.getTypeSpecifier());
         
         /* See which operator is used for assign and emit proper instruction */
-        Emitter.decideAssign(expr, stackPos, operation, var.getTypeSpecifier());
+        Emitter.decideAssign(
+                expr, newVariable.getText(), operation, var.getTypeSpecifier());
         
         if (expr.isRegister())
             expr.freeRegister();
         /* Return new Object */
-        return new ExpressionObject
-            (stackPos, 
-             var.getTypeSpecifier(), 
-             ExpressionObject.VAR_STACK
-            );
+        return newVariable;
     }
     
     /*
@@ -388,7 +390,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             Instead, just peek to see which is next free register and after
             function call move function return value to it. */
         MemoryClassEnum type = MemoryClassEnum.INT;
-        if (!NasmTools.isFunctionFromLib(functionName))
+        if (!Checker.externalFunctionCheck(functionName))
             type = functions.get(functionName).getMemoryClass();
         String nextFreeTemp = NasmTools.showNextFreeTemp(type);
         String areg = NasmTools.registerToString(NasmTools.AREG, type);
@@ -396,7 +398,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         NasmTools.saveRegistersOnStack();
         NasmTools.moveArgsToRegisters(this, argumentList);
         /* Special setup */
-        if (NasmTools.isFunctionFromLib(functionName))
+        if (Checker.externalFunctionCheck(functionName))
             Writers.emitInstruction("mov", "eax", "0");
         Writers.emitInstruction("call", functionName);
         /* Avoid unnecessary move */
@@ -405,7 +407,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         NasmTools.restoreRegisters();
         nextFreeTemp = NasmTools.getNextFreeTempStr(type);
         
-        /* TODO: See in which part of register is return value from function */
         return new ExpressionObject
             (nextFreeTemp, 
              type, 
@@ -1145,5 +1146,36 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return expr;
     }
+
+    /*
+        unaryExpression 
+            :   '&'  unaryExpression    #Adress
+            ;
+    */
+    @Override
+    public ExpressionObject visitAddress(picoCParser.AddressContext ctx) 
+    {
+        ExpressionObject expr;
+        String nextFreeTemp, help;
+        if ((expr = visit(ctx.unaryExpression())) == null)
+            return null;
+        expr.comparisonCheck();
+        
+        if (!Checker.checkAddress(expr, ctx))
+            return null;
+        /* Get proper sintax for lea instruction: lea rax,[rbp-8] for example */
+        nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.POINTER);
+        help = "[" + expr.getStackDisp() + "]";
+        Writers.emitInstruction("lea", nextFreeTemp, help);
+        /* Set new properties to variable */
+        expr = new ExpressionObject
+            (nextFreeTemp, 
+             MemoryClassEnum.POINTER, 
+             ExpressionObject.REGISTER,
+             expr.getType()
+            );
+        return expr;
+    }
+    
     
 }

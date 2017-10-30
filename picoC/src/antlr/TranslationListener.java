@@ -107,7 +107,5 @@ public class TranslationListener extends picoCBaseListener
     {
         LabelsMaker.resetSelectionDepthCounter();
     }
-    
-    
-    
+
 }

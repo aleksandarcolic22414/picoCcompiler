@@ -101,6 +101,7 @@ unaryExpression
     |   '++' unaryExpression    #PreInc
     |   '--' unaryExpression    #PreDec
     |   '!'  unaryExpression    #Negation
+    |   '&'  unaryExpression    #Address
     ;
 
 multiplicativeExpression 

@@ -164,9 +164,8 @@ public class FunctionsAnalyser
         int sizeofvar = NasmTools.getSize(type);
         /* Calculate new stack displacement */
         spaceForLocals += sizeofvar;
-        /* TODO: Determine which cast should be used */
-        String cast = NasmTools.getCast(type);
-        return cast + " [rbp-" + Integer.toString(spaceForLocals) + "]";
+        
+        return "rbp-" + Integer.toString(spaceForLocals);
     }
 
     public String declareParameterVariable(MemoryClassEnum type) 
@@ -180,8 +179,8 @@ public class FunctionsAnalyser
         int taken = TranslationListener.lisFuncAna.get(fname).getSpaceForLocals();
         /* Calculate new place on stack */
         spaceForParams += sizeofvar;
-        String cast = NasmTools.getCast(type);
-        return cast + " [rbp-" + Integer.toString(taken + spaceForParams) + "]";
+        
+        return "rbp-" + Integer.toString(taken + spaceForParams);
     }
 
     public Variable getAnyVariable(String id) 

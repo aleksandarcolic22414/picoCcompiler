@@ -14,8 +14,7 @@ public class Variable
     /* Variable name */
     private String name;
 
-    /* Represents variable displacement on stack. Format is:
-            dword [rbp-X] */
+    /* Represents variable displacement on stack. Format is: rbp-X */
     private String stackPosition;
 
     /* Is variable initialized */

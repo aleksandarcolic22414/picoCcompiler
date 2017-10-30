@@ -30,7 +30,9 @@ public class Constants
     /* setup segments for further compilation */
     /* using C extern printf function in text segment */
     public static final String ENTER_TEXT_SEGMENT = "\nsegment .text"
-            + "                                    \n\nextern printf\n";
+                                                + "\n"
+                                                + "\textern printf\n"
+                                                + "\textern scanf\n";
     public static final String ENTER_DATA_SEGMENT = "segment .data\n";
     public static final String ENTER_BSS_SEGMENT = "\n\nsegment .bss\n";
     /* function emits */
