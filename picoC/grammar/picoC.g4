@@ -11,7 +11,7 @@ translationUnit
 externalDeclaration 
     :   functionDefinition
     |   expressionStatement
-    |   declarationList
+    |   declaration
     |   ';'
     ;
 
@@ -29,13 +29,28 @@ functionName
     :   ID 
     ;
 
+declaration
+    :   typeSpecifier initDeclarationList  ';'
+    ;
 
-declarationList 
-    :   typeSpecifier declaration (',' declaration)*  ';'  ;
+initDeclarationList
+    :   initDeclarator
+    |   initDeclarationList ',' initDeclarator
+    ;
 
-declaration 
-    :   ID
-    |   assignmentExpression
+initDeclarator
+    :   declarator                              #Decl
+    |   declarator '=' assignmentExpression     #DeclWithInit
+    ;
+
+declarator
+    :   pointer declarator      #PtrDecl
+    |   ID                      #DirDecl
+    ;
+
+pointer
+    :   '*'             #SimplePtr
+    |   pointer '*'     #MultiplePrt
     ;
 
 parameterList 
@@ -71,7 +86,7 @@ blockItemList
     ;
 
 blockItem
-    :   declarationList
+    :   declaration
     |   statement
     ;
 

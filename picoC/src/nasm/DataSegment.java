@@ -3,6 +3,7 @@ package nasm;
 import antlr.picoCParser;
 import java.util.ArrayList;
 import java.util.List;
+import tools.ExpressionObject;
 
 /**
  *
@@ -28,8 +29,9 @@ public class DataSegment
         return nextStrLit;
     }
 
-    public static void DeclareExtern(picoCParser.DeclarationContext ctx) 
+    public static ExpressionObject DeclareExtern(picoCParser.DirDeclContext ctx) 
     {
-//        System.out.println("External declaration!");
-    }
+        System.out.println("Extern declaration");
+        return null;
+    }   
 }

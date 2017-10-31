@@ -2,6 +2,8 @@ package tools;
 
 
 import constants.MemoryClassEnum;
+import java.util.LinkedList;
+import nasm.NasmTools;
 
 
 /**
@@ -22,7 +24,11 @@ public class Variable
 
     /* Memory class of variable */
     private MemoryClassEnum typeSpecifier;
-
+    
+    /* If variable is pointer than this list contains type of data that
+        this variable points to. */
+    private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
+    
     public Variable
     (String name, String stackPosition, boolean initialized, MemoryClassEnum type) 
     {
@@ -30,6 +36,18 @@ public class Variable
         this.stackPosition = stackPosition;
         this.initialized = initialized;
         this.typeSpecifier = type;
+    }
+
+    public Variable
+    (String name, String stackPosition, boolean initialized, MemoryClassEnum type, 
+    LinkedList<MemoryClassEnum> curPointer) 
+    {
+        this.name = name;
+        this.stackPosition = stackPosition;
+        this.initialized = initialized;
+        this.typeSpecifier = type;
+        if (!curPointer.isEmpty())
+            NasmTools.switchStacks(curPointer, pointerType);
     }
 
     public String getName() 
@@ -72,4 +90,21 @@ public class Variable
         this.typeSpecifier = typeSpecifier;
     }
 
+    public LinkedList<MemoryClassEnum> getPointerType() {
+        return pointerType;
+    }
+
+    public void setPointerType(LinkedList<MemoryClassEnum> pointerType) {
+        this.pointerType = pointerType;
+    }
+
+    public void insertPointer(MemoryClassEnum type)
+    {
+        pointerType.push(type);
+    }
+    
+    public MemoryClassEnum currentPointer()
+    {
+        return pointerType.peek();
+    }
 }

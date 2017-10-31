@@ -31,7 +31,7 @@ public class ExpressionObject
         stack is current memory type that this variable points to.
         If some variable is pointer to: pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
-    private LinkedList<MemoryClassEnum> pointerType;
+    private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
@@ -51,10 +51,9 @@ public class ExpressionObject
             this.text = castStackVar(text, type);
             stackDisp = text;
         } 
-        this.pointerType = new LinkedList<>();
     }
 
-    /* Constructor to pointer */
+    /* Constructor to simple pointer */
     public ExpressionObject
     (String text, MemoryClassEnum type, int info, MemoryClassEnum pointer) 
     {
@@ -66,8 +65,23 @@ public class ExpressionObject
             this.text = castStackVar(text, type);
             stackDisp = text;
         } 
-        this.pointerType = new LinkedList<>();
         this.insertPointerType(pointer);
+    }
+    
+    /* Constructor to complex pointer */
+    public ExpressionObject
+    (String text, MemoryClassEnum type, int info, 
+    LinkedList<MemoryClassEnum> pointer) 
+    {
+        this.text = text;
+        this.type = type;
+        flags |= info;
+        setSize(type);
+        if ((info & VAR_STACK) != 0) {
+            this.text = castStackVar(text, type);
+            stackDisp = text;
+        } 
+        NasmTools.switchStacks(pointer, pointerType);
     }
     
     public String getText() {

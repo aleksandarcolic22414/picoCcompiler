@@ -1064,6 +1064,8 @@ public class NasmTools
     public static String registerToString(int register, MemoryClassEnum type) 
     {
         switch (type) {
+            case VOID :
+                return registerToString4Bytes(register);
             case CHAR :
                 return registerToString1Bytes(register);
             case INT :
@@ -1080,12 +1082,63 @@ public class NasmTools
         return register == AREG;
     }
 
+    /* Function insert new type that current variable points to.
+        If list is empty that means that pointer to simple type is inserted.
+        If it is not empty that means that pointer to pointer is declared. */
+    public static void insertPointerType(LinkedList<MemoryClassEnum> curPointer, MemoryClassEnum type) 
+    {
+        if (curPointer.isEmpty())
+            curPointer.push(type);
+        else
+            curPointer.push(MemoryClassEnum.POINTER);
+    }
+
+    /* Function moves contents of first list to the second list.
+        Lists are implemented as stacks */
+    public static void switchStacks
+    (LinkedList<MemoryClassEnum> curPointer, LinkedList<MemoryClassEnum> pointerType) 
+    {
+        if (curPointer.isEmpty())
+            return;
+        MemoryClassEnum type = curPointer.pop();
+        switchStacks(curPointer, pointerType);
+        pointerType.push(type);
+    }
+
+
    
     public static void main(String[] args) 
     {
-        String text = "[rbp-4]";
-        text = text.substring(text.indexOf("[") + 1, text.indexOf("]"));
-        System.out.println(text);
+        LinkedList<MemoryClassEnum> lista1 = new LinkedList<>();
+        LinkedList<MemoryClassEnum> lista2 = new LinkedList<>();
+        
+        lista1.push(MemoryClassEnum.VOID);
+        lista1.push(MemoryClassEnum.CHAR);
+        lista1.push(MemoryClassEnum.INT);
+        lista1.push(MemoryClassEnum.POINTER);
+        lista1.push(MemoryClassEnum.POINTER);
+        
+        System.out.println("Pre zamene");
+        System.out.print("lista1: ");
+        for (MemoryClassEnum i : lista1)
+            System.out.print(i + " ");
+        System.out.println("");
+        System.out.print("lista2: ");
+        for (MemoryClassEnum i : lista2)
+            System.out.print(i + " ");
+        System.out.println("");
+        
+        NasmTools.switchStacks(lista1, lista2);
+        
+        System.out.println("Posle zamene");
+        System.out.print("lista1: ");
+        for (MemoryClassEnum i : lista1)
+            System.out.print(i + " ");
+        System.out.println("");
+        System.out.print("lista2: ");
+        for (MemoryClassEnum i : lista2)
+            System.out.print(i + " ");
     }
+
     
 }

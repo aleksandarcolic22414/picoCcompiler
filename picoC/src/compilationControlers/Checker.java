@@ -107,7 +107,7 @@ public class Checker
         return true;
     }
 
-    public static boolean varSizeCheck(picoCParser.ParameterContext ctx, int varSize) 
+    public static boolean varSizeCheck(picoCParser.DirDeclContext ctx, int varSize) 
     {
         if (varSize == -1) {
             CompilationControler.errorOcured
@@ -119,6 +119,17 @@ public class Checker
         return true;
     }
 
+    public static boolean varSizeCheck(picoCParser.ParameterContext ctx, int varSize) 
+    {
+        if (varSize == -1) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Void variable not alowed!");
+            return false;
+        }
+        return true;
+    }
     
     public static boolean varSizeCheck(picoCParser.DeclarationContext ctx, int varSize) 
     {
@@ -132,7 +143,7 @@ public class Checker
         return true;
     }
     
-    public static boolean varDeclCheck(picoCParser.DeclarationContext ctx, String name) 
+    public static boolean varDeclCheck(picoCParser.DirDeclContext ctx, String name) 
     {
         if (TranslationVisitor.curFuncAna.getLocalVariables().containsKey(name)
                 || TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) 
@@ -250,6 +261,17 @@ public class Checker
             CompilationControler.errorOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(), 
                         "Address of non-variable type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean varDeclCheck(picoCParser.DeclWithInitContext ctx, String id, Variable var) {
+        if (var == null) {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Variable " + "'" + id + "'" + " not declared");
             return false;
         }
         return true;

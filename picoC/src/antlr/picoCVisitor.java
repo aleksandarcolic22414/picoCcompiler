@@ -47,17 +47,59 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionName(picoCParser.FunctionNameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link picoCParser#declaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitDeclaration(picoCParser.DeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#initDeclarationList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInitDeclarationList(picoCParser.InitDeclarationListContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Decl}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDecl(picoCParser.DeclContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DeclWithInit}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeclWithInit(picoCParser.DeclWithInitContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code PtrDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPtrDecl(picoCParser.PtrDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code MultiplePrt}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMultiplePrt(picoCParser.MultiplePrtContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code SimplePtr}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSimplePtr(picoCParser.SimplePtrContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

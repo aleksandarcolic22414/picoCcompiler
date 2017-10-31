@@ -13,6 +13,7 @@ void func(int i, int j, int k)
 
 int main()
 {
+    int **a;
     func(5, 5, 50);
     return 0;
 }

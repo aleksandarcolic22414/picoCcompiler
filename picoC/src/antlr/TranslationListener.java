@@ -4,6 +4,7 @@ import tools.FunctionsAnalyser;
 import constants.MemoryClassEnum;
 import nasm.NasmTools;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import nasm.DataSegment;
@@ -25,10 +26,14 @@ public class TranslationListener extends picoCBaseListener
     /* Curent function context.  */
     public static FunctionsAnalyser curFuncCtx = null;
     
-    public static MemoryClassEnum currentDeclaratorType;
+    public static MemoryClassEnum currentDeclaratorType = null;
+    
+    /* List represent current pointer declarator type */
+    public static LinkedList<MemoryClassEnum> pointerInitializator;
     
     public TranslationListener()
     {
+        pointerInitializator = new LinkedList<>();
         lisFuncAna = new HashMap<>();
     }
     
@@ -72,14 +77,7 @@ public class TranslationListener extends picoCBaseListener
     /* Get memoryClass to set current Declarator type for case of multiple
         declarations of same type. Example: int a, b, c = 10; */
     @Override
-    public void enterDeclarationList(picoCParser.DeclarationListContext ctx) 
-    {
-        int tokenType = ctx.typeSpecifier().type.getType();
-        currentDeclaratorType = NasmTools.getTypeOfVar(tokenType);
-    }
-
-    @Override
-    public void enterDeclaration(picoCParser.DeclarationContext ctx) 
+    public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
         /* Calculate space on stack for local variables  */
         if (curFuncCtx == null) {
@@ -87,9 +85,29 @@ public class TranslationListener extends picoCBaseListener
             return ;
         }
         int locals = curFuncCtx.getSpaceForLocals();
-        int sizeOfVar = NasmTools.getSize(currentDeclaratorType);
+        int sizeOfVar;
+        if (pointerInitializator.isEmpty())
+            sizeOfVar = NasmTools.getSize(currentDeclaratorType);
+        else 
+            sizeOfVar = NasmTools.getSize(MemoryClassEnum.POINTER);
         /* Set displacement in current function context */
         curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
+        pointerInitializator.clear();
+    }
+
+    @Override
+    public void enterSimplePtr(picoCParser.SimplePtrContext ctx) 
+    {
+        MemoryClassEnum type;
+        type = curFuncCtx.getCurrentDeclaratorType();
+        NasmTools.insertPointerType(pointerInitializator, type);
+    }
+    
+    @Override
+    public void enterDeclaration(picoCParser.DeclarationContext ctx) 
+    {
+        int tokenType = ctx.typeSpecifier().type.getType();
+        currentDeclaratorType = NasmTools.getTypeOfVar(tokenType);
     }
 
     /* If selectionStatement is visited, it's depth is stored in list

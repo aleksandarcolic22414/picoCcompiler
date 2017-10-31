@@ -1,10 +1,12 @@
 int main()
 {
-    char c = 0;
-    int a = &(c);
+    int b = 10;
+    int ***a = &b;
     
-    printf("%d\n", a);
-    
+    printf("*a = %d\n", a);
+    scanf("%d", a);
+    printf("b = %d\n", b);
+
     return 0;
 }
 

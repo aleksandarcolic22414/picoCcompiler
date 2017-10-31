@@ -68,16 +68,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitFunctionName(picoCParser.FunctionNameContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#declarationList}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclarationList(picoCParser.DeclarationListContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link picoCParser#declaration}.
 	 * @param ctx the parse tree
 	 */
@@ -87,6 +77,88 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitDeclaration(picoCParser.DeclarationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#initDeclarationList}.
+	 * @param ctx the parse tree
+	 */
+	void enterInitDeclarationList(picoCParser.InitDeclarationListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#initDeclarationList}.
+	 * @param ctx the parse tree
+	 */
+	void exitInitDeclarationList(picoCParser.InitDeclarationListContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Decl}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterDecl(picoCParser.DeclContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Decl}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitDecl(picoCParser.DeclContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DeclWithInit}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclWithInit(picoCParser.DeclWithInitContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DeclWithInit}
+	 * labeled alternative in {@link picoCParser#initDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclWithInit(picoCParser.DeclWithInitContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code PtrDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterPtrDecl(picoCParser.PtrDeclContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PtrDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitPtrDecl(picoCParser.PtrDeclContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#declarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code MultiplePrt}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 */
+	void enterMultiplePrt(picoCParser.MultiplePrtContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code MultiplePrt}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 */
+	void exitMultiplePrt(picoCParser.MultiplePrtContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code SimplePtr}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 */
+	void enterSimplePtr(picoCParser.SimplePtrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code SimplePtr}
+	 * labeled alternative in {@link picoCParser#pointer}.
+	 * @param ctx the parse tree
+	 */
+	void exitSimplePtr(picoCParser.SimplePtrContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

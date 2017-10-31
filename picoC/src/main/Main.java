@@ -32,10 +32,10 @@ public class Main
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             picoCParser parser = new picoCParser(tokens);
             ParseTree tree = parser.compilationUnit();
-            
+                        
             ParseTreeWalker walker = new ParseTreeWalker();
-            TranslationVisitor visitor = new TranslationVisitor();
             TranslationListener listener = new TranslationListener();
+            TranslationVisitor visitor = new TranslationVisitor();
             
             walker.walk(listener, tree);
             visitor.visit(tree);

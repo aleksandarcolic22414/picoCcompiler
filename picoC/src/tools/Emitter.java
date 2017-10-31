@@ -179,14 +179,14 @@ public class Emitter
     /* This function represent set of steps needed for calculating
         assignment expression */
     public static void assign
-    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
     {
-        if (expr.isRegister() || expr.isInteger()) {
-            Writers.emitInstruction("mov", stackPos, expr.getText());
+        if (expr2.isRegister() || expr2.isInteger()) {
+            Writers.emitInstruction("mov", expr1.getText(), expr2.getText());
         } else {
             String temp = NasmTools.getNextFreeTempStr(type);
-            Writers.emitInstruction("mov", temp, expr.getText());
-            Writers.emitInstruction("mov", stackPos, temp);
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("mov", expr1.getText(), temp);
             NasmTools.free(temp);
         }
     }
@@ -194,70 +194,66 @@ public class Emitter
     /* This function represent set of steps needed for calculating
         assignment-add expression */
     public static void assignAdd
-    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
     {
-        if (expr.isRegister()) {
-            Writers.emitInstruction("add", stackPos, expr.getText());
-            NasmTools.free(expr.getText());
-        } else if (expr.isInteger()) {
-            Writers.emitInstruction("add", stackPos, expr.getText());
+        if (expr2.isRegister()) {
+            Writers.emitInstruction("add", expr1.getText(), expr2.getText());
+            NasmTools.free(expr2.getText());
+        } else if (expr2.isInteger()) {
+            Writers.emitInstruction("add", expr1.getText(), expr2.getText());
         } else {
             String temp = NasmTools.getNextFreeTempStr(type);
-            Writers.emitInstruction("mov", temp, expr.getText());
-            Writers.emitInstruction("add", stackPos, temp);
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("add", expr1.getText(), temp);
             NasmTools.free(temp);
         }
     }
-
+   
     /* This function represent set of steps needed for calculating
         assignment-sub expression */
     public static void assignSub
-    (ExpressionObject expr, String stackPos, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
     {
-        if (expr.isRegister()) {
-            Writers.emitInstruction("sub", stackPos, expr.getText());
-            NasmTools.free(expr.getText());
-        } else if (expr.isInteger()) {
-            Writers.emitInstruction("sub", stackPos, expr.getText());
+        if (expr2.isRegister()) {
+            Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
+            NasmTools.free(expr2.getText());
+        } else if (expr2.isInteger()) {
+            Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
         } else {
             String temp = NasmTools.getNextFreeTempStr(type);
-            Writers.emitInstruction("mov", temp, expr.getText());
-            Writers.emitInstruction("sub", stackPos, temp);
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("sub", expr1.getText(), temp);
             NasmTools.free(temp);
         }
     }
-
+    
     /* This function represent set of steps needed for calculating
         assignment-mul expression */
-    public static void assignMul(ExpressionObject expr, String stackPos) 
+    public static void assignMul
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
-        /* Make expression object that contains var from stack 
-            and put it in register */
-        ExpressionObject var = new ExpressionObject
-            (stackPos, MemoryClassEnum.INT, ExpressionObject.VAR_STACK);
-        var.putInRegister();
+        String stackPosition = expr1.getText();
+        expr1.putInRegister();
         /* Emitter multiply will return same value pased as first argument, 
             but in case that that change in a future, let's store it in var */
-        var = Emitter.multiply(var, expr);   
-        Writers.emitInstruction("mov", stackPos, var.getText());
-        var.freeRegister();
+        expr1 = Emitter.multiply(expr1, expr2);   
+        Writers.emitInstruction("mov", stackPosition, expr1.getText());
+        expr1.freeRegister();
     }
     
     /* This function represent set of steps needed for calculating
         assignment-div/mod expression */
     public static void assignDivMod
-    (ExpressionObject expr, String stackPos, int operation) 
+    (ExpressionObject expr1, ExpressionObject expr2, int operation) 
     {
-        /* Make expression object that contain var from stack 
-            and put var in register */
-        ExpressionObject var = new ExpressionObject
-            (stackPos, MemoryClassEnum.INT, ExpressionObject.VAR_STACK);
-        var.putInRegister();
+        String stackPos;
+        stackPos = expr1.getText();
+        expr1.putInRegister();
         /* Emitter divideOrModulo will return same value passed as first argument, 
             but in case that that could change in a future, let's store it in var */
-        var = Emitter.divideOrModulo(var, expr, operation);
-        Writers.emitInstruction("mov", stackPos, var.getText());
-        var.freeRegister();
+        expr1 = Emitter.divideOrModulo(expr1, expr2, operation);
+        Writers.emitInstruction("mov", stackPos, expr1.getText());
+        expr1.freeRegister();
     }
 
     public static void SetCCInstruction(String left, int typeOfRelation) 
@@ -287,26 +283,26 @@ public class Emitter
     /* Function checks which operator is used, and based on that, 
         emits set of instructions */
     public static void decideAssign
-    (ExpressionObject expr, String stackPos, int operation, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2, int operation, MemoryClassEnum type) 
     {
         switch (operation) {
             case picoCParser.ASSIGN :
-                Emitter.assign(expr, stackPos, type);
+                Emitter.assign(expr1, expr2, type);
                 break;
             case picoCParser.ASSIGN_ADD :
-                Emitter.assignAdd(expr, stackPos, type);
+                Emitter.assignAdd(expr1, expr2, type);
                 break;
             case picoCParser.ASSIGN_SUB :
-                Emitter.assignSub(expr, stackPos, type);
+                Emitter.assignSub(expr1, expr2, type);
                 break;
             case picoCParser.ASSIGN_MUL :
-                Emitter.assignMul(expr, stackPos);
+                Emitter.assignMul(expr1, expr2);
                 break;
             case picoCParser.ASSIGN_DIV :
-                Emitter.assignDivMod(expr, stackPos, operation);
+                Emitter.assignDivMod(expr1, expr2, operation);
                 break;
             case picoCParser.ASSIGN_MOD :
-                Emitter.assignDivMod(expr, stackPos, operation);
+                Emitter.assignDivMod(expr1, expr2, operation);
                 break;
         }
     }
