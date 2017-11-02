@@ -274,6 +274,13 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAddress(picoCParser.AddressContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Deref}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeref(picoCParser.DerefContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree

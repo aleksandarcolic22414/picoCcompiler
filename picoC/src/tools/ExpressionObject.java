@@ -31,7 +31,7 @@ public class ExpressionObject
         stack is current memory type that this variable points to.
         If some variable is pointer to: pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
-    private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
+    private final LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
@@ -68,20 +68,15 @@ public class ExpressionObject
         this.insertPointerType(pointer);
     }
     
-    /* Constructor to complex pointer */
-    public ExpressionObject
-    (String text, MemoryClassEnum type, int info, 
-    LinkedList<MemoryClassEnum> pointer) 
+    /* Construct expression object from variable */
+    public ExpressionObject(Variable var)
     {
-        this.text = text;
-        this.type = type;
-        flags |= info;
+        this.text = castStackVar(var.getStackPosition(), var.getTypeSpecifier());
+        this.type = var.getTypeSpecifier();
         setSize(type);
-        if ((info & VAR_STACK) != 0) {
-            this.text = castStackVar(text, type);
-            stackDisp = text;
-        } 
-        NasmTools.switchStacks(pointer, pointerType);
+        flags |= VAR_STACK;
+        stackDisp = var.getStackPosition();
+        NasmTools.copyPointerList(pointerType, var.getPointerType());
     }
     
     public String getText() {
@@ -186,13 +181,15 @@ public class ExpressionObject
         this.flags = ExpressionObject.REGISTER;
     }
     
-    public static void castVariablesToMaxSize
+    /* Function casts variables to bigger size of two. Also, the
+        bigger size is returned */
+    public static int castVariablesToMaxSize
     (ExpressionObject left, ExpressionObject right) 
     {
         String casted;
         /* If size of variables already match, than nothing is done */
         if (left.getType() == right.getType())
-            return ;
+            return NasmTools.getSize(left.getType());
         /* Check if variable types matches */
         Checker.checkVarMatch(left, right);
         int maxSizeOfVars = left.size < right.size ? right.size : left.size;
@@ -207,7 +204,7 @@ public class ExpressionObject
             left.setText(casted);
             left.setType(right.getType());
         }
-        
+        return maxSizeOfVars;
     }
     
     /* Set size of variable */
@@ -298,6 +295,39 @@ public class ExpressionObject
     public MemoryClassEnum getTypeOfPointer()
     {
         return pointerType.peek();
+    }
+
+    public boolean isPointer() 
+    {
+        return !pointerType.isEmpty();
+    }
+
+    /* Function dereference pointer. Since variable must be in register 
+        in order to do dereferencing, variable is first moved to one.  
+        Next, cast is determined and moving is done. So final instruction
+        is something like: mov    eax, dword[eax], if eax was a pointer to
+        integer. */
+    public void dereference() 
+    {
+        if (!this.isRegister())
+            this.putInRegister();
+        MemoryClassEnum newType = pointerType.pop();
+        String cast = NasmTools.getCast(newType);
+        String deref = cast + " [" + this.text + "]";
+        castRegisterTo(newType);
+        /* Now, this.text is changed to proper size */
+        Writers.emitInstruction("mov", this.text, deref);
+    }
+
+    /* Function casts variable to a specific size. 
+        Cast is done only if variable is in register. */
+    public void castRegisterTo(MemoryClassEnum newType) 
+    {
+        if (!isRegister())
+            return;
+        setType(newType);
+        int newSize = NasmTools.getSize(newType);
+        this.text = NasmTools.castVariable(this.text, newSize);
     }
     
 }

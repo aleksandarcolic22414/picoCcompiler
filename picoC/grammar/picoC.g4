@@ -117,6 +117,7 @@ unaryExpression
     |   '--' unaryExpression    #PreDec
     |   '!'  unaryExpression    #Negation
     |   '&'  unaryExpression    #Address
+    |   '*'  unaryExpression    #Deref
     ;
 
 multiplicativeExpression 

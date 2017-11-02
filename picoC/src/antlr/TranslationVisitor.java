@@ -229,14 +229,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Initialize new Expression object */
         var.setInitialized(true);
-        int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
-        String stackPos = var.getStackPosition();
-        newVariable = new ExpressionObject
-            (stackPos, 
-             var.getTypeSpecifier(), 
-             ExpressionObject.VAR_STACK,
-             var.getPointerType()
-            );
+        newVariable = new ExpressionObject(var);
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
@@ -247,7 +240,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* See which operator is used for assign and emit proper instruction */
         Emitter.decideAssign(
-                newVariable, expr, operation, var.getTypeSpecifier());
+                newVariable, expr, operation);
         
         if (expr.isRegister())
             expr.freeRegister();
@@ -332,13 +325,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Initialize new Expression object */
         var.setInitialized(true);
-        int sizeOfVar = NasmTools.getSize(var.getTypeSpecifier());
-        String stackPos = var.getStackPosition();
-        newVariable = new ExpressionObject
-            (stackPos, 
-             var.getTypeSpecifier(), 
-             ExpressionObject.VAR_STACK
-            );
+        
+        newVariable = new ExpressionObject(var);
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
@@ -346,10 +334,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast variable if needed */
         if (!expr.isInteger())
             expr.castVariable(var.getTypeSpecifier());
+        if (!Checker.checkAssign(newVariable, expr, ctx, operation))
+            return null;
         
         /* See which operator is used for assign and emit proper instruction */
-        Emitter.decideAssign(
-                newVariable, expr, operation, var.getTypeSpecifier());
+        if (newVariable.isPointer())
+            Emitter.decideAssignPointers(newVariable, expr, operation);
+        else
+            Emitter.decideAssign(
+                    newVariable, expr, operation);
         
         if (expr.isRegister())
             expr.freeRegister();
@@ -556,8 +549,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitAddSub(picoCParser.AddSubContext ctx) 
     {
-        ExpressionObject leftExpr, rightExpr;
+        ExpressionObject leftExpr, rightExpr, help;
         String nextFreeTemp;
+        int maxSize;
         /* Try to visit children and recover if error ocured */
         if ((leftExpr = visit(ctx.additiveExpression())) == null)
             return null;
@@ -566,8 +560,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if ((rightExpr = visit(ctx.multiplicativeExpression())) == null)
             return null;
         rightExpr.comparisonCheck();
-       
-      
+        
+        if (!Checker.checkAddSubPointers(leftExpr, rightExpr, ctx))
+            return null;
         /* Before all calculations, if left and right operand are numbers, 
             let java do the calculation and save some program's time */
         if (leftExpr.isInteger() && rightExpr.isInteger()) {
@@ -580,27 +575,26 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             to be moved to one */
         if (!leftExpr.isRegister() && NasmTools.hasFreeRegisters())
             leftExpr.putInRegister();
+        /* Arithmetic is done with minimum 4 bytes registers, so if both 
+            variables are 1 byte long, left is cased to 4 bytes. */
         if (leftExpr.getType() == MemoryClassEnum.CHAR
                 && rightExpr.getType() == MemoryClassEnum.CHAR)
             leftExpr.castVariable(MemoryClassEnum.INT);
         /* Cast to proper type if needed */
-        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
-        
+        maxSize = ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         String operation = NasmTools.getOperation(ctx.op.getType());
         
-        /* If left operand is not register, then it needs to be moved to one.
-            It's moved to eax, but first eax is saved on stack. */
-        if (!leftExpr.isRegister()) {
-            nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
-            Writers.emitInstruction("mov", nextFreeTemp, "eax");
-            Writers.emitInstruction("mov", "eax", leftExpr.getText());
-            Writers.emitInstruction(operation, "eax", rightExpr.getText());
-            Writers.emitInstruction("mov", leftExpr.getText(), "eax");
-            Writers.emitInstruction("mov", "eax", nextFreeTemp);
-            NasmTools.free(nextFreeTemp);
-        } else
-            Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
-        
+        if (leftExpr.isPointer() || rightExpr.isPointer()) {
+            /* Set left to be pointer and make it easier to code */
+            if (rightExpr.isPointer() && !leftExpr.isPointer()) {
+                help = rightExpr;
+                rightExpr = leftExpr;
+                leftExpr = help;
+            }
+            Emitter.emitPointersAddSub(leftExpr, rightExpr, operation);
+        } else {
+            Emitter.emitAddSub(leftExpr, rightExpr, operation);
+        }
         if (rightExpr.isRegister())
             rightExpr.freeRegister();
         
@@ -698,14 +692,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Check if variable is initialized */
         Checker.varInitCheck(local, newVar, id, ctx);
         
-        /* Get right stack position */
-        stackPosition = newVar.getStackPosition();
-        
-        return new ExpressionObject
-            (stackPosition, 
-             newVar.getTypeSpecifier(),    // TODO: Check external variables
-             ExpressionObject.VAR_STACK
-            );
+        /* Return new variable */
+        return new ExpressionObject(newVar);
     }
     
     /*
@@ -952,6 +940,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitPreInc(picoCParser.PreIncContext ctx) 
     {
         ExpressionObject res;
+        MemoryClassEnum type;
+        String value;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.unaryExpression())) == null)   
             return null;
@@ -959,7 +949,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Check if it is variable and add one to result */
         if (!Checker.checkPreInc(res, ctx))
             return null;
-        Writers.emitInstruction("add", res.getText(), "1");
+        if (res.isPointer()) {
+            type = res.getTypeOfPointer();
+            value = Integer.toString(NasmTools.getSize(type));
+        } else {
+            value = "1";
+        }
+        
+        Writers.emitInstruction("add", res.getText(), value);
         
         return res;
     }
@@ -973,6 +970,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitPreDec(picoCParser.PreDecContext ctx) 
     {
         ExpressionObject res;
+        MemoryClassEnum type;
+        String value;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.unaryExpression())) == null)   
             return null;
@@ -980,7 +979,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Check if it is variable and add one to result */
         if (!Checker.checkPreDec(res, ctx))
             return null;
-        Writers.emitInstruction("sub", res.getText(), "1");
+        if (res.isPointer()) {
+            type = res.getTypeOfPointer();
+            value = Integer.toString(NasmTools.getSize(type));
+        } else {
+            value = "1";
+        }
+        
+        Writers.emitInstruction("sub", res.getText(), value);
         
         return res;
     }
@@ -997,7 +1003,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitPostInc(picoCParser.PostIncContext ctx) 
     {
         ExpressionObject res;
-        String stackPosition;
+        MemoryClassEnum type;
+        String stackPosition, value;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.postfixExpression())) == null)   
             return null;
@@ -1006,10 +1013,18 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.checkPostInc(res, ctx))
             return null;
         
+        if (res.isPointer()) {
+            type = res.getTypeOfPointer();
+            value = Integer.toString(NasmTools.getSize(type));
+        } else {
+            value = "1";
+        }
+        
         /* Get next free register or stack position */
         stackPosition = res.getText();
         res.putInRegister();
-        Writers.emitInstruction("add", stackPosition, "1");
+        
+        Writers.emitInstruction("add", stackPosition, value);
         
         return res;
     }
@@ -1026,7 +1041,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitPostDec(picoCParser.PostDecContext ctx) 
     {
         ExpressionObject res;
-        String stackPosition;
+        MemoryClassEnum type;
+        String stackPosition, value;
         /* Visit expression and try to recover from error */
         if ((res = visit(ctx.postfixExpression())) == null)   
             return null;
@@ -1035,10 +1051,17 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.checkPostDec(res, ctx))
             return null;
         
+        if (res.isPointer()) {
+            type = res.getTypeOfPointer();
+            value = Integer.toString(NasmTools.getSize(type));
+        } else {
+            value = "1";
+        }
         /* Get next free register or stack position */
         stackPosition = res.getText();
         res.putInRegister();
-        Writers.emitInstruction("sub", stackPosition, "1");
+        
+        Writers.emitInstruction("sub", stackPosition, value);
         
         return res;
     }
@@ -1230,6 +1253,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             );
         return expr;
     }
+
+    @Override
+    public ExpressionObject visitDeref(picoCParser.DerefContext ctx) 
+    {
+        ExpressionObject expr;
+        if ((expr = visit(ctx.unaryExpression())) == null)
+            return null;
+        if (!Checker.checkPointer(ctx, expr))
+            return null;
+        
+        expr.dereference();
+        return expr;
+    }
+
     
     
 }

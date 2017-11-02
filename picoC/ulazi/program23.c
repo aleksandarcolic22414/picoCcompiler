@@ -7,16 +7,15 @@ int main()
     int t = 50;
     int y = 60;
 
-    
+    int b = 5;
     int *a = &y;
-    int i;
-    for (i = 0; i < 6; ++i)
-        printf("%d ", *(a + i));
-    
+    a += b;
+
+    printf("%d\n", *a);
 
     return 0;
 }
 
 /* Izlaz je:
-    60 50 40 30 20 10
+    10
  */

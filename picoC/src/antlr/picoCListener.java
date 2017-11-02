@@ -454,6 +454,18 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitAddress(picoCParser.AddressContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Deref}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeref(picoCParser.DerefContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Deref}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeref(picoCParser.DerefContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
 	 * @param ctx the parse tree

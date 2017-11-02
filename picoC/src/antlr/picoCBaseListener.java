@@ -496,6 +496,18 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDeref(picoCParser.DerefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDeref(picoCParser.DerefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterMulDivMod(picoCParser.MulDivModContext ctx) { }
 	/**
 	 * {@inheritDoc}

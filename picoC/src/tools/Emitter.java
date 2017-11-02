@@ -2,6 +2,7 @@
 package tools;
 
 import antlr.picoCParser;
+import compilationControlers.Checker;
 import compilationControlers.Writers;
 import constants.MemoryClassEnum;
 import nasm.NasmTools;
@@ -179,8 +180,10 @@ public class Emitter
     /* This function represent set of steps needed for calculating
         assignment expression */
     public static void assign
-    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
+        MemoryClassEnum type = expr1.getType();
+        
         if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("mov", expr1.getText(), expr2.getText());
         } else {
@@ -194,8 +197,10 @@ public class Emitter
     /* This function represent set of steps needed for calculating
         assignment-add expression */
     public static void assignAdd
-    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
+        MemoryClassEnum type = expr1.getType();
+        
         if (expr2.isRegister()) {
             Writers.emitInstruction("add", expr1.getText(), expr2.getText());
             NasmTools.free(expr2.getText());
@@ -212,8 +217,10 @@ public class Emitter
     /* This function represent set of steps needed for calculating
         assignment-sub expression */
     public static void assignSub
-    (ExpressionObject expr1, ExpressionObject expr2, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
+        MemoryClassEnum type = expr1.getType();
+        
         if (expr2.isRegister()) {
             Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
             NasmTools.free(expr2.getText());
@@ -283,17 +290,17 @@ public class Emitter
     /* Function checks which operator is used, and based on that, 
         emits set of instructions */
     public static void decideAssign
-    (ExpressionObject expr1, ExpressionObject expr2, int operation, MemoryClassEnum type) 
+    (ExpressionObject expr1, ExpressionObject expr2, int operation) 
     {
         switch (operation) {
             case picoCParser.ASSIGN :
-                Emitter.assign(expr1, expr2, type);
+                Emitter.assign(expr1, expr2);
                 break;
             case picoCParser.ASSIGN_ADD :
-                Emitter.assignAdd(expr1, expr2, type);
+                Emitter.assignAdd(expr1, expr2);
                 break;
             case picoCParser.ASSIGN_SUB :
-                Emitter.assignSub(expr1, expr2, type);
+                Emitter.assignSub(expr1, expr2);
                 break;
             case picoCParser.ASSIGN_MUL :
                 Emitter.assignMul(expr1, expr2);
@@ -334,5 +341,125 @@ public class Emitter
                 break;
         }
     }
+
+    /* Function emits set of steps needed for calculation add/sub expression */
+    public static void emitAddSub
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, String operation) 
+    {
+        String nextFreeTemp;
+        /* If left operand is not register, then it needs to be moved to one.
+            It's moved to eax, but first eax is saved on stack. */
+        if (!leftExpr.isRegister()) {
+            nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
+            Writers.emitInstruction("mov", nextFreeTemp, "eax");
+            Writers.emitInstruction("mov", "eax", leftExpr.getText());
+            Writers.emitInstruction(operation, "eax", rightExpr.getText());
+            Writers.emitInstruction("mov", leftExpr.getText(), "eax");
+            Writers.emitInstruction("mov", "eax", nextFreeTemp);
+            NasmTools.free(nextFreeTemp);
+        } else
+            Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
+    }
+
+    /* Correct operations with pointers are:
+        pointer + value
+        pointer - value    
+        pointer - pointer     
+        value   + pointer -> this is switched with
+        -> pointer + value, before 
+        this function call.
+        Any other operation is prevented by Checker.
+    */
+    public static void emitPointersAddSub
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, String operation) 
+    {
+        String shifting;
+        MemoryClassEnum memclass;
+        int size, value;
+        
+        /* If both are pointer, then sub is only valid operation */
+        if (leftExpr.isPointer() && rightExpr.isPointer()) {
+            Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
+            return;
+        } 
+        memclass = leftExpr.getTypeOfPointer();
+        size = NasmTools.getSize(memclass);
+        if (rightExpr.isInteger()) {    // if it is int, let java calculate
+            value = Integer.parseInt(rightExpr.getText());
+            value *= size;
+            rightExpr.setText(Integer.toString(value));
+        } else {
+            shifting = NasmTools.getShiftForPointer(memclass);
+            Writers.emitInstruction("shl", rightExpr.getText(), shifting);
+        }
+        Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
+        
+    }
+
+    public static void decideAssignPointers
+    (ExpressionObject newVariable, ExpressionObject expr, int operation) 
+    {
+        switch (operation) {
+            case picoCParser.ASSIGN:
+                Emitter.assign(newVariable, expr);
+                break;
+            case picoCParser.ASSIGN_ADD:
+                Emitter.assignAddSubPointers(newVariable, expr, operation);
+                break;
+            case picoCParser.ASSIGN_SUB:
+                Emitter.assignAddSubPointers(newVariable, expr, operation);
+                break;    
+        }
+    }
+
+    private static void assignAddSubPointers
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, int operation) 
+    {
+        String shifting, op;
+        MemoryClassEnum memclass;
+        int size, value;
+        op = NasmTools.getOperation(operation);
+        
+        memclass = leftExpr.getTypeOfPointer();
+        size = NasmTools.getSize(memclass);
+        
+        /* If both are pointers, then sub them */
+        if (rightExpr.isPointer()) {
+            rightExpr.putInRegister();
+            Writers.emitInstruction(op, leftExpr.getText(), rightExpr.getText());
+            rightExpr.freeRegister();
+            return;
+        } 
+        
+        if (rightExpr.isInteger()) {    // if it is int, let java calculate
+            value = Integer.parseInt(rightExpr.getText());
+            value *= size;
+            rightExpr.setText(Integer.toString(value));
+        } else {
+            rightExpr.putInRegister();
+            shifting = NasmTools.getShiftForPointer(memclass);
+            Writers.emitInstruction("shl", rightExpr.getText(), shifting);
+        }
+        /* Emitting */
+        Emitter.emitMoveToStack(leftExpr, rightExpr, op);
+        
+    }
+
+    private static void emitMoveToStack
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, String op) 
+    {
+        if (rightExpr.isRegister()) {
+            Writers.emitInstruction(op, leftExpr.getText(), rightExpr.getText());
+            NasmTools.free(rightExpr.getText());
+        } else if (rightExpr.isInteger()) {
+            Writers.emitInstruction(op, leftExpr.getText(), rightExpr.getText());
+        } else {
+            String temp = NasmTools.getNextFreeTempStr(leftExpr.getType());
+            Writers.emitInstruction(op, temp, rightExpr.getText());
+            Writers.emitInstruction(op, leftExpr.getText(), temp);
+            NasmTools.free(temp);
+        }
+    }
+   
     
 }

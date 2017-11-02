@@ -6,7 +6,6 @@ import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnum;
 import java.util.List;
-import nasm.NasmTools;
 import tools.ExpressionObject;
 
 /**
@@ -266,7 +265,9 @@ public class Checker
         return true;
     }
 
-    public static boolean varDeclCheck(picoCParser.DeclWithInitContext ctx, String id, Variable var) {
+    public static boolean varDeclCheck
+    (picoCParser.DeclWithInitContext ctx, String id, Variable var) 
+    {
         if (var == null) {
             CompilationControler.errorOcured(
                     ctx.getStart(), 
@@ -274,6 +275,88 @@ public class Checker
                             "Variable " + "'" + id + "'" + " not declared");
             return false;
         }
+        return true;
+    }
+
+    public static boolean checkPointer
+    (picoCParser.DerefContext ctx, ExpressionObject expr) 
+    {
+        if (!expr.isPointer()) {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Trying to dereference non-pointer type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkAddSubPointers
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.AddSubContext ctx) 
+    {
+        if (leftExpr.isPointer() 
+                && rightExpr.isPointer() 
+                    && ctx.op.getType() == picoCParser.ADD) 
+        {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Adding two pointer-type operands");
+            return false;
+        }
+        
+        if (!leftExpr.isPointer() 
+                && rightExpr.isPointer() 
+                    && ctx.op.getType() == picoCParser.SUB) 
+        {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Substracting pointer from non-pointer type");
+            return false;
+        }
+        
+        return true;
+    }
+
+    /* ... */
+    public static boolean checkAssign
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.AssignContext ctx, int operation) 
+    {
+        if (leftExpr.isPointer()) 
+        {
+            if (rightExpr.isPointer()) {
+                if (operation == picoCParser.ASSIGN_SUB)
+                    return true;
+                CompilationControler.errorOcured(
+                        ctx.getStart(), 
+                            TranslationVisitor.curFuncAna.getFunctionName(),
+                                "Wrong type of operands");
+                return false;
+            }
+            if (operation == picoCParser.ASSIGN_ADD 
+                    || operation == picoCParser.ASSIGN_SUB)
+                return true;
+            CompilationControler.errorOcured(
+                        ctx.getStart(), 
+                            TranslationVisitor.curFuncAna.getFunctionName(),
+                                "Wrong type of operands");
+            return false;
+        }
+        
+        if (!leftExpr.isPointer() 
+                && rightExpr.isPointer() 
+                    && operation == picoCParser.ASSIGN_SUB) 
+        {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Substracting pointer from non-pointer type");
+            return false;
+        }
+        
         return true;
     }
     
