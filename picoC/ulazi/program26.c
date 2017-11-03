@@ -19,5 +19,5 @@ int main(int argc, char **argv)
 
 /* Izlaz je:
     Aleksandar
-    Argv[0] = ./run
+    Argv[0] = ./run (Ili kako je vec ime fajla koji se pokrece...)
  */

@@ -573,22 +573,21 @@ public class NasmTools
         It is used in function definition. 
     Warning: 
         Function may contain 6 parameters at most! */
-    public static void moveArgsToStack(List<picoCParser.ParameterContext> parameters) 
+    public static void moveArgsToStack
+    (List<picoCParser.ParameterContext> parameters, ExpressionObject arg) 
     {
-        initializeNewPickers();
         int lsize = parameters.size();
         String reg, paramName, stackPos, paramPos, cast;
         MemoryClassEnum memclass;
+        initializeNewPickers();
         for (int i = 0; i < lsize; ++i) {
             /* argument name needed for it's position on stack */
-            paramName = parameters.get(i).ID().getText();
+            paramName = arg.getName();
             /* get argument's position on stack */
-            stackPos = TranslationVisitor.curFuncAna.
-                        getParameterVariables().get(paramName).getStackPosition();
+            stackPos = arg.getStackDisp();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            int tokenType = parameters.get(i).typeSpecifier().type.getType();
-            memclass = NasmTools.getTypeOfVar(tokenType);
+            memclass = arg.getTypeOfPointer();
             cast = NasmTools.getCast(memclass);
             paramPos = cast + " [" + stackPos + "]";
             reg = getNextRegForFuncCall(memclass);
@@ -647,7 +646,7 @@ public class NasmTools
     }
     
     
-    static void initializeNewPickers() 
+    public static void initializeNewPickers() 
     {
         ++registerPikcerCountersTop;
         ++regPickFlagsTop;

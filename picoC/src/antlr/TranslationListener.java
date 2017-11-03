@@ -19,9 +19,9 @@ public class TranslationListener extends picoCBaseListener
 {
     picoCParser parser;
     TranslationVisitor visitor;
-    /* List that contains informations about all functions
+    /* Map that contains informations about all functions
         that are beeing compiled */
-    public static Map<String, FunctionsAnalyser> lisFuncAna;
+    public static Map<String, FunctionsAnalyser> mapFuncAna;
     
     /* Curent function context.  */
     public static FunctionsAnalyser curFuncCtx = null;
@@ -34,36 +34,52 @@ public class TranslationListener extends picoCBaseListener
     public TranslationListener()
     {
         pointerInitializator = new LinkedList<>();
-        lisFuncAna = new HashMap<>();
+        mapFuncAna = new HashMap<>();
+    }
+
+    @Override
+    public void enterFunctionBody(picoCParser.FunctionBodyContext ctx) 
+    {
+        curFuncCtx.setFunctionContext(true);
+    }
+
+    @Override
+    public void exitFunctionBody(picoCParser.FunctionBodyContext ctx) 
+    {
+        curFuncCtx.setFunctionContext(false);
     }
     
     @Override
     public void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
         String functionName;
-        if (lisFuncAna.containsKey(functionName = ctx.functionName().getText()))
+        if (mapFuncAna.containsKey(functionName = ctx.functionName().getText()))
             return ;
         FunctionsAnalyser fa = new FunctionsAnalyser(functionName);
-        lisFuncAna.put(functionName, fa);
+        mapFuncAna.put(functionName, fa);
         curFuncCtx = fa;
     }
 
     @Override
     public void enterParameterList(picoCParser.ParameterListContext ctx) 
     {
+        curFuncCtx.setParameterContext(true);
         /* Get list of parameters */
-        List<picoCParser.ParameterContext> parameterList;
-        parameterList = ctx.parameter();
+        List<picoCParser.ParameterContext> parameterList = ctx.parameter();
         /* Calculate displacement for parameters */
         int sizeOfParams, sizeOfVar, paramsNum, i;
         sizeOfParams = sizeOfVar = 0;
         paramsNum = parameterList.size();
-        
+        MemoryClassEnum type;
         /* Iterate over list and calculate total size of parameters in bytes */
         for (i = 0; i < paramsNum; ++i) {
             /* Get type of var and convert it to bytes */
             int tokenType = parameterList.get(i).typeSpecifier().type.getType();
-            MemoryClassEnum type = NasmTools.getTypeOfVar(tokenType);
+            boolean ptr = parameterList.get(i).declarator().getChildCount() > 1;
+            if (ptr)
+                type = MemoryClassEnum.POINTER;
+            else
+                type = NasmTools.getTypeOfVar(tokenType);
             sizeOfVar = NasmTools.getSize(type);
             /* Add it to overall size */
             sizeOfParams += sizeOfVar;
@@ -71,21 +87,23 @@ public class TranslationListener extends picoCBaseListener
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
+        
+        curFuncCtx.setParameterContext(false);
     }
     
-    
-    /* Get memoryClass to set current Declarator type for case of multiple
-        declarations of same type. Example: int a, b, c = 10; */
     @Override
     public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
+        if (!curFuncCtx.isFunctionContext())
+            return;
+        int locals = curFuncCtx.getSpaceForLocals();
+        int sizeOfVar;
         /* Calculate space on stack for local variables  */
         if (curFuncCtx == null) {
             DataSegment.DeclareExtern(null);
             return ;
         }
-        int locals = curFuncCtx.getSpaceForLocals();
-        int sizeOfVar;
+        
         if (pointerInitializator.isEmpty())
             sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         else 

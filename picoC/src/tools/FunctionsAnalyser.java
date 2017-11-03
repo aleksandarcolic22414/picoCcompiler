@@ -52,6 +52,12 @@ public class FunctionsAnalyser
     /* Represents memory class for declarationList */
     private MemoryClassEnum currentDeclaratorType = MemoryClassEnum.VOID;
 
+    /* Represent wheather visitor is parameter contex or not */
+    private boolean parameterContext = false;
+    
+    /* Represent wheather visitor is parameter contex or not */
+    private boolean functionContext = false;
+    
     public FunctionsAnalyser(String functionName) 
     {
         this.localVariables = new HashMap<>();
@@ -156,6 +162,22 @@ public class FunctionsAnalyser
         this.spaceForParams = spaceForParams;
     }
 
+    public boolean isParameterContext() {
+        return parameterContext;
+    }
+
+    public void setParameterContext(boolean parameterContext) {
+        this.parameterContext = parameterContext;
+    }
+
+    public boolean isFunctionContext() {
+        return functionContext;
+    }
+
+    public void setFunctionContext(boolean functionContext) {
+        this.functionContext = functionContext;
+    }
+    
     public String declareLocalVariable(MemoryClassEnum type) 
     {
         /* Increase number of local variables */
@@ -176,7 +198,7 @@ public class FunctionsAnalyser
         String fname = TranslationVisitor.curFuncAna.getFunctionName();
         /* Get taken space on stack for local variables calculated in
             Listener class */
-        int taken = TranslationListener.lisFuncAna.get(fname).getSpaceForLocals();
+        int taken = TranslationListener.mapFuncAna.get(fname).getSpaceForLocals();
         /* Calculate new place on stack */
         spaceForParams += sizeofvar;
         

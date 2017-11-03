@@ -1,104 +1,9 @@
 grammar picoC;
 
-compilationUnit 
-    :   translationUnit? EOF  ;
-
-translationUnit 
-    :   externalDeclaration
-    |   translationUnit externalDeclaration
-    ;
-
-externalDeclaration 
-    :   functionDefinition
-    |   expressionStatement
-    |   declaration
-    |   ';'
-    ;
-
-functionDefinition 
-    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
-    ;
-
-typeSpecifier 
-    : type=('int'
-           | 'char'
-           | 'void')
-    ;
-
-functionName 
-    :   ID 
-    ;
-
-declaration
-    :   typeSpecifier initDeclarationList  ';'
-    ;
-
-initDeclarationList
-    :   initDeclarator
-    |   initDeclarationList ',' initDeclarator
-    ;
-
-initDeclarator
-    :   declarator                              #Decl
-    |   declarator '=' assignmentExpression     #DeclWithInit
-    ;
-
-declarator
-    :   pointer declarator      #PtrDecl
-    |   ID                      #DirDecl
-    ;
-
-pointer
-    :   '*'             #SimplePtr
-    |   pointer '*'     #MultiplePrt
-    ;
-
-parameterList 
-    :   parameter (',' parameter)*  ;
-
-parameter 
-    :   typeSpecifier ID  ;
-
-functionBody 
-    :   compoundStatement  ;
-
-statement 
-    :   compoundStatement
-    |   expressionStatement
-    |   selectionStatement
-    |   iterationStatement
-    |   jumpStatement                         
-    ;
-
-jumpStatement
-    :   'return' expression?  ';'      #Return
-    |   'break'               ';'      #Break
-    |   'continue'            ';'      #Continue
-    ;
-
-compoundStatement
-    :   '{' blockItemList? '}'
-    ;
-
-blockItemList
-    :   blockItem
-    |   blockItemList blockItem
-    ;
-
-blockItem
-    :   declaration
-    |   statement
-    ;
-
-selectionStatement
-    :   'if' '(' expression ')' statement ('else' statement)? ;
-
-iterationStatement
-    :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
-
 primaryExpression 
     :   ID                 #Id
     |   INT                #Int
+    |   STRING_LITERAL     #Str
     |   '(' expression ')' #Parens
     ;
 
@@ -111,13 +16,13 @@ postfixExpression
 
 unaryExpression 
     :   postfixExpression       #DropUnary
-    |   '-'  unaryExpression    #Minus
-    |   '+'  unaryExpression    #Plus
     |   '++' unaryExpression    #PreInc
     |   '--' unaryExpression    #PreDec
+    |   '*'  unaryExpression    #Deref
     |   '!'  unaryExpression    #Negation
     |   '&'  unaryExpression    #Address
-    |   '*'  unaryExpression    #Deref
+    |   '-'  unaryExpression    #Minus
+    |   '+'  unaryExpression    #Plus
     ;
 
 multiplicativeExpression 
@@ -156,8 +61,8 @@ conditionalExpression
     ;
 
 assignmentExpression
-    :   conditionalExpression                         #DropAssign
-    |   ID assignmentOperator assignmentExpression    #Assign
+    :   conditionalExpression                                       #DropAssign
+    |   unaryExpression  assignmentOperator assignmentExpression    #Assign
     ;
 
 assignmentOperator
@@ -169,29 +74,130 @@ expression
     |   expression ',' assignmentExpression
     ;      
 
+declaration
+    :   typeSpecifier initDeclarationList  ';'
+    ;
+
+initDeclarationList
+    :   initDeclarator
+    |   initDeclarationList ',' initDeclarator
+    ;
+
+initDeclarator
+    :   declarator                              #Decl
+    |   declarator '=' assignmentExpression     #DeclWithInit
+    ;
+
+declarator
+    :   pointer declarator      #PtrDecl
+    |   ID                      #DirDecl
+    ;
+
+pointer
+    :   '*'             #SimplePtr
+    |   pointer '*'     #MultiplePrt
+    ;
+
+
+typeSpecifier 
+    : type=('int'
+           | 'char'
+           | 'void')
+    ;
+
+parameterList 
+    :   parameter (',' parameter)*  ;
+
+parameter 
+    :   typeSpecifier declarator  ;
+
+functionBody 
+    :   compoundStatement  ;
+
+statement 
+    :   compoundStatement
+    |   expressionStatement
+    |   selectionStatement
+    |   iterationStatement
+    |   jumpStatement                         
+    ;
+
+jumpStatement
+    :   'return' expression?  ';'      #Return
+    |   'break'               ';'      #Break
+    |   'continue'            ';'      #Continue
+    ;
+
+compoundStatement
+    :   '{' blockItemList? '}'
+    ;
+
+blockItemList
+    :   blockItem
+    |   blockItemList blockItem
+    ;
+
+blockItem
+    :   declaration
+    |   statement
+    ;
+
 expressionStatement 
     :   expression? ';'  ;
 
+selectionStatement
+    :   'if' '(' expression ')' statement ('else' statement)? ;
+
+iterationStatement
+    :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ;
+
+forInit
+    :   expression 
+    ;
+
+forCheck
+    :   expression 
+    ;
+
+forInc
+    :   expression 
+    ;
 
 argumentList 
     :   argument (',' argument)*  ;
 
 argument 
-    : assignmentExpression 
-    | STRING_LITERAL
+    :   assignmentExpression 
     ;    
 
+
+compilationUnit 
+    :   translationUnit? EOF  ;
+
+translationUnit 
+    :   externalDeclaration
+    |   translationUnit externalDeclaration
+    ;
+
+externalDeclaration 
+    :   functionDefinition
+    |   expressionStatement
+    |   declaration
+    |   ';'
+    ;
+
+functionDefinition 
+    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
+    ;
+
+functionName 
+    :   ID 
+    ;
 
 /* Type specifiers */
 VOIDTYPE : 'void' ;
 INTTYPE  : 'int'  ;
 CHARTYPE : 'char' ;
-
-MUL : '*' ;
-DIV : '/' ;
-MOD : '%' ;
-ADD : '+' ;
-SUB : '-' ;
 
 ASSIGN     : '=' ;
 ASSIGN_ADD : '+=' ;
@@ -199,6 +205,13 @@ ASSIGN_SUB : '-=' ;
 ASSIGN_MUL : '*=' ;
 ASSIGN_DIV : '/=' ;
 ASSIGN_MOD : '%=' ;
+
+MUL : '*' ;
+DIV : '/' ;
+MOD : '%' ;
+ADD : '+' ;
+SUB : '-' ;
+
 
 EQUAL :          '==' ;
 NOT_EQUAL :      '!=' ;

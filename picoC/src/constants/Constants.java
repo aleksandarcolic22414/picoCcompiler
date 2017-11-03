@@ -7,32 +7,35 @@ package constants;
  */
 public class Constants 
 {
+    /* Represents char size in bytes */
+    public static final int SIZE_OF_CHAR = 1;
     /* Represents int size in bytes */
     public static final int SIZE_OF_INT = 4;
     /* Represents pointer size in bytes */
     public static final int SIZE_OF_POINTER = 8;
-    /* Represents char size in bytes */
-    public static final int SIZE_OF_CHAR = 1;
     /* Represents value of byte in string */
-    public static String STRING_BYTE = "byte";
+    public static final String STRING_BYTE = "byte";
     /* Represents value of word in string */
-    public static String STRING_WORD = "word";
+    public static final String STRING_WORD = "word";
     /* Represents value of double word in string */
-    public static String STRING_DWORD = "dword";
+    public static final String STRING_DWORD = "dword";
     /* Represents value of quad word in string */
-    public static String STRING_QWORD = "qword";
+    public static final String STRING_QWORD = "qword";
     /* path to Desktop for testing puropse. */
     /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */
     public static final String PATH_TO_OUTPUT_FILE = 
             "//home//aleksandar//Desktop//compilerTesting//compiledProgram.asm";
     /* path to input file */
-    public static final String PATH_TO_INPUT_FILE = "ulazi//program.c";
+    public static final String PATH_TO_INPUT_FILE = "ulazi//program17.c";
     /* setup segments for further compilation */
-    /* using C extern printf function in text segment */
-    public static final String ENTER_TEXT_SEGMENT = "\nsegment .text"
-                                                + "\n"
+    public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n"
                                                 + "\textern printf\n"
-                                                + "\textern scanf\n";
+                                                + "\textern scanf\n"
+                                                + "\textern malloc\n";
+    /* using gcc's C extern functions in text segment */
+    public static final String EXTERN_GCC_LIB = "\textern printf\n"
+                                              + "\textern scanf\n"
+                                              + "\textern malloc\n";
     public static final String ENTER_DATA_SEGMENT = "segment .data\n";
     public static final String ENTER_BSS_SEGMENT = "\n\nsegment .bss\n";
     /* function emits */

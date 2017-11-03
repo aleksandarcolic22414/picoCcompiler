@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static nasm.NasmTools.getNextRegForFuncCall;
+import static nasm.NasmTools.resetRegisterPicker;
 import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
@@ -109,7 +111,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             local variables and parameters is hold within map of functions in class
             TranslationListener. */
         int localsAndArgsSize = 
-                TranslationListener.lisFuncAna.get(name).
+                TranslationListener.mapFuncAna.get(name).
                     getSpaceForVariables();
                 
         String ls = Integer.toString(localsAndArgsSize);
@@ -147,12 +149,35 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         List<picoCParser.ParameterContext> paramsList = ctx.parameter();
         int numberOfParams = paramsList.size();
         curFuncAna.setNumberOfParameters(numberOfParams);
-        /* Visit children */
-        super.visitParameterList(ctx);
-        /* Copy arguments to stack */
-        NasmTools.moveArgsToStack(paramsList);
+        curFuncAna.setParameterContext(true);
+        String reg, paramName, stackPos, paramPos, cast;
+        MemoryClassEnum memclass;
+        ExpressionObject arg;
+        
+        NasmTools.initializeNewPickers();
+        for (int i = 0; i < numberOfParams; ++i) {
+            /* Visit parameter (declare it) */
+            arg = visit(paramsList.get(i));
+            /* argument name needed for it's position on stack */
+            paramName = arg.getName();
+            /* get argument's position on stack */
+            stackPos = arg.getStackDisp();
+            /* Get memory class of typeSpecifier and register 
+                in which it is passed to function */
+            memclass = arg.getType();
+            cast = NasmTools.getCast(memclass);
+            paramPos = cast + " [" + stackPos + "]";
+            reg = getNextRegForFuncCall(memclass);
+            
+            /* Emit copying from registers to stack for arguments */
+            Writers.emitInstruction("mov", paramPos, reg);
+        }
+        resetRegisterPicker();
+        
+        
         /* Free all registers for function body */
         NasmTools.freeAllRegisters();
+        curFuncAna.setParameterContext(false);
         return null;
     }
 
@@ -162,32 +187,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitParameter(picoCParser.ParameterContext ctx) 
     {
-        /* Variable name */
-        String name;
-        name = ctx.ID().getText();
-        /* Chech if variable is already declared */
-        if (!Checker.paramCheck(ctx, name))
-            return null;
-        
         /* Get variable's memory class  */
         int type = ctx.typeSpecifier().type.getType();
-        MemoryClassEnum typeSpecifier;
-        typeSpecifier = NasmTools.getTypeOfVar(type);
-        
-        /* Get stack position */
-        String stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
-        
-        /* Create new variable object */
-        Variable var = new Variable(name, stackPosition, false, typeSpecifier);
-        
-        /* Insert new variable in function analyser */
-        curFuncAna.getParameterVariables().put(name, var);
-        
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
-        
-        if (!Checker.varSizeCheck(ctx, varSize))
-            return null;
+        MemoryClassEnum typeSpecifier = NasmTools.getTypeOfVar(type);;
+        curFuncAna.setCurrentDeclaratorType(typeSpecifier);
         
         return super.visitParameter(ctx);
     }
@@ -253,38 +256,44 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitDirDecl(picoCParser.DirDeclContext ctx) 
     {
-        /* Extern variable declaration */
-        if (!FunctionsAnalyser.isFunctionInProcess())
-            return DataSegment.DeclareExtern(ctx);
-        /* Variable name */
-        String name;
+        /* Variable name, stack position, and memory class */
+        String name, stackPosition;
         name = ctx.ID().getText();
         currentVariableName = name;
+        MemoryClassEnum typeSpecifier;
+        Variable var;
         /* Chech if variable is already declared */
         if (!Checker.varDeclCheck(ctx, name))
             return null;
         
-        /* Get variable's memory class  */
-        MemoryClassEnum typeSpecifier;
         /* Check if variable is pointer */
         if (curPointer.isEmpty())
             typeSpecifier = curFuncAna.getCurrentDeclaratorType();
         else
             typeSpecifier = MemoryClassEnum.POINTER;
-        String stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
-        Variable var = new Variable
-            (name, stackPosition, false, typeSpecifier, curPointer);
         
-        /* Insert new variable in function analyser */
-        curFuncAna.getLocalVariables().put(name, var);
-        
+        if (curFuncAna.isParameterContext()) {
+            /* Get stack position */
+            stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
+            /* Create new variable object */
+            var = new Variable
+                (name, stackPosition, false, typeSpecifier, curPointer);
+            /* Insert new variable in parameter variables */
+            curFuncAna.getParameterVariables().put(name, var);
+        } else {
+            stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
+            var = new Variable
+                (name, stackPosition, false, typeSpecifier, curPointer);
+            /* Insert new variable in local variables */
+            curFuncAna.getLocalVariables().put(name, var);
+        }
         /* Size in bytes */
         int varSize = NasmTools.getSize(typeSpecifier);
         /* Check size of variable */
         if (!Checker.varSizeCheck(ctx, varSize))
             return null;
         
-        return super.visitDirDecl(ctx);
+        return new ExpressionObject(var);
     }
 
     @Override
@@ -316,7 +325,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Expression */
         ExpressionObject expr, newVariable;
         int operation = ctx.assignmentOperator().op.getType();
-        String id = ctx.ID().getText();
+        newVariable = visit(ctx.unaryExpression());
+        String id = newVariable.getName();
         /* Get variable context */
         Variable var = curFuncAna.getAnyVariable(id);
         /* Check if it is declared */
@@ -326,14 +336,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Initialize new Expression object */
         var.setInitialized(true);
         
-        newVariable = new ExpressionObject(var);
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
         /* Cast variable if needed */
         if (!expr.isInteger())
-            expr.castVariable(var.getTypeSpecifier());
+            expr.castVariable(newVariable.getType());
         if (!Checker.checkAssign(newVariable, expr, ctx, operation))
             return null;
         
@@ -481,21 +490,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitArgument(picoCParser.ArgumentContext ctx) 
     {
-        /* If it is not string literal, then return value is register of variable */
-        if (ctx.STRING_LITERAL() == null) {
-            ExpressionObject expr = visit(ctx.assignmentExpression());
-            expr.comparisonCheck();
+        ExpressionObject expr = visit(ctx.assignmentExpression());
+        expr.comparisonCheck();
             
-            return expr;
-        }
-        String strlit = ctx.STRING_LITERAL().getText();
-        String literalName = NasmTools.defineStringLiteral(strlit);
-        /* Return string literal */
-        return new ExpressionObject
-            (literalName, 
-             MemoryClassEnum.POINTER, 
-             ExpressionObject.STRING_LITERAL
-            );
+        return expr;
     }
     /*
         expression
@@ -711,6 +709,22 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
              ExpressionObject.INTEGER
             );
     }
+
+    @Override
+    public ExpressionObject visitStr(picoCParser.StrContext ctx) 
+    {
+        String strlit = ctx.STRING_LITERAL().getText();
+        String literalName = NasmTools.defineStringLiteral(strlit);
+        /* Return string literal */
+        return new ExpressionObject
+            (literalName, 
+             MemoryClassEnum.POINTER, 
+             ExpressionObject.STRING_LITERAL,
+             MemoryClassEnum.CHAR       
+            );
+    }
+    
+    
     
     
     /*  Relation could be: '<' '<=' '>' '>=' ;
@@ -1068,7 +1082,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     /*
         iterationStatement
-            :   'for' '(' expression? ';' expression? ';' expression? ')' statement ;
+            :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ;
     */
     @Override
     public ExpressionObject visitIterationStatement
@@ -1085,8 +1099,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         LabelsMaker.setCurrentForLabels(forIncrementLabel, forEndLabel);
         /* Do first expression witch is "initialization" (it could be 
             any expression off course) */
-        if (ctx.expression(0) != null)
-            expr = visit(ctx.expression(0));
+        if (ctx.forInit() != null)
+            expr = visit(ctx.forInit());
         if (expr != null)
             expr.comparisonCheck();
         /* Jump to check condition */
@@ -1098,16 +1112,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             visit(ctx.statement());
         /* Increment label */
         Writers.emitLabel(forIncrementLabel);
-        if (ctx.expression(2) != null)
-            visit(ctx.expression(2));
+        if (ctx.forInc() != null)
+            visit(ctx.forInc());
         /* Check label */
         Writers.emitLabel(forCheckLabel);
         /* Default jump */
         jump = Constants.JUMP_UNCODITIONAL;        
         /* If comparison is not done, than result of visiting must be
             compared to 0. Something like for (i = 100; i; --i); */
-        if (ctx.expression(1) != null) {
-            condition = visit(ctx.expression(1));
+        if (ctx.forCheck() != null) {
+            condition = visit(ctx.forCheck());
             if (!condition.isCompared())
                 condition.compareWithZero();
             jump = RelationHelper.getTrueJump();
@@ -1176,6 +1190,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         if (!expr2.isRegister())    // and left must be register
             expr2.putInRegister();
+        if (expr3.isStringLiteral())
+            expr3.putInRegister();
         
         ExpressionObject.castVariablesToMaxSize(expr2, expr3);
         Emitter.setConditionalMoveOperator(expr2, expr3);
@@ -1262,11 +1278,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         if (!Checker.checkPointer(ctx, expr))
             return null;
-        
+        if (!expr.isRegister())
+            expr.putInRegister();
         expr.dereference();
+        
         return expr;
     }
 
-    
+   
     
 }

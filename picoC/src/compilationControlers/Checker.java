@@ -62,6 +62,8 @@ public class Checker
                 return true;
             case "scanf":
                 return true;
+            case "malloc":
+                return true;
         }
         return false;
     }

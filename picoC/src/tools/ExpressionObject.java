@@ -27,6 +27,8 @@ public class ExpressionObject
     private int size;
     /* Stack displacement for stack variables */
     private String stackDisp = null;
+    /* If expression is variable, this represents it's name */
+    private String name = null;
     /* Pointers information. This variable operates as stack. The top of
         stack is current memory type that this variable points to.
         If some variable is pointer to: pointer to a char, than this
@@ -73,6 +75,7 @@ public class ExpressionObject
     {
         this.text = castStackVar(var.getStackPosition(), var.getTypeSpecifier());
         this.type = var.getTypeSpecifier();
+        this.name = var.getName();
         setSize(type);
         flags |= VAR_STACK;
         stackDisp = var.getStackPosition();
@@ -124,6 +127,16 @@ public class ExpressionObject
         setCompared(false);
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    
+    
     public boolean isRegister() 
     {
         return (flags & ExpressionObject.REGISTER) != 0;
@@ -309,14 +322,12 @@ public class ExpressionObject
         integer. */
     public void dereference() 
     {
-        if (!this.isRegister())
-            this.putInRegister();
         MemoryClassEnum newType = pointerType.pop();
         String cast = NasmTools.getCast(newType);
         String deref = cast + " [" + this.text + "]";
-        castRegisterTo(newType);
-        /* Now, this.text is changed to proper size */
-        Writers.emitInstruction("mov", this.text, deref);
+        setText(deref);
+        setType(newType);
+        setStackVariable();
     }
 
     /* Function casts variable to a specific size. 
@@ -328,6 +339,16 @@ public class ExpressionObject
         setType(newType);
         int newSize = NasmTools.getSize(newType);
         this.text = NasmTools.castVariable(this.text, newSize);
+    }
+
+    public boolean isStringLiteral() 
+    {
+        return (flags & ExpressionObject.STRING_LITERAL) != 0;
+    }
+
+    private void setStackVariable() 
+    {
+        this.flags = ExpressionObject.VAR_STACK;
     }
     
 }
