@@ -1,16 +1,18 @@
 int main(int argc, char **argv)
 {
-    for (++argv; --argc > 0; argv++) {
-        for ( ; **argv; ++*argv)
-        printf("%c", **argv);
+    int i;
+    for (i = 0; i < argc; ++i) {
+        char *ch = *argv++;
+        for (; *ch; ++ch)
+            printf("%c", *ch);
         printf("\n");
     }
-    
-    
+
     return 0;
 }
 
 /* Izlaz je:
+    (Ime programa)
     (Prvi argument)
     (Drugi argument)
     (Treci argument)

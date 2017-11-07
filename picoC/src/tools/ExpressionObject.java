@@ -40,6 +40,7 @@ public class ExpressionObject
     public static final int VAR_EXTERN =         0x4;
     public static final int INTEGER =            0x8;
     public static final int STRING_LITERAL =     0x10;
+    public static final int DEREFERENCED =       0x20;
     
     /* Constructor */
     public ExpressionObject
@@ -112,6 +113,17 @@ public class ExpressionObject
     public void setSize(int size) {
         this.size = size;
     }
+
+    public boolean isDereferenced() 
+    {
+        return (flags & ExpressionObject.DEREFERENCED) != 0;
+    }
+
+    public void setDereferenced() 
+    {
+        this.flags = ExpressionObject.DEREFERENCED;
+        this.flags |= ExpressionObject.VAR_STACK;
+    }
     
     /* Check if comparison is done and cast variable if it is */
     public void comparisonCheck() 
@@ -135,8 +147,6 @@ public class ExpressionObject
         this.name = name;
     }
 
-    
-    
     public boolean isRegister() 
     {
         return (flags & ExpressionObject.REGISTER) != 0;
@@ -315,19 +325,23 @@ public class ExpressionObject
         return !pointerType.isEmpty();
     }
 
-    /* Function dereference pointer. Since variable must be in register 
-        in order to do dereferencing, variable is first moved to one.  
-        Next, cast is determined and moving is done. So final instruction
-        is something like: mov    eax, dword[eax], if eax was a pointer to
-        integer. */
+    /* Function dereferences pointer.   */
     public void dereference() 
     {
-        MemoryClassEnum newType = pointerType.pop();
-        String cast = NasmTools.getCast(newType);
-        String deref = cast + " [" + this.text + "]";
-        setText(deref);
+        String cast, newText;
+        MemoryClassEnum newType;
+        if (!isDereferenced()) {
+            putInRegister();
+            this.stackDisp = this.text;     // rax for example...
+        } else {
+            Writers.emitInstruction("mov", this.stackDisp, this.text);
+        }
+        newType = pointerType.pop();
+        cast = NasmTools.getCast(newType);
+        newText = cast + " [" + this.stackDisp + "]";
         setType(newType);
-        setStackVariable();
+        setText(newText);
+        setDereferenced();
     }
 
     /* Function casts variable to a specific size. 

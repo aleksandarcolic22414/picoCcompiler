@@ -8,6 +8,56 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface picoCListener extends ParseTreeListener {
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#compilationUnit}.
+	 * @param ctx the parse tree
+	 */
+	void enterCompilationUnit(picoCParser.CompilationUnitContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#compilationUnit}.
+	 * @param ctx the parse tree
+	 */
+	void exitCompilationUnit(picoCParser.CompilationUnitContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#translationUnit}.
+	 * @param ctx the parse tree
+	 */
+	void enterTranslationUnit(picoCParser.TranslationUnitContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#translationUnit}.
+	 * @param ctx the parse tree
+	 */
+	void exitTranslationUnit(picoCParser.TranslationUnitContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#externalDeclaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#externalDeclaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#functionDefinition}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#functionDefinition}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code Id}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
@@ -422,6 +472,16 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitDeclaration(picoCParser.DeclarationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#typeSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#typeSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#initDeclarationList}.
 	 * @param ctx the parse tree
 	 */
@@ -503,16 +563,6 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSimplePtr(picoCParser.SimplePtrContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#typeSpecifier}.
-	 * @param ctx the parse tree
-	 */
-	void enterTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#typeSpecifier}.
-	 * @param ctx the parse tree
-	 */
-	void exitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree
@@ -699,54 +749,4 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArgument(picoCParser.ArgumentContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#compilationUnit}.
-	 * @param ctx the parse tree
-	 */
-	void enterCompilationUnit(picoCParser.CompilationUnitContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#compilationUnit}.
-	 * @param ctx the parse tree
-	 */
-	void exitCompilationUnit(picoCParser.CompilationUnitContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#translationUnit}.
-	 * @param ctx the parse tree
-	 */
-	void enterTranslationUnit(picoCParser.TranslationUnitContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#translationUnit}.
-	 * @param ctx the parse tree
-	 */
-	void exitTranslationUnit(picoCParser.TranslationUnitContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#externalDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#externalDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#functionDefinition}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#functionDefinition}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionName(picoCParser.FunctionNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionName(picoCParser.FunctionNameContext ctx);
 }

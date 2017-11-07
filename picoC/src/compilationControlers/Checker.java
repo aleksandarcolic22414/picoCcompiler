@@ -15,6 +15,19 @@ import tools.ExpressionObject;
 public class Checker 
 {
 
+    private static boolean isInAssignCtx;
+    
+    
+    public static boolean isIsInAssignCtx() 
+    {
+        return isInAssignCtx;
+    }
+
+    public static void setIsInAssignCtx(boolean aIsInAssignCtx) 
+    {
+        isInAssignCtx = aIsInAssignCtx;
+    }
+    
     public static boolean functionCallCheck
     (picoCParser.FuncCallContext ctx, List<picoCParser.ArgumentContext> argumentList) 
     {
@@ -187,7 +200,7 @@ public class Checker
     public static void varInitCheck
     (boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
-        if (local && newVar != null && !newVar.isInitialized()) {
+        if (!isInAssignCtx && local && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 

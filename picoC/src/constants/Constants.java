@@ -26,7 +26,7 @@ public class Constants
     public static final String PATH_TO_OUTPUT_FILE = 
             "//home//aleksandar//Desktop//compilerTesting//compiledProgram.asm";
     /* path to input file */
-    public static final String PATH_TO_INPUT_FILE = "ulazi//program17.c";
+    public static final String PATH_TO_INPUT_FILE = "ulazi//program.c";
     /* setup segments for further compilation */
     public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n"
                                                 + "\textern printf\n"

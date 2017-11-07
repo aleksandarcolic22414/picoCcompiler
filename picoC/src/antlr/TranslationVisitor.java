@@ -34,17 +34,19 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public static Map<String, FunctionsAnalyser> functions;
    
     /* Curent function context.  */
-    public static FunctionsAnalyser curFuncAna = null;
+    public static FunctionsAnalyser curFuncAna;
     
     /* List represent current pointer declarator type */
     public static LinkedList<MemoryClassEnum> curPointer;
     
+    /* Current variable name */
     public static String currentVariableName;
     
     public TranslationVisitor() 
     {
         curPointer = new LinkedList<>();
         functions = new HashMap<>();
+        curFuncAna = null;
     }
     
     /*  
@@ -322,6 +324,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
+        Checker.setIsInAssignCtx(true);
         /* Expression */
         ExpressionObject expr, newVariable;
         int operation = ctx.assignmentOperator().op.getType();
@@ -353,8 +356,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             Emitter.decideAssign(
                     newVariable, expr, operation);
         
+        
+        
         if (expr.isRegister())
             expr.freeRegister();
+        Checker.setIsInAssignCtx(false);
         /* Return new Object */
         return newVariable;
     }
@@ -916,7 +922,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         labelAfterElse = LabelsMaker.getNextAfterElseLabel();
         
         /* Visit statement and try to recover if error ocurs */
-        if ((expr = visit(ctx.expression())) == null)
+        if ((expr = visit(ctx.assignmentExpression())) == null)
             return null;
         if (!expr.isCompared())
             expr.compareWithZero();
@@ -1278,8 +1284,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         if (!Checker.checkPointer(ctx, expr))
             return null;
-        if (!expr.isRegister())
-            expr.putInRegister();
+        
         expr.dereference();
         
         return expr;

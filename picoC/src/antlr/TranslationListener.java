@@ -41,12 +41,7 @@ public class TranslationListener extends picoCBaseListener
     public void enterFunctionBody(picoCParser.FunctionBodyContext ctx) 
     {
         curFuncCtx.setFunctionContext(true);
-    }
-
-    @Override
-    public void exitFunctionBody(picoCParser.FunctionBodyContext ctx) 
-    {
-        curFuncCtx.setFunctionContext(false);
+        curFuncCtx.setParameterContext(false);
     }
     
     @Override
@@ -64,6 +59,7 @@ public class TranslationListener extends picoCBaseListener
     public void enterParameterList(picoCParser.ParameterListContext ctx) 
     {
         curFuncCtx.setParameterContext(true);
+        curFuncCtx.setFunctionContext(false);
         /* Get list of parameters */
         List<picoCParser.ParameterContext> parameterList = ctx.parameter();
         /* Calculate displacement for parameters */
@@ -87,15 +83,14 @@ public class TranslationListener extends picoCBaseListener
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
-        
-        curFuncCtx.setParameterContext(false);
     }
     
     @Override
     public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
-        if (!curFuncCtx.isFunctionContext())
-            return;
+        if (curFuncCtx.isParameterContext()) {
+            return;       
+        }
         int locals = curFuncCtx.getSpaceForLocals();
         int sizeOfVar;
         /* Calculate space on stack for local variables  */
@@ -116,6 +111,9 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
+        if (curFuncCtx.isParameterContext()) {
+            return;       
+        }
         MemoryClassEnum type;
         type = curFuncCtx.getCurrentDeclaratorType();
         NasmTools.insertPointerType(pointerInitializator, type);

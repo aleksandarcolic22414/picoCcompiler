@@ -11,6 +11,36 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#compilationUnit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompilationUnit(picoCParser.CompilationUnitContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#translationUnit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTranslationUnit(picoCParser.TranslationUnitContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#externalDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#functionDefinition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#functionName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionName(picoCParser.FunctionNameContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code Id}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
@@ -253,6 +283,12 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDeclaration(picoCParser.DeclarationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#typeSpecifier}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#initDeclarationList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -300,12 +336,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSimplePtr(picoCParser.SimplePtrContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#typeSpecifier}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeSpecifier(picoCParser.TypeSpecifierContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree
@@ -417,34 +447,4 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArgument(picoCParser.ArgumentContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#compilationUnit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCompilationUnit(picoCParser.CompilationUnitContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#translationUnit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTranslationUnit(picoCParser.TranslationUnitContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#externalDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExternalDeclaration(picoCParser.ExternalDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#functionDefinition}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunctionName(picoCParser.FunctionNameContext ctx);
 }

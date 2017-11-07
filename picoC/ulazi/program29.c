@@ -1,11 +1,8 @@
 int main(int argc, char **argv)
 {
-    for (++argv; --argc > 0; argv++) {
-        for ( ; **argv; ++*argv)
-        printf("%c", **argv);
-        printf("\n");
-    }
-    
+    int i;
+    for (i = 0; i < argc-1; ++i)
+        printf("%s\n", *++argv);
     
     return 0;
 }

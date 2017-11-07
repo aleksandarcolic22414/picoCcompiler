@@ -1,5 +1,27 @@
 grammar picoC;
 
+compilationUnit 
+    :   translationUnit? EOF  ;
+
+translationUnit 
+    :   externalDeclaration
+    |   translationUnit externalDeclaration
+    ;
+
+externalDeclaration 
+    :   functionDefinition
+    |   declaration
+    |   ';'
+    ;
+
+functionDefinition 
+    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
+    ;
+
+functionName 
+    :   ID 
+    ;
+
 primaryExpression 
     :   ID                 #Id
     |   INT                #Int
@@ -78,6 +100,12 @@ declaration
     :   typeSpecifier initDeclarationList  ';'
     ;
 
+typeSpecifier 
+    : type= ( 'int'
+            | 'char'
+            | 'void' )
+            ;
+
 initDeclarationList
     :   initDeclarator
     |   initDeclarationList ',' initDeclarator
@@ -96,13 +124,6 @@ declarator
 pointer
     :   '*'             #SimplePtr
     |   pointer '*'     #MultiplePrt
-    ;
-
-
-typeSpecifier 
-    : type=('int'
-           | 'char'
-           | 'void')
     ;
 
 parameterList 
@@ -146,7 +167,7 @@ expressionStatement
     :   expression? ';'  ;
 
 selectionStatement
-    :   'if' '(' expression ')' statement ('else' statement)? ;
+    :   'if' '(' assignmentExpression ')' statement ('else' statement)? ;
 
 iterationStatement
     :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ;
@@ -156,7 +177,7 @@ forInit
     ;
 
 forCheck
-    :   expression 
+    :   assignmentExpression  
     ;
 
 forInc
@@ -170,29 +191,6 @@ argument
     :   assignmentExpression 
     ;    
 
-
-compilationUnit 
-    :   translationUnit? EOF  ;
-
-translationUnit 
-    :   externalDeclaration
-    |   translationUnit externalDeclaration
-    ;
-
-externalDeclaration 
-    :   functionDefinition
-    |   expressionStatement
-    |   declaration
-    |   ';'
-    ;
-
-functionDefinition 
-    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
-    ;
-
-functionName 
-    :   ID 
-    ;
 
 /* Type specifiers */
 VOIDTYPE : 'void' ;
