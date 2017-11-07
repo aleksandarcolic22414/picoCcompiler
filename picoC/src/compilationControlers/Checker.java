@@ -15,17 +15,17 @@ import tools.ExpressionObject;
 public class Checker 
 {
 
-    private static boolean isInAssignCtx;
+    private static boolean varInitCheck = true;
     
     
-    public static boolean isIsInAssignCtx() 
+    public static boolean varInitCheck() 
     {
-        return isInAssignCtx;
+        return varInitCheck;
     }
 
-    public static void setIsInAssignCtx(boolean aIsInAssignCtx) 
+    public static void setVarInitCheck(boolean avarInitCheck) 
     {
-        isInAssignCtx = aIsInAssignCtx;
+        varInitCheck = avarInitCheck;
     }
     
     public static boolean functionCallCheck
@@ -200,7 +200,7 @@ public class Checker
     public static void varInitCheck
     (boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
-        if (!isInAssignCtx && local && newVar != null && !newVar.isInitialized()) {
+        if (varInitCheck && local && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
@@ -340,6 +340,16 @@ public class Checker
     (ExpressionObject leftExpr, ExpressionObject rightExpr, 
     picoCParser.AssignContext ctx, int operation) 
     {
+        if (operation == picoCParser.ASSIGN) {
+            if (leftExpr.getType() != rightExpr.getType()) {
+                CompilationControler.warningOcured(
+                        ctx.getStart(), 
+                            TranslationVisitor.curFuncAna.getFunctionName(),
+                                "Different type of variables in assign context");
+            }
+            return true;
+        }
+        
         if (leftExpr.isPointer()) 
         {
             if (rightExpr.isPointer()) {

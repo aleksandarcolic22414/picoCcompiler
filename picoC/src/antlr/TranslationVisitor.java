@@ -318,25 +318,24 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     
     /*
         assignmentExpression
-            :   ID assignmentOperator assignmentExpression    #Assign
+            :   unaryExpression assignmentOperator assignmentExpression    #Assign
             ;
     */
     @Override
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
-        Checker.setIsInAssignCtx(true);
+        
         /* Expression */
         ExpressionObject expr, newVariable;
         int operation = ctx.assignmentOperator().op.getType();
+        Checker.setVarInitCheck(false);    // Prevent checking for initialization
         newVariable = visit(ctx.unaryExpression());
+        Checker.setVarInitCheck(true);
         String id = newVariable.getName();
+        /* Just to continue checking for init in visitID context. */
+        
         /* Get variable context */
         Variable var = curFuncAna.getAnyVariable(id);
-        /* Check if it is declared */
-        if (!Checker.varDeclCheck(ctx, id, var))
-            return null;
-        
-        /* Initialize new Expression object */
         var.setInitialized(true);
         
         /* Visit expression and try to recover from error. */
@@ -360,7 +359,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         if (expr.isRegister())
             expr.freeRegister();
-        Checker.setIsInAssignCtx(false);
         /* Return new Object */
         return newVariable;
     }
@@ -1088,11 +1086,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     /*
         iterationStatement
-            :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ;
+            :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ; #ForLoop
     */
     @Override
-    public ExpressionObject visitIterationStatement
-    (picoCParser.IterationStatementContext ctx) 
+    public ExpressionObject visitForLoop
+    (picoCParser.ForLoopContext ctx) 
     {
         ExpressionObject expr, condition;
         String jump; 
@@ -1102,9 +1100,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         forIncrementLabel = LabelsMaker.getNextForIncerementLabel();
         forEndLabel = LabelsMaker.getNextForEndLabel();
         expr = condition = null;
-        LabelsMaker.setCurrentForLabels(forIncrementLabel, forEndLabel);
+        LabelsMaker.setCurrentIterationLabels(forIncrementLabel, forEndLabel);
         /* Do first expression witch is "initialization" (it could be 
-            any expression off course) */
+            any expression of course) */
         if (ctx.forInit() != null)
             expr = visit(ctx.forInit());
         if (expr != null)
@@ -1113,7 +1111,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, forCheckLabel);
         /* Loop start */
         Writers.emitLabel(forStartLabel);
-        /* Visit for body */
+        /* Visit 'for' body */
         if (ctx.statement() != null)
             visit(ctx.statement());
         /* Increment label */
@@ -1134,20 +1132,61 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         }
         Writers.emitInstruction(jump, forStartLabel);
         Writers.emitLabel(forEndLabel);
-        LabelsMaker.unsetCurrentForLabels(forIncrementLabel, forEndLabel);
+        LabelsMaker.unsetCurrentIterationLabels();
         return null;
     }    
 
     /*
+        iterationStatement
+            :   'while' '(' whileCheck? ')' statement   ;       #WhileLoop
+    */
+    @Override
+    public ExpressionObject visitWhileLoop(picoCParser.WhileLoopContext ctx) 
+    {
+        String whileStartLabel, whileCheckLabel, whileEndLabel;
+        String jump;
+        ExpressionObject condition;
+        whileStartLabel = LabelsMaker.getNextWhileStartLabel();
+        whileCheckLabel = LabelsMaker.getNextWhileCheckLabel();
+        whileEndLabel = LabelsMaker.getNextWhileEndLabel();
+        LabelsMaker.setCurrentIterationLabels(whileCheckLabel, whileEndLabel);
+        /* Jump to check condition */
+        Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, whileCheckLabel);
+        /* Loop start */
+        Writers.emitLabel(whileStartLabel);
+        /* Visit 'while' body */
+        if (ctx.statement() != null)
+            visit(ctx.statement());
+        /* Check label */
+        Writers.emitLabel(whileCheckLabel);
+        /* Default jump */
+        jump = Constants.JUMP_UNCODITIONAL;        
+        /* If comparison is not done, than result of visiting must be
+            compared to 0. Something like while (*s++); */
+        if (ctx.whileCheck() != null) {
+            condition = visit(ctx.whileCheck());
+            if (!condition.isCompared())
+                condition.compareWithZero();
+            jump = RelationHelper.getTrueJump();
+        }
+        Writers.emitInstruction(jump, whileStartLabel);
+        Writers.emitLabel(whileEndLabel);
+        LabelsMaker.unsetCurrentIterationLabels();
+        return null;
+    }
+
+    
+    
+    /*
         jumpStatement
             :   'break'     ';'      #Break
             ;
-    */
+    
+    Break instruction is just uncoditional jump to the end of loop */
     @Override
     public ExpressionObject visitBreak(picoCParser.BreakContext ctx) 
     {
-        /* break instruction is just uncodition jump to the end of loop*/
-        String label = LabelsMaker.getLastForEndLabel();
+        String label = LabelsMaker.getLastBreakLabel();
         Writers.emitInstruction("jmp", label);
         return null;
     }
@@ -1156,12 +1195,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         jumpStatement
             :   'continue'     ';'      #Continue
             ;
-    */
+    
+    Continue instruction is just uncoditional jump to 
+    the incrementation/check of loop */
     @Override
     public ExpressionObject visitContinue(picoCParser.ContinueContext ctx) 
-    {
-        /* continue instruction is just uncodition jump to the incrementation of loop*/
-        String label = LabelsMaker.getLastForIncrementLabel();
+    {    
+        String label = LabelsMaker.getLastContinueLabel();
         Writers.emitInstruction("jmp", label);
         return null;
     }
@@ -1219,12 +1259,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr;
     }
 
-    /* Negation is done simply by comparing variable with zero and then
-        "conditional equal set" is done (setcc where cc is condition). 
+    /* Negation is done simply by comparing variable with zero and doing
+        "conditional equal set" (setcc where cc is condition). 
         Something like:
         cmp     eax, 0
         sete    al     
-        So if eax was any other than 0 it becomes zero.
+        So if eax was any other than 0 it becomes 0.
         If eax was 0 it becomes 1.
     
         unaryExpression 
@@ -1276,6 +1316,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return expr;
     }
 
+    /*
+        unaryExpression
+            :   '*'  unaryExpression    #Deref   
+    */
     @Override
     public ExpressionObject visitDeref(picoCParser.DerefContext ctx) 
     {
@@ -1289,7 +1333,5 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return expr;
     }
-
-   
     
 }

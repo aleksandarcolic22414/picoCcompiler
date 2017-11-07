@@ -170,7 +170,9 @@ selectionStatement
     :   'if' '(' assignmentExpression ')' statement ('else' statement)? ;
 
 iterationStatement
-    :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ;
+    :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement   #ForLoop
+    |   'while' '(' whileCheck? ')' statement                        #WhileLoop 
+    ;
 
 forInit
     :   expression 
@@ -182,6 +184,10 @@ forCheck
 
 forInc
     :   expression 
+    ;
+
+whileCheck
+    :   assignmentExpression
     ;
 
 argumentList 

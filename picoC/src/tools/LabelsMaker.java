@@ -14,7 +14,7 @@ public class LabelsMaker
     public static long logicalFalseCounter = 1;
     public static long logicalAfterFalseCounter = 1;
     
-    /* Variables holds information about next free ifelse label number */
+    /* Variables holds information about next free if-else label number */
     public static long logicalIfCounter = 1;
     public static long logicalElseCounter = 1;
     public static long logicalAfterElseCounter = 1;
@@ -24,6 +24,11 @@ public class LabelsMaker
     public static long forCheckCounter = 1;
     public static long forIncrementCounter = 1;
     public static long forEndCounter = 1;
+    
+    /* Variables holds information about next free 'while' label number */
+    public static long WhileStartCounter = 1;
+    public static long WhileCheckCounter = 1;
+    public static long WhileEndCounter = 1;
     /* Holds information about current depth of if else statement */
     public static long selectionDepthCounter = 0;
     /* List contains depths of all if else statements in program */
@@ -31,8 +36,8 @@ public class LabelsMaker
     
     /* These two listes contains information about current for labels
         in order to help with break and continue instructions */
-    public static LinkedList<String> currentForEndLabel;
-    public static LinkedList<String> currentForIncrementLabel;
+    public static LinkedList<String> currentBreakLabel;
+    public static LinkedList<String> currentContinueLabel;
     
     /* Next variables are string representation of labels */
     public static final String TRUE_LABEL = "TRUE_LABEL_";
@@ -45,12 +50,14 @@ public class LabelsMaker
     public static final String FOR_CHECK_LABEL = "FOR_CHECK_LABEL_";
     public static final String FOR_INCREMENT_LABEL = "FOR_INCREMENT_LABEL_";
     public static final String FOR_END_LABEL = "FOR_END_LABEL_";
-    
+    public static final String WHILE_START_LABEL = "WHILE_START_LABEL_";
+    public static final String WHILE_CHECK_LABEL = "WHILE_CHECK_LABEL_";
+    public static final String WHILE_END_LABEL = "WHILE_END_LABEL_";
             
     static {
         ifElseLabelHelper = new LinkedList<>();
-        currentForEndLabel = new LinkedList<>();
-        currentForIncrementLabel = new LinkedList<>();
+        currentBreakLabel = new LinkedList<>();
+        currentContinueLabel = new LinkedList<>();
     }
     
     /* Function returns next free true label in logical expressions */
@@ -158,26 +165,43 @@ public class LabelsMaker
     public static String getNextForEndLabel() {
         return FOR_END_LABEL + Long.toString(forEndCounter++);
     }
-
-    public static void setCurrentForLabels(String forIncrementLabel, String forEndLabel) 
+    
+    public static String getNextWhileStartLabel() 
     {
-        currentForEndLabel.push(forEndLabel);
-        currentForIncrementLabel.push(forIncrementLabel);
+        return WHILE_START_LABEL + Long.toString(WhileStartCounter++);
     }
 
-    public static void unsetCurrentForLabels(String forIncrementLabel, String forEndLabel) 
+    public static String getNextWhileCheckLabel() 
     {
-        currentForEndLabel.pop();
-        currentForIncrementLabel.pop();
+        return WHILE_CHECK_LABEL + Long.toString(WhileCheckCounter++);
     }
 
-    public static String getLastForEndLabel() 
+    public static String getNextWhileEndLabel() 
     {
-        return currentForEndLabel.peek();
+        return WHILE_END_LABEL + Long.toString(WhileEndCounter++);
     }
     
-    public static String getLastForIncrementLabel() 
+    public static void setCurrentIterationLabels
+    (String iterationIncrementLabel, String iterationEndLabel) 
     {
-        return currentForIncrementLabel.peek();
+        currentContinueLabel.push(iterationIncrementLabel);
+        currentBreakLabel.push(iterationEndLabel);
     }
+
+    public static void unsetCurrentIterationLabels() 
+    {
+        currentBreakLabel.pop();
+        currentContinueLabel.pop();
+    }
+
+    public static String getLastBreakLabel() 
+    {
+        return currentBreakLabel.peek();
+    }
+    
+    public static String getLastContinueLabel() 
+    {
+        return currentContinueLabel.peek();
+    }
+
 }

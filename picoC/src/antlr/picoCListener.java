@@ -690,15 +690,29 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * Enter a parse tree produced by the {@code ForLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterIterationStatement(picoCParser.IterationStatementContext ctx);
+	void enterForLoop(picoCParser.ForLoopContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * Exit a parse tree produced by the {@code ForLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitIterationStatement(picoCParser.IterationStatementContext ctx);
+	void exitForLoop(picoCParser.ForLoopContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code WhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhileLoop(picoCParser.WhileLoopContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code WhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhileLoop(picoCParser.WhileLoopContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#forInit}.
 	 * @param ctx the parse tree
@@ -729,6 +743,16 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitForInc(picoCParser.ForIncContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#whileCheck}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhileCheck(picoCParser.WhileCheckContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#whileCheck}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhileCheck(picoCParser.WhileCheckContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#argumentList}.
 	 * @param ctx the parse tree

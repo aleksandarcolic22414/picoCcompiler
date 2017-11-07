@@ -1,18 +1,14 @@
-int main(int argc, char **argv)
+int main()
 {
-    for (++argv; --argc > 0; argv++) {
-        for ( ; **argv; ++*argv)
-        printf("%c", **argv);
-        printf("\n");
+    int a = 1000;
+    while (a--) {
+        printf("%d ", a);
+        if (a == 500) {
+            while (++a < 1000)
+                printf("%d ", a);
+        }
     }
-    
-    
+
     return 0;
 }
 
-/* Izlaz je:
-    (Prvi argument)
-    (Drugi argument)
-    (Treci argument)
-        ...
- */

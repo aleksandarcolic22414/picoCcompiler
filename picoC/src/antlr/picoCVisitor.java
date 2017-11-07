@@ -412,11 +412,19 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSelectionStatement(picoCParser.SelectionStatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#iterationStatement}.
+	 * Visit a parse tree produced by the {@code ForLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIterationStatement(picoCParser.IterationStatementContext ctx);
+	T visitForLoop(picoCParser.ForLoopContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code WhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhileLoop(picoCParser.WhileLoopContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#forInit}.
 	 * @param ctx the parse tree
@@ -435,6 +443,12 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForInc(picoCParser.ForIncContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#whileCheck}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhileCheck(picoCParser.WhileCheckContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#argumentList}.
 	 * @param ctx the parse tree
