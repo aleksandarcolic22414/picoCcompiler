@@ -1129,5 +1129,48 @@ public class NasmTools
         }
         return null;
     }
+ 
+    public static void main(String[] args) 
+    {
+        String s = "\t";
+        s = getConstantCharValue(s);
+        System.out.println(s);
+    }
+
+    /* Converts char constant such as 'A', '\t' ect. into integer value.
+        String representation of that integer value is returned. 
+        Since, input string is given literally as 
+        \'.\' or \'\\.\' where . is any character, characters with backslash
+        whithin input string needs to be freed from backslashes. 
+        Only legal characters with backslash character before them 
+        are: '\n', '\r' and '\t' */
+    public static String getConstantCharValue(String charSeq) 
+    {
+        int res;
+        /* remove \' from input string */
+        charSeq = charSeq.replaceAll("\\\'", "");
+        if (charSeq.length() == 1)
+            res = charSeq.codePointAt(0);
+        else {
+            /* remove \\ from input string */
+            charSeq = charSeq.replaceAll("\\\\", "");
+            char ch = charSeq.charAt(0);
+            switch (ch) {
+                case 'n':
+                    res = '\n';
+                    break;
+                case 'r':
+                    res = '\r';
+                    break;
+                case 't':
+                    res = '\t';
+                    break;
+                default:
+                    res = -1;
+                    break;
+            }
+        }
+        return Integer.toString(res);
+    }
     
 }

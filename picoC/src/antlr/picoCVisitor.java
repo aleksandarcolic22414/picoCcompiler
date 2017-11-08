@@ -48,12 +48,12 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitId(picoCParser.IdContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code Int}
+	 * Visit a parse tree produced by the {@code Const}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitInt(picoCParser.IntContext ctx);
+	T visitConst(picoCParser.ConstContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code Str}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
@@ -426,6 +426,13 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitWhileLoop(picoCParser.WhileLoopContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code DoWhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDoWhileLoop(picoCParser.DoWhileLoopContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#forInit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -461,4 +468,18 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArgument(picoCParser.ArgumentContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Int}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInt(picoCParser.IntContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Char}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitChar(picoCParser.CharContext ctx);
 }

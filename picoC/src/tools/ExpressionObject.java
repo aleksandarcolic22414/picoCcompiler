@@ -38,7 +38,7 @@ public class ExpressionObject
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
     public static final int VAR_EXTERN =         0x4;
-    public static final int INTEGER =            0x8;
+    public static final int CONSTANT =           0x8;
     public static final int STRING_LITERAL =     0x10;
     public static final int DEREFERENCED =       0x20;
     
@@ -159,7 +159,7 @@ public class ExpressionObject
 
     public boolean isInteger() 
     {
-        return (flags & ExpressionObject.INTEGER) != 0;
+        return (flags & ExpressionObject.CONSTANT) != 0;
     }
     
     public boolean isExternVariable()

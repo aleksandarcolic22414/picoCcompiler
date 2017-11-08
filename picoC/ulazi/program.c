@@ -1,13 +1,8 @@
-int main()
+int main(int argc, char **argv)
 {
-    int a = 1000;
-    while (a--) {
-        printf("%d ", a);
-        if (a == 500) {
-            while (++a < 1000)
-                printf("%d ", a);
-        }
-    }
+    char a = 'A';
+    int *b = &a;
+    b -= a;
 
     return 0;
 }

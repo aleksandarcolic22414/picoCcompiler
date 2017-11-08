@@ -24,7 +24,7 @@ functionName
 
 primaryExpression 
     :   ID                 #Id
-    |   INT                #Int
+    |   constant           #Const
     |   STRING_LITERAL     #Str
     |   '(' expression ')' #Parens
     ;
@@ -170,8 +170,9 @@ selectionStatement
     :   'if' '(' assignmentExpression ')' statement ('else' statement)? ;
 
 iterationStatement
-    :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement   #ForLoop
-    |   'while' '(' whileCheck? ')' statement                        #WhileLoop 
+    :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement  #ForLoop
+    |   'while' '(' whileCheck? ')' statement                       #WhileLoop
+    |   'do' statement 'while' '(' whileCheck? ')'  ';'             #DoWhileLoop
     ;
 
 forInit
@@ -197,6 +198,10 @@ argument
     :   assignmentExpression 
     ;    
 
+constant
+    :   INT         #Int
+    |   CHAR        #Char
+    ;
 
 /* Type specifiers */
 VOIDTYPE : 'void' ;
@@ -227,10 +232,9 @@ GREATER_EQUAL :  '>=' ;
 LOGICAL_AND :   '&&'  ;
 LOGICAL_OR  :   '||'  ; 
 
-ID      : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
-INT     : [0-9]+ ;
-WS      : [ \t\r\n]+ -> skip;
-
+ID              : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ; 
+INT             : [0-9]+ ;
+CHAR            : '\'' . '\'' | '\'\\' . '\'' ;
 STRING_LITERAL  : '"' (ESC|.)*? '"' ;
 
 fragment
@@ -245,4 +249,5 @@ SINGLE_LINE_COMMENT
     :   '//' .*? '\r'? '\n' -> skip  // match anything after // until newline
     ;
 
-
+WHITE_SPACE  : [ \t\r\n]+ -> skip
+    ;

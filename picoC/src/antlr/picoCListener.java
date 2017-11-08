@@ -70,17 +70,17 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitId(picoCParser.IdContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code Int}
+	 * Enter a parse tree produced by the {@code Const}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
 	 */
-	void enterInt(picoCParser.IntContext ctx);
+	void enterConst(picoCParser.ConstContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code Int}
+	 * Exit a parse tree produced by the {@code Const}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree
 	 */
-	void exitInt(picoCParser.IntContext ctx);
+	void exitConst(picoCParser.ConstContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code Str}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
@@ -714,6 +714,18 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitWhileLoop(picoCParser.WhileLoopContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code DoWhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterDoWhileLoop(picoCParser.DoWhileLoopContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DoWhileLoop}
+	 * labeled alternative in {@link picoCParser#iterationStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitDoWhileLoop(picoCParser.DoWhileLoopContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#forInit}.
 	 * @param ctx the parse tree
 	 */
@@ -773,4 +785,28 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArgument(picoCParser.ArgumentContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Int}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void enterInt(picoCParser.IntContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Int}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void exitInt(picoCParser.IntContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Char}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void enterChar(picoCParser.CharContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Char}
+	 * labeled alternative in {@link picoCParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void exitChar(picoCParser.CharContext ctx);
 }

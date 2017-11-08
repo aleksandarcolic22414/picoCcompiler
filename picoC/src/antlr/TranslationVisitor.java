@@ -699,9 +699,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     }
     
     /*
-        primaryExpression 
-            :   INT       #Int
-            ;
+        INT  : [0-9]+ ;
     */
     @Override
     public ExpressionObject visitInt(picoCParser.IntContext ctx) 
@@ -710,10 +708,27 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return new ExpressionObject
             (val, 
              MemoryClassEnum.INT, 
-             ExpressionObject.INTEGER
+             ExpressionObject.CONSTANT
             );
     }
 
+    /*   
+        CHAR   : '\'' . '\'' | '\'\\' . '\'' ;  
+    */
+    @Override
+    public ExpressionObject visitChar(picoCParser.CharContext ctx) 
+    {
+        String charSeq = ctx.CHAR().getText();
+        if (!Checker.checkCharSequence(ctx, charSeq))
+            return null;
+        String value = NasmTools.getConstantCharValue(charSeq);
+        return new ExpressionObject
+            (value, 
+             MemoryClassEnum.CHAR, 
+             ExpressionObject.CONSTANT
+            );
+    }
+    
     @Override
     public ExpressionObject visitStr(picoCParser.StrContext ctx) 
     {
@@ -1155,6 +1170,44 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Loop start */
         Writers.emitLabel(whileStartLabel);
         /* Visit 'while' body */
+        if (ctx.statement() != null)
+            visit(ctx.statement());
+        /* Check label */
+        Writers.emitLabel(whileCheckLabel);
+        /* Default jump */
+        jump = Constants.JUMP_UNCODITIONAL;        
+        /* If comparison is not done, than result of visiting must be
+            compared to 0. Something like while (*s++); */
+        if (ctx.whileCheck() != null) {
+            condition = visit(ctx.whileCheck());
+            if (!condition.isCompared())
+                condition.compareWithZero();
+            jump = RelationHelper.getTrueJump();
+        }
+        Writers.emitInstruction(jump, whileStartLabel);
+        Writers.emitLabel(whileEndLabel);
+        LabelsMaker.unsetCurrentIterationLabels();
+        return null;
+    }
+
+    /*
+        iterationStatement
+            :   'do' statement 'while' '(' whileCheck? ')'  ';'  #DoWhileLoop
+    */
+    @Override
+    public ExpressionObject visitDoWhileLoop(picoCParser.DoWhileLoopContext ctx) 
+    {
+        String whileStartLabel, whileCheckLabel, whileEndLabel;
+        String jump;
+        ExpressionObject condition;
+        whileStartLabel = LabelsMaker.getNextWhileStartLabel();
+        whileCheckLabel = LabelsMaker.getNextWhileCheckLabel();
+        whileEndLabel = LabelsMaker.getNextWhileEndLabel();
+        LabelsMaker.setCurrentIterationLabels(whileCheckLabel, whileEndLabel);
+        
+        /* Loop start */
+        Writers.emitLabel(whileStartLabel);
+        /* Visit 'do-while' body */
         if (ctx.statement() != null)
             visit(ctx.statement());
         /* Check label */

@@ -384,5 +384,20 @@ public class Checker
         
         return true;
     }
+
+    public static boolean checkCharSequence(picoCParser.CharContext ctx, String charSeq) 
+    {
+        if (charSeq.length() == 4) {
+            char ch = charSeq.charAt(2);
+            if (ch != 'n' && ch != 'r' && ch != 't') {
+                CompilationControler.errorOcured(
+                        ctx.getStart(), 
+                            TranslationVisitor.curFuncAna.getFunctionName(),
+                                "Not valid char contant");
+                return false;
+            }
+        }
+        return true;
+    }
     
 }
