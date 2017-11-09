@@ -15,11 +15,7 @@ externalDeclaration
     ;
 
 functionDefinition 
-    :   typeSpecifier functionName '(' parameterList? ')' functionBody 
-    ;
-
-functionName 
-    :   ID 
+    :   typeSpecifier declarator '(' parameterList? ')' functionBody 
     ;
 
 primaryExpression 

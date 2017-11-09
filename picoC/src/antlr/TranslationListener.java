@@ -41,14 +41,23 @@ public class TranslationListener extends picoCBaseListener
     public void enterFunctionBody(picoCParser.FunctionBodyContext ctx) 
     {
         curFuncCtx.setFunctionContext(true);
-        curFuncCtx.setParameterContext(false);
+    }
+
+    @Override
+    public void exitFunctionBody(picoCParser.FunctionBodyContext ctx) 
+    {
+        curFuncCtx.setFunctionContext(false);
     }
     
     @Override
     public void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
-        String functionName;
-        if (mapFuncAna.containsKey(functionName = ctx.functionName().getText()))
+        /* Since declarator.getText() can return function name with
+            pointer prefix (**func for example), that prefix needs to be
+            removed from this string. */
+        String functionName = ctx.declarator().getText();
+        functionName = functionName.replaceAll("\\*+", "");
+        if (mapFuncAna.containsKey(functionName))
             return ;
         FunctionsAnalyser fa = new FunctionsAnalyser(functionName);
         mapFuncAna.put(functionName, fa);
@@ -59,7 +68,6 @@ public class TranslationListener extends picoCBaseListener
     public void enterParameterList(picoCParser.ParameterListContext ctx) 
     {
         curFuncCtx.setParameterContext(true);
-        curFuncCtx.setFunctionContext(false);
         /* Get list of parameters */
         List<picoCParser.ParameterContext> parameterList = ctx.parameter();
         /* Calculate displacement for parameters */
@@ -84,11 +92,17 @@ public class TranslationListener extends picoCBaseListener
         curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
     }
+
+    @Override
+    public void exitParameterList(picoCParser.ParameterListContext ctx) 
+    {
+        curFuncCtx.setParameterContext(false);
+    }
     
     @Override
     public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
-        if (curFuncCtx.isParameterContext()) {
+        if (!curFuncCtx.isFunctionContext()) {
             return;       
         }
         int locals = curFuncCtx.getSpaceForLocals();
@@ -109,14 +123,18 @@ public class TranslationListener extends picoCBaseListener
     }
 
     @Override
+    public void enterTypeSpecifier(picoCParser.TypeSpecifierContext ctx) 
+    {
+        currentDeclaratorType = NasmTools.getTypeOfVar(ctx.type.getType());
+    }
+
+    @Override
     public void enterSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
-        if (curFuncCtx.isParameterContext()) {
+        if (!curFuncCtx.isFunctionContext()) {
             return;       
         }
-        MemoryClassEnum type;
-        type = curFuncCtx.getCurrentDeclaratorType();
-        NasmTools.insertPointerType(pointerInitializator, type);
+        NasmTools.insertPointerType(pointerInitializator, currentDeclaratorType);
     }
     
     @Override

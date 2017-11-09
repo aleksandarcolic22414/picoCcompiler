@@ -6,6 +6,7 @@ import antlr.TranslationVisitor;
 import constants.MemoryClassEnum;
 import nasm.NasmTools;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -46,11 +47,12 @@ public class FunctionsAnalyser
     /* One of memory class identifiers used for return value */
     private MemoryClassEnum memoryClass = MemoryClassEnum.VOID;
 
+    /* If function returns pointer, this list holds information 
+        about that pointer. */
+    private LinkedList<MemoryClassEnum> pointerType;
+    
     /* Wheather function has return statement */
     private boolean hasReturn = false;
-    
-    /* Represents memory class for declarationList */
-    private MemoryClassEnum currentDeclaratorType = MemoryClassEnum.VOID;
 
     /* Represent wheather visitor is parameter contex or not */
     private boolean parameterContext = false;
@@ -62,6 +64,7 @@ public class FunctionsAnalyser
     {
         this.localVariables = new HashMap<>();
         this.parameterVariables = new HashMap<>();
+        this.pointerType = new LinkedList<>();
         this.functionName = functionName;
     }
     
@@ -73,7 +76,6 @@ public class FunctionsAnalyser
         return functionInProcess;
     }
 
-    
     public static void setInProcess(String inProcess) {
         FunctionsAnalyser.inProcess = inProcess;
     }
@@ -130,14 +132,6 @@ public class FunctionsAnalyser
         return hasReturn;
     }
 
-    public MemoryClassEnum getCurrentDeclaratorType() {
-        return currentDeclaratorType;
-    }
-
-    public void setCurrentDeclaratorType(MemoryClassEnum currentDeclaratorType) {
-        this.currentDeclaratorType = currentDeclaratorType;
-    }
-
     public Map<String, Variable> getParameterVariables() {
         return parameterVariables;
     }
@@ -176,6 +170,14 @@ public class FunctionsAnalyser
 
     public void setFunctionContext(boolean functionContext) {
         this.functionContext = functionContext;
+    }
+    
+    public LinkedList<MemoryClassEnum> getPointerType() {
+        return pointerType;
+    }
+
+    public void setPointerType(LinkedList<MemoryClassEnum> pointerType) {
+        this.pointerType = pointerType;
     }
     
     public String declareLocalVariable(MemoryClassEnum type) 

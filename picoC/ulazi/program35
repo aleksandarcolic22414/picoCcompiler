@@ -1,8 +1,3 @@
-void *f()
-{
-    return malloc(256);
-}
-
 int strcpy(char *s1, char *s2)
 {
     while (*s1++ = *s2++)   

@@ -35,12 +35,6 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFunctionName(picoCParser.FunctionNameContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code Id}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree

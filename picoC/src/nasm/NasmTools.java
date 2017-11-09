@@ -1099,14 +1099,15 @@ public class NasmTools
             curPointer.push(MemoryClassEnum.POINTER);
     }
 
+    /* Switch elements from list1 to list2. Lists are implemented as stacks */
     public static void switchStacks
-    (LinkedList<MemoryClassEnum> curPointer, LinkedList<MemoryClassEnum> pointerType)
+    (LinkedList<MemoryClassEnum> list1, LinkedList<MemoryClassEnum> list2)
     {
-        if (curPointer.isEmpty())
+        if (list1.isEmpty())
             return;
-        MemoryClassEnum type = curPointer.pop();
-        switchStacks(curPointer, pointerType);
-        pointerType.push(type);
+        MemoryClassEnum type = list1.pop();
+        switchStacks(list1, list2);
+        list2.push(type);
     }
     
     public static void copyPointerList
@@ -1171,6 +1172,17 @@ public class NasmTools
             }
         }
         return Integer.toString(res);
+    }
+
+    public static String getARegister(MemoryClassEnum memoryClass) 
+    {
+        if (memoryClass == MemoryClassEnum.CHAR)
+            return rtosMap1Bytes.get(AREG);
+        if (memoryClass == MemoryClassEnum.INT)
+            return rtosMap4Bytes.get(AREG);
+        if (memoryClass == MemoryClassEnum.POINTER)
+            return rtosMap8Bytes.get(AREG);
+        return null;
     }
     
 }

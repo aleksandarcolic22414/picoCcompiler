@@ -48,16 +48,6 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionName(picoCParser.FunctionNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link picoCParser#functionName}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionName(picoCParser.FunctionNameContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code Id}
 	 * labeled alternative in {@link picoCParser#primaryExpression}.
 	 * @param ctx the parse tree

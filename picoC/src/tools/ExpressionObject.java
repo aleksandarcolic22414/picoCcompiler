@@ -56,19 +56,42 @@ public class ExpressionObject
         } 
     }
 
-    /* Constructor to simple pointer */
+    /* Constructor to complex pointer */
+    /* If variable on stack is created, than input text is given as stack
+        displacement. Something like: rbp-12 */
     public ExpressionObject
-    (String text, MemoryClassEnum type, int info, MemoryClassEnum pointer) 
+    (String ntext, MemoryClassEnum type, int info, LinkedList<MemoryClassEnum> pointer) 
     {
-        this.text = text;
+        this.text = ntext;
         this.type = type;
         flags |= info;
         setSize(type);
+        /* If it is stack variable, cast text and set stack displacement */
         if ((info & VAR_STACK) != 0) {
-            this.text = castStackVar(text, type);
-            stackDisp = text;
+            this.text = castStackVar(ntext, type);
+            stackDisp = ntext;
         } 
-        this.insertPointerType(pointer);
+        /* If there is something to points to, copy it. */
+        if (pointer != null && pointer.size() > 0)
+            NasmTools.copyPointerList(pointerType, pointer);
+    }
+    
+     /* Constructor to simple pointer */
+    /*  If variable on stack is created, than input text is given as stack
+        displacement. Something like: rbp-12 */
+    public ExpressionObject
+    (String ntext, MemoryClassEnum type, int info, MemoryClassEnum pointer) 
+    {
+        this.text = ntext;
+        this.type = type;
+        flags |= info;
+        setSize(type);
+        /* If it is stack variable, cast text and set stack displacement */
+        if ((info & VAR_STACK) != 0) {
+            this.text = castStackVar(ntext, type);
+            stackDisp = ntext;
+        } 
+        insertPointerType(pointer);
     }
     
     /* Construct expression object from variable */

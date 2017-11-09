@@ -18,6 +18,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static nasm.NasmTools.getNextRegForFuncCall;
 import static nasm.NasmTools.resetRegisterPicker;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.RuleContext;
 import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
@@ -41,6 +43,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     
     /* Current variable name */
     public static String currentVariableName;
+    
+    /* Helps during declaration */
+    public static MemoryClassEnum curTypeSpecifier;
     
     public TranslationVisitor() 
     {
@@ -83,16 +88,21 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     
     /*  
         functionDefinition 
-            :    typeSpecifier functionName '(' parameterList? ')' functionBody  
+            :    typeSpecifier declarator '(' parameterList? ')' functionBody  
     */
     @Override
     public ExpressionObject visitFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
         /* Get name and memory class of function */
-        String name = ctx.functionName().getText();
         int tokenType = ctx.typeSpecifier().type.getType();
         MemoryClassEnum memclass;
         memclass = NasmTools.getTypeOfVar(tokenType);
+        /* Set global variable curTypeSpecifier
+            to current memory class in order to
+            visitSimplePointer() insert correct type in curPointer list */
+        curTypeSpecifier = memclass;
+        String name = visit(ctx.declarator()).getText();
+        
         
         /* Chech weather function is already defined */
         if (!Checker.funcDefCheck(ctx, name))
@@ -101,7 +111,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Create new function analyser object, and set it's type specifier
         to some type */
         FunctionsAnalyser fa = new FunctionsAnalyser(name);
-        fa.setMemoryClass(memclass);
+        if (curPointer.isEmpty())
+            fa.setMemoryClass(memclass);
+        else {
+            fa.setMemoryClass(MemoryClassEnum.POINTER);
+            NasmTools.switchStacks(curPointer, fa.getPointerType());
+        }
         
         functions.put(name, fa);       /* Add function to collection */
         
@@ -123,8 +138,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Substract number of bytes needed for variables if there is any */
         if (localsAndArgsSize > 0)
             Writers.emitInstruction("sub", "rsp", ls);    
-        /* Visit rest of the function. (visitChildren) */
-        super.visitFunctionDefinition(ctx);
+        /* Visit rest of the function. (parameterList and functionBody) */
+        if (ctx.parameterList() != null)
+            visit(ctx.parameterList());
+        visit(ctx.functionBody());
         
         /* Check for return statement */
         Checker.funcRetStatCheck(ctx);
@@ -184,15 +201,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     }
 
     /* parameter 
-          :   typeSpecifier ID   
+          :   typeSpecifier declarator  
     */
     @Override
     public ExpressionObject visitParameter(picoCParser.ParameterContext ctx) 
     {
         /* Get variable's memory class  */
         int type = ctx.typeSpecifier().type.getType();
-        MemoryClassEnum typeSpecifier = NasmTools.getTypeOfVar(type);;
-        curFuncAna.setCurrentDeclaratorType(typeSpecifier);
+        MemoryClassEnum typeSpecifier = NasmTools.getTypeOfVar(type);
+        curTypeSpecifier = typeSpecifier;
         
         return super.visitParameter(ctx);
     }
@@ -212,12 +229,17 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Get memory class for declaration */
         int tokenType = ctx.typeSpecifier().type.getType();
         MemoryClassEnum memclass = NasmTools.getTypeOfVar(tokenType);
-        curFuncAna.setCurrentDeclaratorType(memclass);
+        curTypeSpecifier = memclass;
         /* Keep declaring rest of the list */
         
         return super.visitDeclaration(ctx);
     }
     
+    /*
+        initDeclarator
+            :   declarator '=' assignmentExpression     #DeclWithInit
+            ;
+    */
     @Override
     public ExpressionObject visitDeclWithInit(picoCParser.DeclWithInitContext ctx) 
     {
@@ -254,10 +276,34 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Return new Object */
         return newVariable;
     }
-
+    
+    /*
+        declarator
+            :   ID                      #DirDecl
+            ;
+    */
     @Override
     public ExpressionObject visitDirDecl(picoCParser.DirDeclContext ctx) 
     {
+        /* Get index of the rule that invoked this state. If it is same
+            rule as ctx, that go to parent. */
+        RuleContext rule = ctx.parent;
+        int ruleIndex;
+        while (rule.getRuleIndex() == ctx.getRuleIndex())
+            rule = rule.parent;
+        ruleIndex = rule.getRuleIndex();
+        /* Call proper function for the rule that invoked direct declaration */
+        switch (ruleIndex) {
+            case picoCParser.RULE_parameter:
+                return declareParameter(ctx);
+            case picoCParser.RULE_initDeclarator:
+                return declareLocalVariable(ctx);
+            case picoCParser.RULE_functionDefinition:
+                return declareFunction(ctx);
+            default:
+                break;
+        }
+
         /* Variable name, stack position, and memory class */
         String name, stackPosition;
         name = ctx.ID().getText();
@@ -270,7 +316,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Check if variable is pointer */
         if (curPointer.isEmpty())
-            typeSpecifier = curFuncAna.getCurrentDeclaratorType();
+            typeSpecifier = curTypeSpecifier;
         else
             typeSpecifier = MemoryClassEnum.POINTER;
         
@@ -298,21 +344,27 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return new ExpressionObject(var);
     }
 
+    /*
+        pointer
+            :   '*'             #SimplePtr
+            ;
+    */
     @Override
     public ExpressionObject visitSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
-        MemoryClassEnum type;
-        type = curFuncAna.getCurrentDeclaratorType();
-        NasmTools.insertPointerType(curPointer, type);
+        NasmTools.insertPointerType(curPointer, curTypeSpecifier);
         return super.visitSimplePtr(ctx);
     }
 
+    /*
+        pointer
+            :   pointer '*'     #MultiplePrt
+            ;
+    */
     @Override
     public ExpressionObject visitMultiplePrt(picoCParser.MultiplePrtContext ctx) 
     {
-        MemoryClassEnum type;
-        type = curFuncAna.getCurrentDeclaratorType();
-        NasmTools.insertPointerType(curPointer, type);
+        NasmTools.insertPointerType(curPointer, curTypeSpecifier);
         return super.visitMultiplePrt(ctx);
     }
     
@@ -388,6 +440,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitReturn(picoCParser.ReturnContext ctx) 
     {
         ExpressionObject expr;
+        String retReg;
         /* Try to recover from error */
         if ((expr = visit(ctx.expression())) == null)
             return null;
@@ -397,8 +450,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast expression to proper size */
         expr.castVariable(curFuncAna.getMemoryClass());
         /* mov result to eax for return if result is not eax */
-        if (!expr.isRegisterA())
-            Writers.emitInstruction("mov", NasmTools.STRING_EAX, expr.getText());
+        if (!expr.isRegisterA()) {
+            retReg = NasmTools.getARegister(curFuncAna.getMemoryClass());
+            Writers.emitInstruction("mov", retReg, expr.getText());
+        }
         Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
         /* Free all registers for function exit */
         NasmTools.freeAllRegisters();
@@ -450,8 +505,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             Instead, just peek to see which is next free register and after
             function call move function return value to it. */
         MemoryClassEnum type = MemoryClassEnum.INT;
+        /* If function is from GCC's lib, than func is null. */
+        FunctionsAnalyser func = functions.get(functionName);
         if (!Checker.externalFunctionCheck(functionName))
-            type = functions.get(functionName).getMemoryClass();
+            type = func.getMemoryClass();
+        
         String nextFreeTemp = NasmTools.showNextFreeTemp(type);
         String areg = NasmTools.registerToString(NasmTools.AREG, type);
         /* Registers are saved and freed for further use */
@@ -467,10 +525,18 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         NasmTools.restoreRegisters();
         nextFreeTemp = NasmTools.getNextFreeTempStr(type);
         
+        /* Check if function is from GCC's lib. If it is, return 
+            simple int && register object. If it is not, return object that
+            represents functions value. */
+        if (func == null)
+            return new ExpressionObject(nextFreeTemp, type, 
+                    ExpressionObject.REGISTER);
+        
         return new ExpressionObject
-            (nextFreeTemp, 
-             type, 
-             ExpressionObject.REGISTER
+            (nextFreeTemp,
+             type,
+             ExpressionObject.REGISTER,
+             func.getPointerType()
             );
     }
 
@@ -729,6 +795,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             );
     }
     
+    /*
+        STRING_LITERAL  : '"' (ESC|.)*? '"' ;
+    */
     @Override
     public ExpressionObject visitStr(picoCParser.StrContext ctx) 
     {
@@ -1385,6 +1454,82 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         expr.dereference();
         
         return expr;
+    }
+
+    private ExpressionObject declareParameter(picoCParser.DirDeclContext ctx) 
+    {
+        /* Variable name, stack position, and memory class */
+        String name, stackPosition;
+        name = ctx.ID().getText();
+        currentVariableName = name;
+        MemoryClassEnum typeSpecifier;
+        Variable var;
+        /* Chech if variable is already declared */
+        if (!Checker.varDeclCheck(ctx, name))
+            return null;
+        
+        /* Check if variable is pointer */
+        if (curPointer.isEmpty())
+            typeSpecifier = curTypeSpecifier;
+        else
+            typeSpecifier = MemoryClassEnum.POINTER;
+        
+        /* Get stack position */
+        stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
+        /* Create new variable object */
+        var = new Variable(name, stackPosition, false, typeSpecifier, curPointer);
+        /* Insert new variable in parameter variables */
+        curFuncAna.getParameterVariables().put(name, var);
+        
+        /* Size in bytes */
+        int varSize = NasmTools.getSize(typeSpecifier);
+        /* Check size of variable */
+        if (!Checker.varSizeCheck(ctx, varSize))
+            return null;
+        
+        return new ExpressionObject(var);
+    }
+
+    private ExpressionObject declareLocalVariable(picoCParser.DirDeclContext ctx) 
+    {
+        /* Variable name, stack position, and memory class */
+        String name, stackPosition;
+        name = ctx.ID().getText();
+        currentVariableName = name;
+        MemoryClassEnum typeSpecifier;
+        Variable var;
+        /* Chech if variable is already declared */
+        if (!Checker.varDeclCheck(ctx, name))
+            return null;
+        
+        /* Check if variable is pointer */
+        if (curPointer.isEmpty())
+            typeSpecifier = curTypeSpecifier;
+        else
+            typeSpecifier = MemoryClassEnum.POINTER;
+        
+        stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
+        var = new Variable(name, stackPosition, false, typeSpecifier, curPointer);
+        /* Insert new variable in local variables */
+        curFuncAna.getLocalVariables().put(name, var);
+
+        /* Size in bytes */
+        int varSize = NasmTools.getSize(typeSpecifier);
+        /* Check size of variable */
+        if (!Checker.varSizeCheck(ctx, varSize))
+            return null;
+        
+        return new ExpressionObject(var);
+    }
+
+    /* In case that function in declared, than just name of the 
+        function needs to be returned. */
+    private ExpressionObject declareFunction(picoCParser.DirDeclContext ctx) 
+    {
+        return new ExpressionObject
+            (ctx.ID().getText(), 
+             MemoryClassEnum.POINTER, 0
+            );
     }
     
 }

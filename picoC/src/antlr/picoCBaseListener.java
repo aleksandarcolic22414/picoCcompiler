@@ -64,18 +64,6 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFunctionName(picoCParser.FunctionNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFunctionName(picoCParser.FunctionNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterId(picoCParser.IdContext ctx) { }
 	/**
 	 * {@inheritDoc}
