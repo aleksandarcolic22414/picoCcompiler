@@ -102,17 +102,16 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
-        if (!curFuncCtx.isFunctionContext()) {
+        if (curFuncCtx == null || !curFuncCtx.isFunctionContext()) {
             return;       
         }
         int locals = curFuncCtx.getSpaceForLocals();
         int sizeOfVar;
-        /* Calculate space on stack for local variables  */
+        /* If variable is extern, than no stack calculation is needed */
         if (curFuncCtx == null) {
-            DataSegment.DeclareExtern(null);
             return ;
         }
-        
+        /* Calculate space on stack for local variables  */
         if (pointerInitializator.isEmpty())
             sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         else 
@@ -131,7 +130,7 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
-        if (!curFuncCtx.isFunctionContext()) {
+        if (curFuncCtx == null || !curFuncCtx.isFunctionContext()) {
             return;       
         }
         NasmTools.insertPointerType(pointerInitializator, currentDeclaratorType);

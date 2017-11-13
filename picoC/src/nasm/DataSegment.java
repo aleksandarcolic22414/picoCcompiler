@@ -1,9 +1,12 @@
 package nasm;
 
 import antlr.picoCParser;
+import compilationControlers.Writers;
+import constants.MemoryClassEnum;
 import java.util.ArrayList;
 import java.util.List;
 import tools.ExpressionObject;
+import tools.Variable;
 
 /**
  *
@@ -28,10 +31,46 @@ public class DataSegment
         stringLiteralList.add(nextStrLit);
         return nextStrLit;
     }
-
-    public static ExpressionObject DeclareExtern(picoCParser.DirDeclContext ctx) 
+ 
+    /* Emit new instruction in data segment that defines new variable in data
+        segment. Example:
+        C(extern) -> int a;    nasm(data segment) ->  a:      
+        Which defines doubleword (8 bytes) variable and set it's value to 0.
+    */
+    public static void declareExternVariable
+    (ExpressionObject var, String value)
     {
-        System.out.println("Extern declaration");
-        return null;
-    }   
+        String name = var.getName();
+        String inst = getDefineDataInst(var.getType());
+        Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
+    }
+
+    /* Emit new instruction in data segment that defines new variable in data
+        segment. Example:
+        C(extern) -> int a;    nasm(data segment) ->  a:      
+        Which defines doubleword (8 bytes) variable and set it's value to 0.
+    */
+    public static void declareExternVariable
+    (Variable var, String value)
+    {
+        String name = var.getName();
+        String inst = getDefineDataInst(var.getTypeSpecifier());
+        Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
+    }
+    
+    /* Returnes defining istruction for proper size of variable */
+    private static String getDefineDataInst(MemoryClassEnum typeSpecifier) 
+    {
+        switch (typeSpecifier) {
+            case CHAR:
+                return "db";
+            case INT:
+                return "dd";
+            case POINTER:
+                return "dq";
+            default:
+                return null;
+        }
+    }
+    
 }

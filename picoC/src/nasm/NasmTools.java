@@ -16,6 +16,7 @@ import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
 import tools.RelationHelper;
+import tools.Variable;
 
 /**
  *
@@ -1174,6 +1175,7 @@ public class NasmTools
         return Integer.toString(res);
     }
 
+    /* Returns string representation of A register based on input size */
     public static String getARegister(MemoryClassEnum memoryClass) 
     {
         if (memoryClass == MemoryClassEnum.CHAR)

@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static nasm.NasmTools.getNextRegForFuncCall;
-import static nasm.NasmTools.resetRegisterPicker;
-import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RuleContext;
 import tools.Emitter;
 import tools.ExpressionObject;
@@ -38,6 +35,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     /* Curent function context.  */
     public static FunctionsAnalyser curFuncAna;
     
+    /* Mapping for extern variables */
+    public static Map<String, Variable> externVariables;
+    
     /* List represent current pointer declarator type */
     public static LinkedList<MemoryClassEnum> curPointer;
     
@@ -51,6 +51,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         curPointer = new LinkedList<>();
         functions = new HashMap<>();
+        externVariables = new HashMap<>();
         curFuncAna = null;
     }
     
@@ -186,12 +187,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             memclass = arg.getType();
             cast = NasmTools.getCast(memclass);
             paramPos = cast + " [" + stackPos + "]";
-            reg = getNextRegForFuncCall(memclass);
+            reg = NasmTools.getNextRegForFuncCall(memclass);
             
             /* Emit copying from registers to stack for arguments */
             Writers.emitInstruction("mov", paramPos, reg);
         }
-        resetRegisterPicker();
+        NasmTools.resetRegisterPicker();
         
         
         /* Free all registers for function body */
@@ -222,10 +223,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitDeclaration(picoCParser.DeclarationContext ctx) 
     {
-        if (curFuncAna == null) {
-            DataSegment.DeclareExtern(null);
-            return null;
-        }
         /* Get memory class for declaration */
         int tokenType = ctx.typeSpecifier().type.getType();
         MemoryClassEnum memclass = NasmTools.getTypeOfVar(tokenType);
@@ -243,34 +240,38 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitDeclWithInit(picoCParser.DeclWithInitContext ctx) 
     {
-        visit(ctx.declarator());
         /* Expression */
         ExpressionObject expr, newVariable;
-        int operation = picoCParser.ASSIGN;
+        newVariable = visit(ctx.declarator());
+        
         String id = currentVariableName;
         /* Get variable context */
-        Variable var = curFuncAna.getAnyVariable(id);
-        /* Check if it is declared */
-        if (!Checker.varDeclCheck(ctx, id, var))
-            return null;
+        if (newVariable.isExternVariable())
+            externVariables.get(id).setInitialized(true);
+        else
+            curFuncAna.getAnyVariable(id).setInitialized(true);
         
-        /* Initialize new Expression object */
-        var.setInitialized(true);
-        newVariable = new ExpressionObject(var);
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
-        /* Cast variable if needed */
-        if (!expr.isInteger())
-            expr.castVariable(var.getTypeSpecifier());
         
-        /* See which operator is used for assign and emit proper instruction */
-        Emitter.decideAssign(
-                newVariable, expr, operation);
-        
-        if (expr.isRegister())
-            expr.freeRegister();
+        /* If it is external declaration, just check if expression is constant.
+            If it is not, emit initialization instruction */
+        if (newVariable.isExternVariable()) {
+            if (!Checker.checkConstantExpression(ctx, expr))
+                return null;
+            DataSegment.declareExternVariable(newVariable, expr.getText());
+        } else {
+            /* Cast variable if needed */
+            if (!expr.isInteger()) 
+                expr.castVariable(newVariable.getType());
+            /* Emit proper assignment instruction */
+            Emitter.decideAssign(newVariable, expr, picoCParser.ASSIGN);
+
+            if (expr.isRegister())
+                expr.freeRegister();
+        }
         
         currentVariableName = null;
         /* Return new Object */
@@ -286,7 +287,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitDirDecl(picoCParser.DirDeclContext ctx) 
     {
         /* Get index of the rule that invoked this state. If it is same
-            rule as ctx, that go to parent. */
+            rule as ctx, that go to the parent. */
         RuleContext rule = ctx.parent;
         int ruleIndex;
         while (rule.getRuleIndex() == ctx.getRuleIndex())
@@ -297,13 +298,18 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             case picoCParser.RULE_parameter:
                 return declareParameter(ctx);
             case picoCParser.RULE_initDeclarator:
-                return declareLocalVariable(ctx);
+                return declareLocalOrExtern(ctx);
             case picoCParser.RULE_functionDefinition:
                 return declareFunction(ctx);
             default:
-                break;
+                return null;
         }
 
+    }
+
+        /* Function that declares parameter of the function */
+    private ExpressionObject declareParameter(picoCParser.DirDeclContext ctx) 
+    {
         /* Variable name, stack position, and memory class */
         String name, stackPosition;
         name = ctx.ID().getText();
@@ -320,21 +326,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         else
             typeSpecifier = MemoryClassEnum.POINTER;
         
-        if (curFuncAna.isParameterContext()) {
-            /* Get stack position */
-            stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
-            /* Create new variable object */
-            var = new Variable
-                (name, stackPosition, false, typeSpecifier, curPointer);
-            /* Insert new variable in parameter variables */
-            curFuncAna.getParameterVariables().put(name, var);
-        } else {
-            stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
-            var = new Variable
-                (name, stackPosition, false, typeSpecifier, curPointer);
-            /* Insert new variable in local variables */
-            curFuncAna.getLocalVariables().put(name, var);
-        }
+        /* Get stack position */
+        stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
+        /* Create new variable object */
+        var = new Variable(name, stackPosition, typeSpecifier, curPointer, false);
+        /* Insert new variable in parameter variables */
+        curFuncAna.getParameterVariables().put(name, var);
+        
         /* Size in bytes */
         int varSize = NasmTools.getSize(typeSpecifier);
         /* Check size of variable */
@@ -344,6 +342,104 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return new ExpressionObject(var);
     }
 
+    /* Decides which declaration is done. */
+    private ExpressionObject declareLocalOrExtern
+    (picoCParser.DirDeclContext ctx) 
+    {
+        /* If no function is in progres, define extern. Otherwise declare local */
+        if (curFuncAna == null)
+            return declareExternVariable(ctx);
+        else
+            return declareLocalVariable(ctx);
+    }
+    
+    /* Function that declares local variable of the function */
+    private ExpressionObject declareLocalVariable(picoCParser.DirDeclContext ctx) 
+    {
+        /* Variable name, stack position, and memory class */
+        String name, stackPosition;
+        name = ctx.ID().getText();
+        currentVariableName = name;
+        MemoryClassEnum typeSpecifier;
+        Variable var;
+        /* Chech if variable is already declared */
+        if (!Checker.varDeclCheck(ctx, name))
+            return null;
+        
+        /* Check if variable is pointer */
+        if (curPointer.isEmpty())
+            typeSpecifier = curTypeSpecifier;
+        else
+            typeSpecifier = MemoryClassEnum.POINTER;
+        
+        stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
+        var = new Variable(name, stackPosition, typeSpecifier, curPointer, false);
+        /* Insert new variable in local variables */
+        curFuncAna.getLocalVariables().put(name, var);
+
+        /* Size in bytes */
+        int varSize = NasmTools.getSize(typeSpecifier);
+        /* Check size of variable */
+        if (!Checker.varSizeCheck(ctx, varSize))
+            return null;
+        
+        return new ExpressionObject(var);
+    }
+
+    private ExpressionObject declareExternVariable(picoCParser.DirDeclContext ctx) 
+    {
+        /* Variable name and memory class */
+        /* Add underscore to variable's name in order not to mix internals */
+        String name = ctx.ID().getText();
+        currentVariableName = name;
+        
+        MemoryClassEnum typeSpecifier;
+        Variable var;
+        /* Chech if variable is already declared */
+        if (!Checker.varExternDeclCheck(ctx, name))
+            return null;
+        
+        /* Check if variable is pointer */
+        if (curPointer.isEmpty())
+            typeSpecifier = curTypeSpecifier;
+        else
+            typeSpecifier = MemoryClassEnum.POINTER;
+        
+        /* Since extern variable is accessed through it's name, than stack 
+            position is also name, so that expression object can cast
+            it's stack postion later in dword[variablename] for example . */  
+        var = new Variable(name, name, typeSpecifier, curPointer, true);
+        /* Insert new variable in extern variables */
+        externVariables.put(name, var);
+
+        /* Check for void type */
+        if (!Checker.varTypeCheck(ctx, typeSpecifier))
+            return null;
+        
+        /* Go to start of the initialization */
+        RuleContext rule = ctx.parent;
+        while (rule.getRuleIndex() != picoCParser.RULE_initDeclarator)
+            rule = rule.parent;
+        /* If there is no initialization, initialize variable to 0. */
+        if (rule.getChildCount() == 1)
+            DataSegment.declareExternVariable(var, "0");
+            
+        return new ExpressionObject(var);   
+    }
+    
+    /* Function that declares new function. In case that function 
+        is currently declared, than just name of the 
+        function needs to be returned. It doesn't matter which argumets
+        are passed to Expression object, because only text of the
+        object is used. */
+    private ExpressionObject declareFunction(picoCParser.DirDeclContext ctx) 
+    {
+        return new ExpressionObject
+            (ctx.ID().getText(), 
+             MemoryClassEnum.POINTER, 0
+            );
+    }
+    
     /*
         pointer
             :   '*'             #SimplePtr
@@ -601,6 +697,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Visit rest of expression */
         ExpressionObject expr = super.visitMinus(ctx);
         expr.comparisonCheck();
+        /* If result is integer just put - prefix */
+        if (expr.isInteger())
+            return expr.insertIntMinusPrefix();
         /* Negate it */
         if (!expr.isRegister() || !expr.isStackVariable())
             expr.putInRegister();
@@ -732,13 +831,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitId(picoCParser.IdContext ctx) 
     {
         /* Just for more readable code */
-        boolean local = true, param = true;
+        boolean local = true, param = true, extern = true;
         
         String id = ctx.ID().getText();
-        /* Position of variable on stack */
-        String stackPosition;
-        /* Next free register */
-        String nextFreeTemp;
         
         /* Check if variable is local */
         Variable newVar = curFuncAna.getLocalVariables().get(id);
@@ -751,14 +846,21 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* It is not parameter, if it is null */
         if (newVar == null)
             param = false;
-        /* TODO: If it is not local and it is not param, than it shoud be checked
-            if it is extern */
-        if (!Checker.varLocalAndParamCheck(local, param, ctx, id))
+        
+        /* If it is not local or param, check for extern */
+        if (!param && !local)
+            newVar = externVariables.get(id);
+        /* If it is not extern */
+        if (newVar == null)
+            extern = false;
+        
+        if (!Checker.varLocalAndParamCheck(local, param, extern, ctx, id))
             return null;
+        
         if (newVar == null)
             return null;
         /* Check if variable is initialized */
-        Checker.varInitCheck(local, newVar, id, ctx);
+        Checker.varInitCheck(local || extern, newVar, id, ctx);
         
         /* Return new variable */
         return new ExpressionObject(newVar);
@@ -1454,82 +1556,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         expr.dereference();
         
         return expr;
-    }
-
-    private ExpressionObject declareParameter(picoCParser.DirDeclContext ctx) 
-    {
-        /* Variable name, stack position, and memory class */
-        String name, stackPosition;
-        name = ctx.ID().getText();
-        currentVariableName = name;
-        MemoryClassEnum typeSpecifier;
-        Variable var;
-        /* Chech if variable is already declared */
-        if (!Checker.varDeclCheck(ctx, name))
-            return null;
-        
-        /* Check if variable is pointer */
-        if (curPointer.isEmpty())
-            typeSpecifier = curTypeSpecifier;
-        else
-            typeSpecifier = MemoryClassEnum.POINTER;
-        
-        /* Get stack position */
-        stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
-        /* Create new variable object */
-        var = new Variable(name, stackPosition, false, typeSpecifier, curPointer);
-        /* Insert new variable in parameter variables */
-        curFuncAna.getParameterVariables().put(name, var);
-        
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
-        /* Check size of variable */
-        if (!Checker.varSizeCheck(ctx, varSize))
-            return null;
-        
-        return new ExpressionObject(var);
-    }
-
-    private ExpressionObject declareLocalVariable(picoCParser.DirDeclContext ctx) 
-    {
-        /* Variable name, stack position, and memory class */
-        String name, stackPosition;
-        name = ctx.ID().getText();
-        currentVariableName = name;
-        MemoryClassEnum typeSpecifier;
-        Variable var;
-        /* Chech if variable is already declared */
-        if (!Checker.varDeclCheck(ctx, name))
-            return null;
-        
-        /* Check if variable is pointer */
-        if (curPointer.isEmpty())
-            typeSpecifier = curTypeSpecifier;
-        else
-            typeSpecifier = MemoryClassEnum.POINTER;
-        
-        stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
-        var = new Variable(name, stackPosition, false, typeSpecifier, curPointer);
-        /* Insert new variable in local variables */
-        curFuncAna.getLocalVariables().put(name, var);
-
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
-        /* Check size of variable */
-        if (!Checker.varSizeCheck(ctx, varSize))
-            return null;
-        
-        return new ExpressionObject(var);
-    }
-
-    /* In case that function in declared, than just name of the 
-        function needs to be returned. */
-    private ExpressionObject declareFunction(picoCParser.DirDeclContext ctx) 
-    {
-        return new ExpressionObject
-            (ctx.ID().getText(), 
-             MemoryClassEnum.POINTER, 0
-            );
     }
     
 }

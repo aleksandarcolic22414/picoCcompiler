@@ -12,7 +12,6 @@ import nasm.NasmTools;
  */
 public class Variable 
 {
-
     /* Variable name */
     private String name;
 
@@ -22,6 +21,9 @@ public class Variable
     /* Is variable initialized */
     private boolean initialized;
 
+    /* Is extern variable */
+    private boolean extern;
+    
     /* Memory class of variable */
     private MemoryClassEnum typeSpecifier;
     
@@ -30,22 +32,24 @@ public class Variable
     private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
     
     public Variable
-    (String name, String stackPosition, boolean initialized, MemoryClassEnum type) 
+    (String name, String stackPosition, MemoryClassEnum type, boolean extern) 
     {
         this.name = name;
         this.stackPosition = stackPosition;
-        this.initialized = initialized;
+        this.initialized = false;
         this.typeSpecifier = type;
+        this.extern = extern;
     }
 
     public Variable
-    (String name, String stackPosition, boolean initialized, MemoryClassEnum type, 
-    LinkedList<MemoryClassEnum> curPointer) 
+    (String name, String stackPosition, MemoryClassEnum type, 
+    LinkedList<MemoryClassEnum> curPointer, boolean extern) 
     {
         this.name = name;
         this.stackPosition = stackPosition;
-        this.initialized = initialized;
+        this.initialized = false;
         this.typeSpecifier = type;
+        this.extern = extern;
         if (!curPointer.isEmpty())
             NasmTools.switchStacks(curPointer, pointerType);
     }
@@ -107,4 +111,13 @@ public class Variable
     {
         return pointerType.peek();
     }
+
+    public boolean isExtern() {
+        return extern;
+    }
+
+    public void setExtern(boolean extern) {
+        this.extern = extern;
+    }
+    
 }

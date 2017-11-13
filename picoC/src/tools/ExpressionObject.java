@@ -102,7 +102,10 @@ public class ExpressionObject
         this.name = var.getName();
         setSize(type);
         flags |= VAR_STACK;
+        if (var.isExtern())
+            flags |= VAR_EXTERN;
         stackDisp = var.getStackPosition();
+        
         NasmTools.copyPointerList(pointerType, var.getPointerType());
     }
     
@@ -386,6 +389,24 @@ public class ExpressionObject
     private void setStackVariable() 
     {
         this.flags = ExpressionObject.VAR_STACK;
+    }
+
+    public ExpressionObject insertIntMinusPrefix() 
+    {
+        if (this.text.startsWith("-"))
+            this.text = this.text.substring(1);
+        else
+            this.text = "-" + this.text;
+        return this;
+    }
+    
+    public static void main(String[] args) {
+        String s = "1555";
+        if (s.startsWith("-"))
+            s = s.substring(1);
+        else
+            s = "-" + s;
+        System.out.println(s);
     }
     
 }

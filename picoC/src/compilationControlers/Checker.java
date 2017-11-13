@@ -185,9 +185,10 @@ public class Checker
     }
 
     public static boolean varLocalAndParamCheck
-    (boolean local, boolean param, picoCParser.IdContext ctx, String id) 
+    (boolean local, boolean param, boolean extern, 
+     picoCParser.IdContext ctx, String id) 
     {
-        if (!local && !param) {
+        if (!local && !param && !extern) {
             CompilationControler.errorOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
@@ -198,13 +199,13 @@ public class Checker
     }
 
     public static void varInitCheck
-    (boolean local, Variable newVar, String id, picoCParser.IdContext ctx) 
+    (boolean bool, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
-        if (varInitCheck && local && newVar != null && !newVar.isInitialized()) {
+        if (varInitCheck && bool && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
-                        + " is used uninitialized");
+                        + " may not have been initialized");
         }
     }
 
@@ -396,6 +397,46 @@ public class Checker
                                 "Not valid char contant");
                 return false;
             }
+        }
+        return true;
+    }
+
+    public static boolean varExternDeclCheck(picoCParser.DirDeclContext ctx, String name) 
+    {
+        if (TranslationVisitor.externVariables.containsKey(name)) 
+        {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        "External declaration",
+                            "Multiple declaration of " + name);
+            return false;    
+        }
+        return true;
+    }
+
+    public static boolean varTypeCheck
+    (picoCParser.DirDeclContext ctx, MemoryClassEnum typeSpecifier) 
+    {
+        if (typeSpecifier == MemoryClassEnum.VOID) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Void variables not alowed!");
+            return false;
+        }
+        return true;
+    }
+
+
+    public static boolean checkConstantExpression
+    (picoCParser.DeclWithInitContext ctx, ExpressionObject expr) 
+    {
+        if (!expr.isInteger()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        "External declaration",
+                            "Initialization expression not constant");
+            return false;
         }
         return true;
     }
