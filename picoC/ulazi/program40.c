@@ -56,7 +56,7 @@ void parray(int *niz, int size)
 int main(int argc, char **argv)
 {
     int i, N;
-    N = 30;
+    N = 20;
     int *niz = malloc(1000);
     int *h = niz;
     for (i = 0; i < N; i++)

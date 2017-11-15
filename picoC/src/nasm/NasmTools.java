@@ -552,19 +552,36 @@ public class NasmTools
     public static int getSize(MemoryClassEnum typeSpecifier) 
     {
         switch (typeSpecifier) {
+            case VOID:
+                return Constants.SIZE_OF_VOID;
             case CHAR:
                 return Constants.SIZE_OF_CHAR;
             case INT:
                 return Constants.SIZE_OF_INT;
             case POINTER:
                 return Constants.SIZE_OF_POINTER;    
-            case VOID:
-                return -1;
             default:
                 return 0;
         }
     }
 
+    /* Returns size of type specifier */
+    public static int getSizeForPtrIncDec(MemoryClassEnum typeSpecifier) 
+    {
+        switch (typeSpecifier) {
+            case VOID:
+                return 1;
+            case CHAR:
+                return Constants.SIZE_OF_CHAR;
+            case INT:
+                return Constants.SIZE_OF_INT;
+            case POINTER:
+                return Constants.SIZE_OF_POINTER;    
+            default:
+                return 0;
+        }
+    }
+    
     public static void freeAllRegisters() 
     {
         /* Clear flags regiser */
@@ -621,7 +638,8 @@ public class NasmTools
         
         for (int i = 0; i < lsize; ++i) {
             /* Visit expression or STRING_LITERAL */
-            res = visitor.visit(arguments.get(i));
+            if ((res = visitor.visit(arguments.get(i))) == null)
+                return ;
             res.comparisonCheck();
             /* Get variable size based on register it is stored in.
                 Minimum size for argument is 4 bytes which is INT type */
@@ -1020,6 +1038,8 @@ public class NasmTools
     public static String getCast(MemoryClassEnum type) 
     {
         switch (type) {
+            case VOID :
+                return Constants.STRING_BYTE;
             case CHAR :
                 return Constants.STRING_BYTE;
             case INT :
@@ -1072,7 +1092,7 @@ public class NasmTools
     {
         switch (type) {
             case VOID :
-                return registerToString4Bytes(register);
+                return registerToString1Bytes(register);
             case CHAR :
                 return registerToString1Bytes(register);
             case INT :
@@ -1122,6 +1142,8 @@ public class NasmTools
     public static String getShiftForPointer(MemoryClassEnum memclass) 
     {
         switch (memclass) {
+            case VOID:
+                return "0";
             case CHAR:
                 return "0";
             case INT:
@@ -1134,9 +1156,7 @@ public class NasmTools
  
     public static void main(String[] args) 
     {
-        String s = "\t";
-        s = getConstantCharValue(s);
-        System.out.println(s);
+        
     }
 
     /* Converts char constant such as 'A', '\t' ect. into integer value.
@@ -1166,6 +1186,9 @@ public class NasmTools
                     break;
                 case 't':
                     res = '\t';
+                    break;
+                case '0':
+                    res = '\0';
                     break;
                 default:
                     res = -1;

@@ -77,6 +77,8 @@ public class Checker
                 return true;
             case "malloc":
                 return true;
+            case "rand":
+                return true;
         }
         return false;
     }
@@ -188,14 +190,13 @@ public class Checker
     (boolean local, boolean param, boolean extern, 
      picoCParser.IdContext ctx, String id) 
     {
-        if (!local && !param && !extern) {
-            CompilationControler.errorOcured
-                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
-                        "Variable " + "'" + id  + "'" 
-                        + " is not declared");
-            return false;
-        }
-        return true;
+        if (local || param || extern)
+            return true;
+        CompilationControler.errorOcured
+            (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                "Variable " + "'" + id + "'"
+                    + " is not declared");
+        return false;
     }
 
     public static void varInitCheck
@@ -390,11 +391,11 @@ public class Checker
     {
         if (charSeq.length() == 4) {
             char ch = charSeq.charAt(2);
-            if (ch != 'n' && ch != 'r' && ch != 't') {
+            if (ch != 'n' && ch != 'r' && ch != 't' && ch != '0') {
                 CompilationControler.errorOcured(
                         ctx.getStart(), 
                             TranslationVisitor.curFuncAna.getFunctionName(),
-                                "Not valid char contant");
+                                "Not valid char constant");
                 return false;
             }
         }
@@ -436,6 +437,32 @@ public class Checker
                 (ctx.getStart(),
                         "External declaration",
                             "Initialization expression not constant");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkVariableExistance
+    (ExpressionObject expr, picoCParser.AssignContext ctx) 
+    {
+        if (expr.isInteger() || expr.isStringLiteral()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Try to assign to non-variable type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkReturnValue
+    (MemoryClassEnum memoryClass, picoCParser.ReturnContext ctx) 
+    {
+        if (ctx.expression() == null && memoryClass != MemoryClassEnum.VOID) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Returning void type in non-void function");
             return false;
         }
         return true;

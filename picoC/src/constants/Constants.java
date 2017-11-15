@@ -7,6 +7,10 @@ package constants;
  */
 public class Constants 
 {
+    /* Represents void size in bytes. Void type actualy has no bytes, but
+        in order to separate pointer arithmetic from other types it has
+        value of 1. */
+    public static int SIZE_OF_VOID = 1;
     /* Represents char size in bytes */
     public static final int SIZE_OF_CHAR = 1;
     /* Represents int size in bytes */
@@ -31,7 +35,8 @@ public class Constants
     public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n"
                                                 + "\textern printf\n"
                                                 + "\textern scanf\n"
-                                                + "\textern malloc\n";
+                                                + "\textern malloc\n"
+                                                + "\textern rand\n";
     /* using gcc's C extern functions in text segment */
     public static final String EXTERN_GCC_LIB = "\textern printf\n"
                                               + "\textern scanf\n"

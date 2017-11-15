@@ -469,50 +469,55 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         assignmentExpression
             :   unaryExpression assignmentOperator assignmentExpression    #Assign
             ;
+    
+        assignmentOperator
+            :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=')
+            ;
     */
     @Override
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
         
         /* Expressions */
-        ExpressionObject expr, newVariable;
+        ExpressionObject left, right;
         /* Visit expression and try to recover from error. */
-        if ((expr = visit(ctx.assignmentExpression())) == null) 
+        if ((right = visit(ctx.assignmentExpression())) == null) 
             return null;
-        expr.comparisonCheck();
+        right.comparisonCheck();
         
         Checker.setVarInitCheck(false);    // Prevent checking for initialization
-        newVariable = visit(ctx.unaryExpression());
+        if ((left = visit(ctx.unaryExpression())) == null)
+            return null;
         Checker.setVarInitCheck(true);
-        String id = newVariable.getName();
+        String id = left.getName();
         
+        /* Check if there is variable to assign value to */
+        if (!Checker.checkVariableExistance(left, ctx))
+            return null;
         int operation = ctx.assignmentOperator().op.getType();
         /* Get variable context if it is local variable */
         Variable var = curFuncAna.getAnyVariable(id);
-        /* Check if it is extern */
+        /* If it is not, check if it is extern */
         if (var == null)
             var = externVariables.get(id);
         var.setInitialized(true);
         
         /* Cast variable if needed */
-        if (!expr.isInteger())
-            expr.castVariable(newVariable.getType());
-        if (!Checker.checkAssign(newVariable, expr, ctx, operation))
+        if (!right.isInteger())
+            right.castVariable(left.getType());
+        if (!Checker.checkAssign(left, right, ctx, operation))
             return null;
         
         /* See which operator is used for assign and emit proper instruction */
-        if (newVariable.isPointer())
-            Emitter.decideAssignPointers(newVariable, expr, operation);
+        if (left.isPointer())
+            Emitter.decideAssignPointers(left, right, operation);
         else
-            Emitter.decideAssign(
-                    newVariable, expr, operation);
+            Emitter.decideAssign(left, right, operation);
         
-        
-        
-        if (expr.isRegister())
-            expr.freeRegister();
+        if (right.isRegister())
+            right.freeRegister();
         /* Return new Object */
-        return newVariable;
+        return left;
     }
     
     /*
@@ -541,10 +546,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject expr;
         String retReg;
-        /* Try to recover from error */
-        if ((expr = visit(ctx.expression())) == null)
+        /* Let checker decide wheather return value is correct */
+        if (!Checker.checkReturnValue(curFuncAna.getMemoryClass(), ctx))
             return null;
+        
+        /* If ctx.expression is null, than it is void type */
+        if (ctx.expression() == null) {
+            Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
+            NasmTools.freeAllRegisters();
+            return null;
+        } else if ((expr = visit(ctx.expression())) == null)
+            return null;
+            
         expr.comparisonCheck();
+        
         /* Set function has return  */
         curFuncAna.setHasReturn(true);
         /* Cast expression to proper size */
@@ -654,13 +669,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     /*
         argument 
             : assignmentExpression 
-            | STRING_LITERAL
             ;    
     */
     @Override
     public ExpressionObject visitArgument(picoCParser.ArgumentContext ctx) 
     {
-        ExpressionObject expr = visit(ctx.assignmentExpression());
+        ExpressionObject expr;
+        if ((expr = visit(ctx.assignmentExpression())) == null)
+            return null;
         expr.comparisonCheck();
             
         return expr;
@@ -835,33 +851,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitId(picoCParser.IdContext ctx) 
     {
         /* Just for more readable code */
-        boolean local = true, param = true, extern = true;
-        
+        boolean local, param, extern;
+        local = param = extern = false;
         String id = ctx.ID().getText();
         
-        /* Check if variable is local */
-        Variable newVar = curFuncAna.getLocalVariables().get(id);
-        /* if variable is null, then it's sure that it is not local */
-        if (newVar == null)
-            local = false;
-        /* If it is not local, maybe it's parameter */
-        if (!local)
-            newVar = curFuncAna.getParameterVariables().get(id);
-        /* It is not parameter, if it is null */
-        if (newVar == null)
-            param = false;
-        
-        /* If it is not local or param, check for extern */
-        if (!param && !local)
-            newVar = externVariables.get(id);
-        /* If it is not extern */
-        if (newVar == null)
-            extern = false;
+        /* Check if variable is local, extern or parameter */
+        Variable newVar;
+        if ((newVar = curFuncAna.getLocalVariables().get(id)) != null)
+            local = true;
+        else if ((newVar = curFuncAna.getParameterVariables().get(id)) != null)
+            param = true;
+        else if ((newVar = externVariables.get(id)) != null)
+            extern = true;
         
         if (!Checker.varCheck(local, param, extern, ctx, id))
-            return null;
-        
-        if (newVar == null)
             return null;
         /* Check if variable is initialized */
         Checker.varInitCheck(local || extern, newVar, id, ctx);

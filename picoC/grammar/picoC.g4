@@ -97,10 +97,10 @@ declaration
     ;
 
 typeSpecifier 
-    : type= ( 'int'
-            | 'char'
-            | 'void' )
-            ;
+    : type = ( 'int'
+             | 'char'
+             | 'void' )
+             ;
 
 initDeclarationList
     :   initDeclarator
