@@ -184,7 +184,7 @@ public class Checker
         return true;
     }
 
-    public static boolean varLocalAndParamCheck
+    public static boolean varCheck
     (boolean local, boolean param, boolean extern, 
      picoCParser.IdContext ctx, String id) 
     {
@@ -431,7 +431,7 @@ public class Checker
     public static boolean checkConstantExpression
     (picoCParser.DeclWithInitContext ctx, ExpressionObject expr) 
     {
-        if (!expr.isInteger()) {
+        if (!expr.isInteger() && !expr.isStringLiteral()) {
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         "External declaration",

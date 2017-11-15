@@ -242,7 +242,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Expression */
         ExpressionObject expr, newVariable;
-        newVariable = visit(ctx.declarator());
+        if ((newVariable = visit(ctx.declarator())) == null)
+            return null;
         
         String id = currentVariableName;
         /* Get variable context */
@@ -473,23 +474,26 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
         
-        /* Expression */
+        /* Expressions */
         ExpressionObject expr, newVariable;
-        int operation = ctx.assignmentOperator().op.getType();
-        Checker.setVarInitCheck(false);    // Prevent checking for initialization
-        newVariable = visit(ctx.unaryExpression());
-        Checker.setVarInitCheck(true);
-        String id = newVariable.getName();
-        /* Just to continue checking for init in visitID context. */
-        
-        /* Get variable context */
-        Variable var = curFuncAna.getAnyVariable(id);
-        var.setInitialized(true);
-        
         /* Visit expression and try to recover from error. */
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
+        
+        Checker.setVarInitCheck(false);    // Prevent checking for initialization
+        newVariable = visit(ctx.unaryExpression());
+        Checker.setVarInitCheck(true);
+        String id = newVariable.getName();
+        
+        int operation = ctx.assignmentOperator().op.getType();
+        /* Get variable context if it is local variable */
+        Variable var = curFuncAna.getAnyVariable(id);
+        /* Check if it is extern */
+        if (var == null)
+            var = externVariables.get(id);
+        var.setInitialized(true);
+        
         /* Cast variable if needed */
         if (!expr.isInteger())
             expr.castVariable(newVariable.getType());
@@ -854,7 +858,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (newVar == null)
             extern = false;
         
-        if (!Checker.varLocalAndParamCheck(local, param, extern, ctx, id))
+        if (!Checker.varCheck(local, param, extern, ctx, id))
             return null;
         
         if (newVar == null)
