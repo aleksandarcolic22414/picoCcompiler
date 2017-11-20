@@ -123,9 +123,10 @@ public class Checker
         return true;
     }
 
-    public static boolean varSizeCheck(picoCParser.DirDeclContext ctx, int varSize) 
+    public static boolean varSizeCheck
+    (picoCParser.DirDeclContext ctx, MemoryClassEnum type) 
     {
-        if (varSize == -1) {
+        if (type == MemoryClassEnum.VOID) {
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
@@ -302,7 +303,7 @@ public class Checker
             CompilationControler.errorOcured(
                     ctx.getStart(), 
                         TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Trying to dereference non-pointer type");
+                            "Trying to dereference non-pointer type " + ctx.getText());
             return false;
         }
         return true;

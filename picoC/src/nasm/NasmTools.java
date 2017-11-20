@@ -28,7 +28,7 @@ public class NasmTools
     public static final int NUMBER_OF_REGISTERS = 14;
     
     /* This variable contains information about free registers  */
-    public static int flags = 0;
+    public static int flags = 0x0;
     
     /* This array represent stack of flags. It it used for function calls.
         Before every function call, if some registers holds 
@@ -554,23 +554,6 @@ public class NasmTools
         switch (typeSpecifier) {
             case VOID:
                 return Constants.SIZE_OF_VOID;
-            case CHAR:
-                return Constants.SIZE_OF_CHAR;
-            case INT:
-                return Constants.SIZE_OF_INT;
-            case POINTER:
-                return Constants.SIZE_OF_POINTER;    
-            default:
-                return 0;
-        }
-    }
-
-    /* Returns size of type specifier */
-    public static int getSizeForPtrIncDec(MemoryClassEnum typeSpecifier) 
-    {
-        switch (typeSpecifier) {
-            case VOID:
-                return 1;
             case CHAR:
                 return Constants.SIZE_OF_CHAR;
             case INT:
@@ -1131,14 +1114,37 @@ public class NasmTools
         list2.push(type);
     }
     
+    /* Switch elements from list1 to list2. Lists are implemented as stacks */
+    public static void switchArrays
+    (LinkedList<Integer> list1, LinkedList<Integer> list2)
+    {
+        if (list1.isEmpty())
+            return;
+        Integer type = list1.pop();
+        switchArrays(list1, list2);
+        list2.push(type);
+    }
+    
     public static void copyPointerList
     (LinkedList<MemoryClassEnum> list1, LinkedList<MemoryClassEnum> list2) 
     {
+        if (list1 == null || list2 == null)
+            return;
         list2.forEach((i) -> {
             list1.addLast(i);
         });
     }
 
+    public static void copyArrayList
+    (LinkedList<Integer> list1, LinkedList<Integer> list2) 
+    {
+        if (list1 == null || list2 == null)
+            return;
+        list2.forEach((i) -> {
+            list1.addLast(i);
+        });
+    }
+    
     public static String getShiftForPointer(MemoryClassEnum memclass) 
     {
         switch (memclass) {
@@ -1208,6 +1214,17 @@ public class NasmTools
         if (memoryClass == MemoryClassEnum.POINTER)
             return rtosMap8Bytes.get(AREG);
         return null;
+    }
+
+    /* Multiply elements of Integer list */
+    public static int multiplyList(LinkedList<Integer> arraySizes) 
+    {
+        int i, size, sum;
+        size = arraySizes.size();
+        sum = 1;
+        for (i = 0; i < size; ++i)
+            sum *= arraySizes.get(i);
+        return sum;
     }
     
 }

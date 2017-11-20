@@ -34,6 +34,8 @@ public class ExpressionObject
         If some variable is pointer to: pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
     private final LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
+    /* If variable is array, than this variable holds it's sizes. */
+    private final LinkedList<Integer> arraySizes = new LinkedList<>();
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
@@ -60,7 +62,8 @@ public class ExpressionObject
     /* If variable on stack is created, than input text is given as stack
         displacement. Something like: rbp-12 */
     public ExpressionObject
-    (String ntext, MemoryClassEnum type, int info, LinkedList<MemoryClassEnum> pointer) 
+    (String ntext, MemoryClassEnum type, int info, 
+     LinkedList<MemoryClassEnum> pointer) 
     {
         this.text = ntext;
         this.type = type;
@@ -71,9 +74,7 @@ public class ExpressionObject
             this.text = castStackVar(ntext, type);
             stackDisp = ntext;
         } 
-        /* If there is something to points to, copy it. */
-        if (pointer != null && pointer.size() > 0)
-            NasmTools.copyPointerList(pointerType, pointer);
+        NasmTools.copyPointerList(pointerType, pointer);
     }
     
      /* Constructor to simple pointer */
@@ -100,13 +101,14 @@ public class ExpressionObject
         this.text = castStackVar(var.getStackPosition(), var.getTypeSpecifier());
         this.type = var.getTypeSpecifier();
         this.name = var.getName();
-        setSize(type);
+        setSize(var.getSize());
         flags |= VAR_STACK;
         if (var.isExtern())
             flags |= VAR_EXTERN;
         stackDisp = var.getStackPosition();
         
         NasmTools.copyPointerList(pointerType, var.getPointerType());
+        NasmTools.copyArrayList(arraySizes, var.getArraySizes());
     }
     
     public String getText() {

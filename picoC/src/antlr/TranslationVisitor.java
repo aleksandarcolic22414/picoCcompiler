@@ -47,9 +47,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     /* Helps during declaration */
     public static MemoryClassEnum curTypeSpecifier;
     
+    /* If variable is array this list holds it's sizes.
+        For example: If variable is int ar[5][6][3], this list would hold
+        5, 6 and 3 */
+    public static LinkedList<Integer> arrayDecl;
+    
     public TranslationVisitor() 
     {
         curPointer = new LinkedList<>();
+        arrayDecl = new LinkedList<>();
         functions = new HashMap<>();
         externVariables = new HashMap<>();
         curFuncAna = null;
@@ -258,7 +264,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         expr.comparisonCheck();
         
         /* If it is external declaration, just check if expression is constant.
-            If it is not, emit initialization instruction */
+            If it is not external, emit initialization instruction. */
         if (newVariable.isExternVariable()) {
             if (!Checker.checkConstantExpression(ctx, expr))
                 return null;
@@ -280,18 +286,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     }
     
     /*
-        declarator
-            :   ID                      #DirDecl
-            ;
+        directDeclarator
+            :   ID                                  #DirDecl
     */
     @Override
     public ExpressionObject visitDirDecl(picoCParser.DirDeclContext ctx) 
     {
         /* Get index of the rule that invoked this state. If it is same
-            rule as ctx, that go to the parent. */
+            rule as ctx, than go to the parent. Since rule declarator will
+            always invoke this state, than one level above that rule needs
+            to be reached. */
         RuleContext rule = ctx.parent;
         int ruleIndex;
-        while (rule.getRuleIndex() == ctx.getRuleIndex())
+        while (rule.getRuleIndex() == ctx.getRuleIndex() 
+                || rule.getRuleIndex() == picoCParser.RULE_declarator)
             rule = rule.parent;
         ruleIndex = rule.getRuleIndex();
         /* Call proper function for the rule that invoked direct declaration */
@@ -308,7 +316,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     }
 
-        /* Function that declares parameter of the function */
+    /* Function that declares parameter of the function */
     private ExpressionObject declareParameter(picoCParser.DirDeclContext ctx) 
     {
         /* Variable name, stack position, and memory class */
@@ -321,24 +329,31 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.varDeclCheck(ctx, name))
             return null;
         
-        /* Check if variable is pointer */
-        if (curPointer.isEmpty())
+        /* Check if variable is pointer or array. In both cases variable
+            is passed as pointer */
+        if (curPointer.isEmpty() && arrayDecl.isEmpty())
             typeSpecifier = curTypeSpecifier;
         else
             typeSpecifier = MemoryClassEnum.POINTER;
         
         /* Get stack position */
         stackPosition = curFuncAna.declareParameterVariable(typeSpecifier);
+        
         /* Create new variable object */
-        var = new Variable(name, stackPosition, typeSpecifier, curPointer, false);
+        var = new Variable
+            (name, stackPosition, typeSpecifier, curPointer, arrayDecl, false);
         /* Insert new variable in parameter variables */
         curFuncAna.getParameterVariables().put(name, var);
         
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
-        /* Check size of variable */
-        if (!Checker.varSizeCheck(ctx, varSize))
+        /* Check for void variables */
+        if (!Checker.varSizeCheck(ctx, typeSpecifier))
             return null;
+        
+        /* Even thou variable constructor will clear both 
+            curPointer and arrayDecl lists, just to be sure that lists are empty
+            let's clear them */
+        curPointer.clear();
+        arrayDecl.clear();
         
         return new ExpressionObject(var);
     }
@@ -359,8 +374,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Variable name, stack position, and memory class */
         String name, stackPosition;
-        name = ctx.ID().getText();
-        currentVariableName = name;
+        currentVariableName = name = ctx.ID().getText();
         MemoryClassEnum typeSpecifier;
         Variable var;
         /* Chech if variable is already declared */
@@ -373,16 +387,25 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         else
             typeSpecifier = MemoryClassEnum.POINTER;
         
-        stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
-        var = new Variable(name, stackPosition, typeSpecifier, curPointer, false);
+        /* Check if variable is array */
+        if (!arrayDecl.isEmpty())
+            stackPosition = curFuncAna.declareLocalArray(typeSpecifier, arrayDecl);
+        else
+            stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
+        
+        var = new Variable
+            (name, stackPosition, typeSpecifier, curPointer, arrayDecl, false);
         /* Insert new variable in local variables */
         curFuncAna.getLocalVariables().put(name, var);
-
-        /* Size in bytes */
-        int varSize = NasmTools.getSize(typeSpecifier);
+            
         /* Check size of variable */
-        if (!Checker.varSizeCheck(ctx, varSize))
+        if (!Checker.varSizeCheck(ctx, typeSpecifier))
             return null;
+        
+        /* Even thou variable constructor will clear both 
+            curPointer and arrayDecl lists, just to be sure that lists are empty */
+        curPointer.clear();
+        arrayDecl.clear();
         
         return new ExpressionObject(var);
     }
@@ -390,7 +413,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     private ExpressionObject declareExternVariable(picoCParser.DirDeclContext ctx) 
     {
         /* Variable name and memory class */
-        /* Add underscore to variable's name in order not to mix internals */
         String name = ctx.ID().getText();
         currentVariableName = name;
         
@@ -408,8 +430,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Since extern variable is accessed through it's name, than stack 
             position is also name, so that expression object can cast
-            it's stack postion later in dword[variablename] for example . */  
-        var = new Variable(name, name, typeSpecifier, curPointer, true);
+            it's stack postion later in cast[variablename] for example . */  
+        var = new Variable
+            (name, name, typeSpecifier, curPointer, arrayDecl, true);
         /* Insert new variable in extern variables */
         externVariables.put(name, var);
 
@@ -425,11 +448,17 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (rule.getChildCount() == 1)
             DataSegment.declareExternVariable(var, "0");
             
+        /* Even thou variable constructor will clear both 
+            curPointer and arrayDecl lists, just to be sure that lists are empty
+            let's clear them */
+        curPointer.clear();
+        arrayDecl.clear();
+        
         return new ExpressionObject(var);   
     }
     
     /* Function that declares new function. In case that function 
-        is currently declared, than just name of the 
+        is currently declaring, than just name of the 
         function needs to be returned. It doesn't matter which argumets
         are passed to Expression object, because only text of the
         object is used. */
@@ -630,9 +659,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Registers are saved and freed for further use */
         NasmTools.saveRegistersOnStack();
         NasmTools.moveArgsToRegisters(this, argumentList);
-        /* Special setup */
+        /* Special setup if fucntion is from gcc's lib */
         if (Checker.externalFunctionCheck(functionName))
             Writers.emitInstruction("mov", "eax", "0");
+        /* Function call */
         Writers.emitInstruction("call", functionName);
         /* Avoid unnecessary move */
         if (!NasmTools.isRegisterA(nextFreeTemp))
@@ -1564,5 +1594,28 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return expr;
     }
+
+    /*
+        directDeclarator
+            |   directDeclarator '[' constant? ']'   #ArrayDecl
+    */
+    @Override
+    public ExpressionObject visitArrayDecl(picoCParser.ArrayDeclContext ctx) 
+    {
+        ExpressionObject expr;
+        int size = 0;
+        
+        if (ctx.constant() != null) {
+            if ((expr = visit(ctx.constant())) == null)
+                return null;
+            size = Integer.parseInt(expr.getText());
+        }
+        /* Just push size to array declarator */
+        arrayDecl.push(size);
+        
+        return visit(ctx.directDeclarator());
+    }
+    
+    
     
 }

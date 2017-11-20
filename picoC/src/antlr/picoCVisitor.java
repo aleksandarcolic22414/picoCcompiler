@@ -303,19 +303,11 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDeclWithInit(picoCParser.DeclWithInitContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code PtrDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
+	 * Visit a parse tree produced by {@link picoCParser#declarator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPtrDecl(picoCParser.PtrDeclContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code DirDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDirDecl(picoCParser.DirDeclContext ctx);
+	T visitDeclarator(picoCParser.DeclaratorContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code MultiplePrt}
 	 * labeled alternative in {@link picoCParser#pointer}.
@@ -330,6 +322,20 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSimplePtr(picoCParser.SimplePtrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ArrayDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayDecl(picoCParser.ArrayDeclContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

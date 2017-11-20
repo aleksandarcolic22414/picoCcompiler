@@ -47,15 +47,25 @@ public class DataSegment
 
     /* Emit new instruction in data segment that defines new variable in data
         segment. Example:
-        C(extern) -> int a;    nasm(data segment) ->  a:      
+        C(extern) -> int a;    nasm(data segment) ->  a:     dd    0  
         Which defines doubleword (8 bytes) variable and set it's value to 0.
+        If variable is array, than: 
+        "times [numberOfElements]  sizeofdefining   value" needs to be emited.
+        Something like:
+        array:   times    5    dd    0 
     */
     public static void declareExternVariable
     (Variable var, String value)
     {
+        int sizeOfArray;     // in case variable is array
         String name = var.getName();
         String inst = getDefineDataInst(var.getTypeSpecifier());
-        Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
+        if (!var.getArraySizes().isEmpty()) {
+            sizeOfArray = NasmTools.multiplyList(var.getArraySizes());
+            Writers.emitData(name + ":\t times " 
+                    + sizeOfArray + " " + inst + " " + value);
+        } else
+            Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
     }
     
     /* Returnes defining istruction for proper size of variable */

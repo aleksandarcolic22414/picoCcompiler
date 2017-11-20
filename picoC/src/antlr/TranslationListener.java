@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import nasm.DataSegment;
 import tools.LabelsMaker;
 
 
@@ -31,9 +30,12 @@ public class TranslationListener extends picoCBaseListener
     /* List represent current pointer declarator type */
     public static LinkedList<MemoryClassEnum> pointerInitializator;
     
+    public static LinkedList<Integer> arrayInitializator;
+    
     public TranslationListener()
     {
         pointerInitializator = new LinkedList<>();
+        arrayInitializator = new LinkedList<>();
         mapFuncAna = new HashMap<>();
     }
 
@@ -48,7 +50,21 @@ public class TranslationListener extends picoCBaseListener
     {
         curFuncCtx.setFunctionContext(false);
     }
-    
+
+    @Override
+    public void enterDeclarator(picoCParser.DeclaratorContext ctx) 
+    {
+        pointerInitializator.clear();
+        arrayInitializator.clear();
+    }
+
+    @Override
+    public void exitDeclarator(picoCParser.DeclaratorContext ctx) 
+    {
+        pointerInitializator.clear();
+        arrayInitializator.clear();
+    }
+
     @Override
     public void enterFunctionDefinition(picoCParser.FunctionDefinitionContext ctx) 
     {
@@ -79,7 +95,14 @@ public class TranslationListener extends picoCBaseListener
         for (i = 0; i < paramsNum; ++i) {
             /* Get type of var and convert it to bytes */
             int tokenType = parameterList.get(i).typeSpecifier().type.getType();
+            /* Variable is pointer if it has more than 1 child in declarator
+                context or has more than 1 child in directDeclarator context */
             boolean ptr = parameterList.get(i).declarator().getChildCount() > 1;
+            ptr = ptr || 
+                    parameterList.get(i)
+                    .declarator()
+                    .directDeclarator()
+                    .getChildCount() > 1;
             if (ptr)
                 type = MemoryClassEnum.POINTER;
             else
@@ -91,6 +114,9 @@ public class TranslationListener extends picoCBaseListener
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
+        /* Clear lists */
+        arrayInitializator.clear();
+        pointerInitializator.clear();
     }
 
     @Override
@@ -102,23 +128,29 @@ public class TranslationListener extends picoCBaseListener
     @Override
     public void enterDirDecl(picoCParser.DirDeclContext ctx) 
     {
-        if (curFuncCtx == null || !curFuncCtx.isFunctionContext()) {
+        if (curFuncCtx == null || !curFuncCtx.isFunctionContext())
             return;       
-        }
+        
         int locals = curFuncCtx.getSpaceForLocals();
         int sizeOfVar;
-        /* If variable is extern, than no stack calculation is needed */
-        if (curFuncCtx == null) {
-            return ;
-        }
+        int totalSize;
+        
         /* Calculate space on stack for local variables  */
         if (pointerInitializator.isEmpty())
             sizeOfVar = NasmTools.getSize(currentDeclaratorType);
         else 
             sizeOfVar = NasmTools.getSize(MemoryClassEnum.POINTER);
+        
+        /* If variable is array, than it's total size is calculated by
+            multiplying size of one variable and number of variables */
+        if (arrayInitializator.isEmpty())
+            totalSize = sizeOfVar;
+        else
+            totalSize = sizeOfVar * NasmTools.multiplyList(arrayInitializator);
         /* Set displacement in current function context */
-        curFuncCtx.setSpaceForLocals(locals + sizeOfVar);
+        curFuncCtx.setSpaceForLocals(locals + totalSize);
         pointerInitializator.clear();
+        arrayInitializator.clear();
     }
 
     @Override
@@ -127,12 +159,34 @@ public class TranslationListener extends picoCBaseListener
         currentDeclaratorType = NasmTools.getTypeOfVar(ctx.type.getType());
     }
 
+    /*
+        directDeclarator
+            |   directDeclarator '[' constant? ']'   #ArrayDecl
+            ;
+    */
+    /* Just inserting size of array into arrayInitializator list */
+    /* If there is no constant, just simulate 0 sized array in order to 
+        calculate correct size */
+    @Override
+    public void enterArrayDecl(picoCParser.ArrayDeclContext ctx) 
+    {
+        String hsize;
+        int size = 0;
+        if (ctx.constant() != null) {
+            hsize = ctx.constant().getText();
+            size = Integer.parseInt(hsize);
+        }
+        arrayInitializator.push(size);
+    }
+
+    
+    
     @Override
     public void enterSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
-        if (curFuncCtx == null || !curFuncCtx.isFunctionContext()) {
+        if (curFuncCtx == null || !curFuncCtx.isFunctionContext())
             return;       
-        }
+        
         NasmTools.insertPointerType(pointerInitializator, currentDeclaratorType);
     }
     

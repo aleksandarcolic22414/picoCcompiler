@@ -506,29 +506,15 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitDeclWithInit(picoCParser.DeclWithInitContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code PtrDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
+	 * Enter a parse tree produced by {@link picoCParser#declarator}.
 	 * @param ctx the parse tree
 	 */
-	void enterPtrDecl(picoCParser.PtrDeclContext ctx);
+	void enterDeclarator(picoCParser.DeclaratorContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code PtrDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
+	 * Exit a parse tree produced by {@link picoCParser#declarator}.
 	 * @param ctx the parse tree
 	 */
-	void exitPtrDecl(picoCParser.PtrDeclContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code DirDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
-	 * @param ctx the parse tree
-	 */
-	void enterDirDecl(picoCParser.DirDeclContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code DirDecl}
-	 * labeled alternative in {@link picoCParser#declarator}.
-	 * @param ctx the parse tree
-	 */
-	void exitDirDecl(picoCParser.DirDeclContext ctx);
+	void exitDeclarator(picoCParser.DeclaratorContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MultiplePrt}
 	 * labeled alternative in {@link picoCParser#pointer}.
@@ -553,6 +539,30 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSimplePtr(picoCParser.SimplePtrContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DirDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitDirDecl(picoCParser.DirDeclContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code ArrayDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterArrayDecl(picoCParser.ArrayDeclContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code ArrayDecl}
+	 * labeled alternative in {@link picoCParser#directDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitArrayDecl(picoCParser.ArrayDeclContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link picoCParser#parameterList}.
 	 * @param ctx the parse tree

@@ -113,13 +113,17 @@ initDeclarator
     ;
 
 declarator
-    :   pointer declarator      #PtrDecl
-    |   ID                      #DirDecl
+    :   pointer? directDeclarator      
     ;
 
 pointer
     :   '*'             #SimplePtr
     |   pointer '*'     #MultiplePrt
+    ;
+
+directDeclarator
+    :   ID                                  #DirDecl
+    |   directDeclarator '[' constant? ']'   #ArrayDecl
     ;
 
 parameterList 

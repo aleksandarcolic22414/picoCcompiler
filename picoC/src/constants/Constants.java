@@ -31,21 +31,21 @@ public class Constants
             "//home//aleksandar//Desktop//compilerTesting//compiledProgram.asm";
     /* path to input file */
     public static final String PATH_TO_INPUT_FILE = "ulazi//program.c";
-    /* setup segments for further compilation */
-    public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n"
-                                                + "\textern printf\n"
-                                                + "\textern scanf\n"
-                                                + "\textern malloc\n"
-                                                + "\textern rand\n";
+    
     /* using gcc's C extern functions in text segment */
     public static final String EXTERN_GCC_LIB = "\textern printf\n"
                                               + "\textern scanf\n"
-                                              + "\textern malloc\n";
+                                              + "\textern malloc\n"
+                                              + "\textern rand\n";
+    /* setup segments for further compilation */
+    public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n"
+                                                   + EXTERN_GCC_LIB;
+    
     public static final String ENTER_DATA_SEGMENT = "segment .data\n";
     public static final String ENTER_BSS_SEGMENT = "\n\nsegment .bss\n";
     /* function emits */
     public static final String FUNCTION_ENTRY = "\tpush\trbp"
-                                            + "\n\tmov\trbp,rsp\n";
+                                            + "\n\tmov\trbp, rsp\n";
     
     public static final String FUNCTION_EXIT = "\tmov\trsp,rbp"
             + "                                 \n\tpop\trbp"

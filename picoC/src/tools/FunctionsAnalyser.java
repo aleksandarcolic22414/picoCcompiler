@@ -222,6 +222,20 @@ public class FunctionsAnalyser
     {
         return getSpaceForLocals() + getSpaceForParams();
     }
+
+    public String declareLocalArray
+    (MemoryClassEnum type, LinkedList<Integer> arrayDecl) 
+    {
+        /* Increase number of local variables */
+        ++localVariablesCounter;
+        
+        int sizeofvar = NasmTools.getSize(type);
+        int numberOfVariable = NasmTools.multiplyList(arrayDecl);
+        /* Calculate new stack displacement */
+        spaceForLocals += sizeofvar * numberOfVariable;
+        
+        return "rbp-" + Integer.toString(spaceForLocals);
+    }
     
     
 }

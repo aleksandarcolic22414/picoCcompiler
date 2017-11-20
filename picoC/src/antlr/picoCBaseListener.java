@@ -532,25 +532,13 @@ public class picoCBaseListener implements picoCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPtrDecl(picoCParser.PtrDeclContext ctx) { }
+	@Override public void enterDeclarator(picoCParser.DeclaratorContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitPtrDecl(picoCParser.PtrDeclContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterDirDecl(picoCParser.DirDeclContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitDirDecl(picoCParser.DirDeclContext ctx) { }
+	@Override public void exitDeclarator(picoCParser.DeclaratorContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -575,6 +563,30 @@ public class picoCBaseListener implements picoCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSimplePtr(picoCParser.SimplePtrContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDirDecl(picoCParser.DirDeclContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDirDecl(picoCParser.DirDeclContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArrayDecl(picoCParser.ArrayDeclContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArrayDecl(picoCParser.ArrayDeclContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

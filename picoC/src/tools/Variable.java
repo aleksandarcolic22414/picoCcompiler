@@ -31,6 +31,12 @@ public class Variable
         this variable points to. */
     private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
     
+    /* If variable is array than this list holds it's sizes */
+    private LinkedList<Integer> arraySizes = new LinkedList<>();
+    
+    /* Size of variable in bytes */
+    private int size;
+    
     public Variable
     (String name, String stackPosition, MemoryClassEnum type, boolean extern) 
     {
@@ -43,7 +49,8 @@ public class Variable
 
     public Variable
     (String name, String stackPosition, MemoryClassEnum type, 
-    LinkedList<MemoryClassEnum> curPointer, boolean extern) 
+    LinkedList<MemoryClassEnum> curPointer, 
+    LinkedList<Integer> curArray, boolean extern) 
     {
         this.name = name;
         this.stackPosition = stackPosition;
@@ -52,6 +59,17 @@ public class Variable
         this.extern = extern;
         if (!curPointer.isEmpty())
             NasmTools.switchStacks(curPointer, pointerType);
+        if (!curArray.isEmpty())
+            NasmTools.switchArrays(curArray, arraySizes);
+        /* Get size of variable's memory class */
+        int hsize = NasmTools.getSize(typeSpecifier);  
+        /* If variable is not array, than size is the size of Memory class, and
+            if it is array, than size is sum of the sizes times size of 
+            one element */
+        if (arraySizes.isEmpty())
+            this.size = hsize;
+        else
+            this.size = hsize * NasmTools.multiplyList(arraySizes);
     }
 
     public String getName() 
@@ -118,6 +136,27 @@ public class Variable
 
     public void setExtern(boolean extern) {
         this.extern = extern;
+    }
+
+    public LinkedList<Integer> getArraySizes() {
+        return arraySizes;
+    }
+
+    public void setArraySizes(LinkedList<Integer> arraySizes) {
+        this.arraySizes = arraySizes;
+    }
+    
+    public boolean isArray()
+    {
+        return !arraySizes.isEmpty();
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
     
 }
