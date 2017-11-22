@@ -12,11 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import tools.Emitter;
 import tools.ExpressionObject;
-import tools.LabelsMaker;
-import tools.RelationHelper;
-import tools.Variable;
 
 /**
  *
@@ -588,7 +584,7 @@ public class NasmTools
             stackPos = arg.getStackDisp();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            memclass = arg.getTypeOfPointer();
+            memclass = arg.getPointer().getType();
             cast = NasmTools.getCast(memclass);
             paramPos = cast + " [" + stackPos + "]";
             reg = getNextRegForFuncCall(memclass);
@@ -1090,59 +1086,6 @@ public class NasmTools
     {
         int register = stringToRegister(strRegister);
         return register == AREG;
-    }
-
-    /* Function insert new type that current variable points to.
-        If list is empty that means that pointer to simple type is inserted.
-        If it is not empty that means that pointer to pointer is declared. */
-    public static void insertPointerType(LinkedList<MemoryClassEnum> curPointer, MemoryClassEnum type) 
-    {
-        if (curPointer.isEmpty())
-            curPointer.push(type);
-        else
-            curPointer.push(MemoryClassEnum.POINTER);
-    }
-
-    /* Switch elements from list1 to list2. Lists are implemented as stacks */
-    public static void switchStacks
-    (LinkedList<MemoryClassEnum> list1, LinkedList<MemoryClassEnum> list2)
-    {
-        if (list1.isEmpty())
-            return;
-        MemoryClassEnum type = list1.pop();
-        switchStacks(list1, list2);
-        list2.push(type);
-    }
-    
-    /* Switch elements from list1 to list2. Lists are implemented as stacks */
-    public static void switchArrays
-    (LinkedList<Integer> list1, LinkedList<Integer> list2)
-    {
-        if (list1.isEmpty())
-            return;
-        Integer type = list1.pop();
-        switchArrays(list1, list2);
-        list2.push(type);
-    }
-    
-    public static void copyPointerList
-    (LinkedList<MemoryClassEnum> list1, LinkedList<MemoryClassEnum> list2) 
-    {
-        if (list1 == null || list2 == null)
-            return;
-        list2.forEach((i) -> {
-            list1.addLast(i);
-        });
-    }
-
-    public static void copyArrayList
-    (LinkedList<Integer> list1, LinkedList<Integer> list2) 
-    {
-        if (list1 == null || list2 == null)
-            return;
-        list2.forEach((i) -> {
-            list1.addLast(i);
-        });
     }
     
     public static String getShiftForPointer(MemoryClassEnum memclass) 

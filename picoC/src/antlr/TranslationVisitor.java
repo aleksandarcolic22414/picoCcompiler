@@ -20,6 +20,8 @@ import org.antlr.v4.runtime.RuleContext;
 import tools.Emitter;
 import tools.ExpressionObject;
 import tools.LabelsMaker;
+import tools.Pointer;
+import tools.PointerTools;
 import tools.RelationHelper;
 
 /**
@@ -39,7 +41,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public static Map<String, Variable> externVariables;
     
     /* List represent current pointer declarator type */
-    public static LinkedList<MemoryClassEnum> curPointer;
+    public static LinkedList<Pointer> pointerTo;
+    
+    /* If variable is array this list holds it's sizes.
+        For example: If variable is int ar[5][6][3], this list would hold
+        5, 6 and 3 */
+    public static LinkedList<Integer> arrayDecl;
     
     /* Current variable name */
     public static String currentVariableName;
@@ -47,14 +54,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     /* Helps during declaration */
     public static MemoryClassEnum curTypeSpecifier;
     
-    /* If variable is array this list holds it's sizes.
-        For example: If variable is int ar[5][6][3], this list would hold
-        5, 6 and 3 */
-    public static LinkedList<Integer> arrayDecl;
     
     public TranslationVisitor() 
     {
-        curPointer = new LinkedList<>();
+        pointerTo = new LinkedList<>();
         arrayDecl = new LinkedList<>();
         functions = new HashMap<>();
         externVariables = new HashMap<>();
@@ -106,7 +109,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         memclass = NasmTools.getTypeOfVar(tokenType);
         /* Set global variable curTypeSpecifier
             to current memory class in order to
-            visitSimplePointer() insert correct type in curPointer list */
+            visitSimplePointer() insert correct type in pointerTo list */
         curTypeSpecifier = memclass;
         String name = visit(ctx.declarator()).getText();
         
@@ -118,11 +121,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Create new function analyser object, and set it's type specifier
         to some type */
         FunctionsAnalyser fa = new FunctionsAnalyser(name);
-        if (curPointer.isEmpty())
+        if (pointerTo.isEmpty())
             fa.setMemoryClass(memclass);
         else {
             fa.setMemoryClass(MemoryClassEnum.POINTER);
-            NasmTools.switchStacks(curPointer, fa.getPointerType());
+            PointerTools.switchStacks(pointerTo, fa.getPointerType());
         }
         
         functions.put(name, fa);       /* Add function to collection */
@@ -331,7 +334,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Check if variable is pointer or array. In both cases variable
             is passed as pointer */
-        if (curPointer.isEmpty() && arrayDecl.isEmpty())
+        if (pointerTo.isEmpty() && arrayDecl.isEmpty())
             typeSpecifier = curTypeSpecifier;
         else
             typeSpecifier = MemoryClassEnum.POINTER;
@@ -341,7 +344,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Create new variable object */
         var = new Variable
-            (name, stackPosition, typeSpecifier, curPointer, arrayDecl, false);
+            (name, stackPosition, curTypeSpecifier, pointerTo, arrayDecl, false);
         /* Insert new variable in parameter variables */
         curFuncAna.getParameterVariables().put(name, var);
         
@@ -350,12 +353,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Even thou variable constructor will clear both 
-            curPointer and arrayDecl lists, just to be sure that lists are empty
+            pointerTo and arrayDecl lists, just to be sure that lists are empty
             let's clear them */
-        curPointer.clear();
+        pointerTo.clear();
         arrayDecl.clear();
         
-        return new ExpressionObject(var);
+        return new ExpressionObject(var, true);
     }
 
     /* Decides which declaration is done. */
@@ -382,7 +385,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Check if variable is pointer */
-        if (curPointer.isEmpty())
+        if (pointerTo.isEmpty())
             typeSpecifier = curTypeSpecifier;
         else
             typeSpecifier = MemoryClassEnum.POINTER;
@@ -394,7 +397,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             stackPosition = curFuncAna.declareLocalVariable(typeSpecifier);
         
         var = new Variable
-            (name, stackPosition, typeSpecifier, curPointer, arrayDecl, false);
+            (name, stackPosition, typeSpecifier, pointerTo, arrayDecl, false);
         /* Insert new variable in local variables */
         curFuncAna.getLocalVariables().put(name, var);
             
@@ -403,11 +406,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Even thou variable constructor will clear both 
-            curPointer and arrayDecl lists, just to be sure that lists are empty */
-        curPointer.clear();
+            pointerTo and arrayDecl lists, just to be sure that lists are empty */
+        pointerTo.clear();
         arrayDecl.clear();
         
-        return new ExpressionObject(var);
+        return new ExpressionObject(var, true);
     }
 
     private ExpressionObject declareExternVariable(picoCParser.DirDeclContext ctx) 
@@ -423,7 +426,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         /* Check if variable is pointer */
-        if (curPointer.isEmpty())
+        if (pointerTo.isEmpty())
             typeSpecifier = curTypeSpecifier;
         else
             typeSpecifier = MemoryClassEnum.POINTER;
@@ -432,7 +435,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             position is also name, so that expression object can cast
             it's stack postion later in cast[variablename] for example . */  
         var = new Variable
-            (name, name, typeSpecifier, curPointer, arrayDecl, true);
+            (name, name, curTypeSpecifier, pointerTo, arrayDecl, true);
         /* Insert new variable in extern variables */
         externVariables.put(name, var);
 
@@ -449,12 +452,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             DataSegment.declareExternVariable(var, "0");
             
         /* Even thou variable constructor will clear both 
-            curPointer and arrayDecl lists, just to be sure that lists are empty
+            pointerTo and arrayDecl lists, just to be sure that lists are empty
             let's clear them */
-        curPointer.clear();
+        pointerTo.clear();
         arrayDecl.clear();
         
-        return new ExpressionObject(var);   
+        return new ExpressionObject(var, true);   
     }
     
     /* Function that declares new function. In case that function 
@@ -478,7 +481,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitSimplePtr(picoCParser.SimplePtrContext ctx) 
     {
-        NasmTools.insertPointerType(curPointer, curTypeSpecifier);
+        PointerTools.insertPointerType(pointerTo, curTypeSpecifier);
         return super.visitSimplePtr(ctx);
     }
 
@@ -490,7 +493,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitMultiplePrt(picoCParser.MultiplePrtContext ctx) 
     {
-        NasmTools.insertPointerType(curPointer, curTypeSpecifier);
+        PointerTools.insertPointerType(pointerTo, curTypeSpecifier);
         return super.visitMultiplePrt(ctx);
     }
     
@@ -778,6 +781,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         rightExpr.comparisonCheck();
         
+        /* Make sure that pointer arithmetic is valid */
         if (!Checker.checkAddSubPointers(leftExpr, rightExpr, ctx))
             return null;
         /* Before all calculations, if left and right operand are numbers, 
@@ -797,12 +801,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (leftExpr.getType() == MemoryClassEnum.CHAR
                 && rightExpr.getType() == MemoryClassEnum.CHAR)
             leftExpr.castVariable(MemoryClassEnum.INT);
-        /* Cast to proper type if needed */
+        /* Cast smaller variable to the type of bigger if needed */
         maxSize = ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         String operation = NasmTools.getOperation(ctx.op.getType());
         
         if (leftExpr.isPointer() || rightExpr.isPointer()) {
-            /* Set left to be pointer and make it easier to code */
+            /* Set left to be pointer and make it easier to code.
+                Only valid operation if right one is pointer and left is not,
+                is add, so that doesn't change result. */
             if (rightExpr.isPointer() && !leftExpr.isPointer()) {
                 help = rightExpr;
                 rightExpr = leftExpr;
@@ -812,6 +818,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         } else {
             Emitter.emitAddSub(leftExpr, rightExpr, operation);
         }
+        
         if (rightExpr.isRegister())
             rightExpr.freeRegister();
         
@@ -893,14 +900,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             param = true;
         else if ((newVar = externVariables.get(id)) != null)
             extern = true;
-        
+        /* Check if variable is declared */
         if (!Checker.varCheck(local, param, extern, ctx, id))
             return null;
         /* Check if variable is initialized */
         Checker.varInitCheck(local || extern, newVar, id, ctx);
         
         /* Return new variable */
-        return new ExpressionObject(newVar);
+        return new ExpressionObject(newVar, false);
     }
     
     /*
@@ -1191,7 +1198,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.checkPreInc(res, ctx))
             return null;
         if (res.isPointer()) {
-            type = res.getTypeOfPointer();
+            type = res.getPointer().getType();
             value = Integer.toString(NasmTools.getSize(type));
         } else {
             value = "1";
@@ -1221,7 +1228,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.checkPreDec(res, ctx))
             return null;
         if (res.isPointer()) {
-            type = res.getTypeOfPointer();
+            type = res.getPointer().getType();
             value = Integer.toString(NasmTools.getSize(type));
         } else {
             value = "1";
@@ -1255,7 +1262,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         if (res.isPointer()) {
-            type = res.getTypeOfPointer();
+            type = res.getPointer().getType();
             value = Integer.toString(NasmTools.getSize(type));
         } else {
             value = "1";
@@ -1293,7 +1300,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         
         if (res.isPointer()) {
-            type = res.getTypeOfPointer();
+            type = res.getPointer().getType();
             value = Integer.toString(NasmTools.getSize(type));
         } else {
             value = "1";
@@ -1561,6 +1568,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         expr.comparisonCheck();
         
+        /* Address of an array is the same as the array itself, so expressions
+            like:
+            printf("%p", array) and printf("%p", &array) are identical */
+        if (expr.isArray())
+            return expr;
+        /* Check if expr is variable */
         if (!Checker.checkAddress(expr, ctx))
             return null;
         /* Get proper sintax for lea instruction: lea rax,[rbp-8] for example */
@@ -1615,7 +1628,5 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return visit(ctx.directDeclarator());
     }
-    
-    
     
 }

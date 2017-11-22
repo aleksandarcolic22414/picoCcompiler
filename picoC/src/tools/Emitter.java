@@ -341,24 +341,12 @@ public class Emitter
                 break;
         }
     }
-
-    /* Function emits set of steps needed for calculation add/sub expression */
+    
+    /* Function emits calculation of add/sub expression */
     public static void emitAddSub
     (ExpressionObject leftExpr, ExpressionObject rightExpr, String operation) 
     {
-        String nextFreeTemp;
-        /* If left operand is not register, then it needs to be moved to one.
-            It's moved to eax, but first eax is saved on stack. */
-        if (!leftExpr.isRegister()) {
-            nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
-            Writers.emitInstruction("mov", nextFreeTemp, "eax");
-            Writers.emitInstruction("mov", "eax", leftExpr.getText());
-            Writers.emitInstruction(operation, "eax", rightExpr.getText());
-            Writers.emitInstruction("mov", leftExpr.getText(), "eax");
-            Writers.emitInstruction("mov", "eax", nextFreeTemp);
-            NasmTools.free(nextFreeTemp);
-        } else
-            Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
+        Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
     }
 
     /* Correct operations with pointers are:
@@ -377,25 +365,31 @@ public class Emitter
         MemoryClassEnum memclass;
         int size, value;
         
-        /* If both are pointer, then sub is only valid operation */
+        /* If both are pointers, then sub is only valid operation */
         if (leftExpr.isPointer() && rightExpr.isPointer()) {
             Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
             return;
         } 
-        memclass = leftExpr.getTypeOfPointer();
-        size = NasmTools.getSize(memclass);
+        /* In other cases left is pointer and right one is not. */
+        memclass = leftExpr.getPointer().getType();
+        size = PointerTools.getByteIncrement(leftExpr);
+        
         if (rightExpr.isInteger()) {    // if it is int, let java calculate
             value = Integer.parseInt(rightExpr.getText());
             value *= size;
             rightExpr.setText(Integer.toString(value));
         } else {
-            shifting = NasmTools.getShiftForPointer(memclass);
-            Writers.emitInstruction("shl", rightExpr.getText(), shifting);
+            if (!leftExpr.isArray()) {
+                shifting = NasmTools.getShiftForPointer(memclass);
+                Writers.emitInstruction("shl", rightExpr.getText(), shifting);
+            } else {
+                Writers.emitInstruction("imul", rightExpr.getText(), Integer.toString(size));
+            }
         }
         Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
-        
     }
 
+    /* Decide which method will be caled based on the given operation */
     public static void decideAssignPointers
     (ExpressionObject newVariable, ExpressionObject expr, int operation) 
     {
@@ -420,7 +414,7 @@ public class Emitter
         int size, value;
         op = NasmTools.getOperation(operation);
         
-        memclass = leftExpr.getTypeOfPointer();
+        memclass = leftExpr.getPointer().getType();
         size = NasmTools.getSize(memclass);
         
         /* If both are pointers, then sub them */

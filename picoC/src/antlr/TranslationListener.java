@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import tools.LabelsMaker;
+import tools.Pointer;
+import tools.PointerTools;
 
 
 /**
@@ -22,14 +24,16 @@ public class TranslationListener extends picoCBaseListener
         that are beeing compiled */
     public static Map<String, FunctionsAnalyser> mapFuncAna;
     
-    /* Curent function context.  */
+    /* Current function context.  */
     public static FunctionsAnalyser curFuncCtx = null;
     
+    /* Current declarator  */
     public static MemoryClassEnum currentDeclaratorType = null;
     
-    /* List represent current pointer declarator type */
-    public static LinkedList<MemoryClassEnum> pointerInitializator;
+    /* List represent current pointer  */
+    public static LinkedList<Pointer> pointerInitializator;
     
+    /* List represent current array sizes */
     public static LinkedList<Integer> arrayInitializator;
     
     public TranslationListener()
@@ -187,7 +191,7 @@ public class TranslationListener extends picoCBaseListener
         if (curFuncCtx == null || !curFuncCtx.isFunctionContext())
             return;       
         
-        NasmTools.insertPointerType(pointerInitializator, currentDeclaratorType);
+        PointerTools.insertPointerType(pointerInitializator, currentDeclaratorType);
     }
     
     @Override

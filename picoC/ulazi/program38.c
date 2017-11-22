@@ -54,3 +54,8 @@ int main(int argc, char **argv)
     
     return 0;
 }
+
+/* 
+    Input: n brojeva
+    Izlaz: n brojeva kao int-ovi
+ */

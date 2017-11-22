@@ -24,19 +24,27 @@ public class Variable
     /* Is extern variable */
     private boolean extern;
     
+    /* Is variable an array */
+    private boolean array = false;
+    
     /* Memory class of variable */
     private MemoryClassEnum typeSpecifier;
     
+    /* Type of array members if variable is an array */
+    private MemoryClassEnum arrayType;
+    
     /* If variable is pointer than this list contains type of data that
         this variable points to. */
-    private LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
+    private LinkedList<Pointer> pointerTo = new LinkedList<>();
     
-    /* If variable is array than this list holds it's sizes */
+    /* If variable is array or multidimensional array, 
+        than this list holds it's size(s) */
     private LinkedList<Integer> arraySizes = new LinkedList<>();
     
     /* Size of variable in bytes */
     private int size;
     
+    /* Constructor to a simple variable */
     public Variable
     (String name, String stackPosition, MemoryClassEnum type, boolean extern) 
     {
@@ -47,34 +55,62 @@ public class Variable
         this.extern = extern;
     }
 
+    /* Constructor to a complex variable */
     public Variable
     (String name, String stackPosition, MemoryClassEnum type, 
-    LinkedList<MemoryClassEnum> curPointer, 
+    LinkedList<Pointer> curPointer, 
     LinkedList<Integer> curArray, boolean extern) 
     {
         this.name = name;
         this.stackPosition = stackPosition;
         this.initialized = false;
-        this.typeSpecifier = type;
         this.extern = extern;
+        
+        if (!curArray.isEmpty()) {
+            this.array = true;
+            this.arrayType = type;
+        }
+        
+        if (curPointer.isEmpty() && curArray.isEmpty())
+            this.typeSpecifier = type;
+        else
+            this.typeSpecifier = MemoryClassEnum.POINTER;
+        
         if (!curPointer.isEmpty())
-            NasmTools.switchStacks(curPointer, pointerType);
-        if (!curArray.isEmpty())
-            NasmTools.switchArrays(curArray, arraySizes);
+            PointerTools.switchStacks(curPointer, pointerTo);
+        /* Insert array/s as pointer/s if array/s is/are declared */
+        if (!curArray.isEmpty()) {
+            PointerTools.insertArrays(pointerTo, curArray, type);
+        }
         /* Get size of variable's memory class */
         int hsize = NasmTools.getSize(typeSpecifier);  
-        /* If variable is not array, than size is the size of Memory class, and
-            if it is array, than size is sum of the sizes times size of 
-            one element */
-        if (arraySizes.isEmpty())
-            this.size = hsize;
-        else
-            this.size = hsize * NasmTools.multiplyList(arraySizes);
+        this.size = hsize;
+        
+    }
+
+    public boolean isArray() 
+    {
+        return array;
+    }
+    
+    public void setArray(boolean array) 
+    {
+        this.array = array;
     }
 
     public String getName() 
     {
         return name;
+    }
+
+    public MemoryClassEnum getArrayType() 
+    {
+        return arrayType;
+    }
+
+    public void setArrayType(MemoryClassEnum arrayType) 
+    {
+        this.arrayType = arrayType;
     }
 
     public void setName(String name) 
@@ -112,43 +148,44 @@ public class Variable
         this.typeSpecifier = typeSpecifier;
     }
 
-    public LinkedList<MemoryClassEnum> getPointerType() {
-        return pointerType;
-    }
-
-    public void setPointerType(LinkedList<MemoryClassEnum> pointerType) {
-        this.pointerType = pointerType;
-    }
-
-    public void insertPointer(MemoryClassEnum type)
+    public LinkedList<Pointer> getPointerTo() 
     {
-        pointerType.push(type);
+        return pointerTo;
+    }
+
+    public void setPointerTo(LinkedList<Pointer> pointerTo) 
+    {
+        this.pointerTo = pointerTo;
+    }
+
+    public void insertPointer(Pointer type)
+    {
+        pointerTo.push(type);
     }
     
-    public MemoryClassEnum currentPointer()
+    public Pointer currentPointer()
     {
-        return pointerType.peek();
+        return pointerTo.peek();
     }
 
-    public boolean isExtern() {
+    public boolean isExtern() 
+    {
         return extern;
     }
 
-    public void setExtern(boolean extern) {
+    public void setExtern(boolean extern) 
+    {
         this.extern = extern;
     }
 
-    public LinkedList<Integer> getArraySizes() {
+    public LinkedList<Integer> getArraySizes() 
+    {
         return arraySizes;
     }
 
-    public void setArraySizes(LinkedList<Integer> arraySizes) {
-        this.arraySizes = arraySizes;
-    }
-    
-    public boolean isArray()
+    public void setArraySizes(LinkedList<Integer> arraySizes) 
     {
-        return !arraySizes.isEmpty();
+        this.arraySizes = arraySizes;
     }
 
     public int getSize() {

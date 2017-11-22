@@ -49,7 +49,7 @@ public class FunctionsAnalyser
 
     /* If function returns pointer, this list holds information 
         about that pointer. */
-    private LinkedList<MemoryClassEnum> pointerType;
+    private LinkedList<Pointer> pointerType;
     
     /* Wheather function has return statement */
     private boolean hasReturn = false;
@@ -172,11 +172,11 @@ public class FunctionsAnalyser
         this.functionContext = functionContext;
     }
     
-    public LinkedList<MemoryClassEnum> getPointerType() {
+    public LinkedList<Pointer> getPointerType() {
         return pointerType;
     }
 
-    public void setPointerType(LinkedList<MemoryClassEnum> pointerType) {
+    public void setPointerType(LinkedList<Pointer> pointerType) {
         this.pointerType = pointerType;
     }
     

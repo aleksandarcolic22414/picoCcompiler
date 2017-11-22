@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     
     100
     500
-    1000
+    1200
     A
     B
     Initialized

@@ -17,32 +17,43 @@ public class ExpressionObject
 {
     /* Holds text representation of current evaluated expression */
     public String text = null;
+    
     /* Internal informations */
     public int flags = 0x0;
+    
     /* Memory class of expression evaluated */
     MemoryClassEnum type = MemoryClassEnum.VOID;
+    
+    /* Type of array members if expression is an array */
+    private MemoryClassEnum arrayType = null;
+    
     /* Shows if variable was in relation or equality context */
     private boolean compared = false;
+    
+    /* Shows if variable is dereferenced */
+    private boolean dereferenced = false;
+    
     /* Size of var */
     private int size;
+    
     /* Stack displacement for stack variables */
     private String stackDisp = null;
+    
     /* If expression is variable, this represents it's name */
     private String name = null;
+    
     /* Pointers information. This variable operates as stack. The top of
         stack is current memory type that this variable points to.
         If some variable is pointer to: pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
-    private final LinkedList<MemoryClassEnum> pointerType = new LinkedList<>();
-    /* If variable is array, than this variable holds it's sizes. */
-    private final LinkedList<Integer> arraySizes = new LinkedList<>();
+    private LinkedList<Pointer> pointerTo = new LinkedList<>();
+    
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
     public static final int VAR_STACK =          0x2;
     public static final int VAR_EXTERN =         0x4;
     public static final int CONSTANT =           0x8;
     public static final int STRING_LITERAL =     0x10;
-    public static final int DEREFERENCED =       0x20;
     
     /* Constructor */
     public ExpressionObject
@@ -63,7 +74,7 @@ public class ExpressionObject
         displacement. Something like: rbp-12 */
     public ExpressionObject
     (String ntext, MemoryClassEnum type, int info, 
-     LinkedList<MemoryClassEnum> pointer) 
+     LinkedList<Pointer> pointer) 
     {
         this.text = ntext;
         this.type = type;
@@ -74,11 +85,11 @@ public class ExpressionObject
             this.text = castStackVar(ntext, type);
             stackDisp = ntext;
         } 
-        NasmTools.copyPointerList(pointerType, pointer);
+        PointerTools.copyPointerList(pointerTo, pointer);
     }
     
-     /* Constructor to simple pointer */
-    /*  If variable on stack is created, than input text is given as stack
+    /*  Constructor to a simple pointer 
+        If variable on stack is created, than input text is given as stack
         displacement. Something like: rbp-12 */
     public ExpressionObject
     (String ntext, MemoryClassEnum type, int info, MemoryClassEnum pointer) 
@@ -95,31 +106,64 @@ public class ExpressionObject
         insertPointerType(pointer);
     }
     
-    /* Construct expression object from variable */
-    public ExpressionObject(Variable var)
+    /* Construct expression object from variable 
+        If variable is an array, than text will hold it's stack displacement.
+        Otherwise, text will hold stack displacement and proper cast in order
+        to access this object in assembly. Something like this:
+        Array:          [rbp-256]
+        Integer:        dword[rbp-256]
+        Pointer         qword[rbp-256]
+    */
+    public ExpressionObject(Variable var, boolean inDeclarationContext)
     {
-        this.text = castStackVar(var.getStackPosition(), var.getTypeSpecifier());
+        this.text = "[" + var.getStackPosition() + "]";
         this.type = var.getTypeSpecifier();
         this.name = var.getName();
-        setSize(var.getSize());
+        this.stackDisp = var.getStackPosition();
+        this.size = var.getSize();
+        this.arrayType = var.getArrayType();        // null is default
+        
         flags |= VAR_STACK;
+        
         if (var.isExtern())
             flags |= VAR_EXTERN;
-        stackDisp = var.getStackPosition();
-        
-        NasmTools.copyPointerList(pointerType, var.getPointerType());
-        NasmTools.copyArrayList(arraySizes, var.getArraySizes());
+        if (var.isArray())
+            initArray(inDeclarationContext);
+        else
+            this.text = castStackVar(this.stackDisp, this.type);
+        if (!var.getPointerTo().isEmpty())
+            PointerTools.copyPointerList(pointerTo, var.getPointerTo());
     }
     
-    public String getText() {
+    /* If variable is array, it needs to be moved to register in order to
+       access it's elements. */
+    private void initArray(boolean inDeclarationContext)
+    {
+        String nextFreeTemp, help;
+        nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.POINTER);
+        /* If variable is not currently declaring, than it needs to be moved
+            to register in order to do stack calculations */
+        if (!inDeclarationContext)
+            Writers.emitInstruction("lea", nextFreeTemp, this.text);
+        
+        /* Set new properties to variable */
+        this.text = nextFreeTemp;
+        this.stackDisp = nextFreeTemp;
+        flags = ExpressionObject.REGISTER;
+    }
+    
+    public String getText() 
+    {
         return text;
     }
 
-    public void setText(String text) {
+    public void setText(String text) 
+    {
         this.text = text;
     }
 
-    public MemoryClassEnum getType() {
+    public MemoryClassEnum getType() 
+    {
         return type;
     }
 
@@ -130,27 +174,40 @@ public class ExpressionObject
         setSize(type);
     }
 
-    public void setCompared(boolean compared) {
+    public void setCompared(boolean compared) 
+    {
         this.compared = compared;
     }
 
-    public int getSize() {
+    public int getSize() 
+    {
         return size;
     }
 
-    public void setSize(int size) {
+    public final void setSize(int size) 
+    {
         this.size = size;
     }
 
     public boolean isDereferenced() 
     {
-        return (flags & ExpressionObject.DEREFERENCED) != 0;
+        return dereferenced;
     }
 
     public void setDereferenced() 
     {
-        this.flags = ExpressionObject.DEREFERENCED;
-        this.flags |= ExpressionObject.VAR_STACK;
+        this.dereferenced = true;
+        this.flags = ExpressionObject.VAR_STACK;
+    }
+
+    public LinkedList<Pointer> getPointerTo() 
+    {
+        return pointerTo;
+    }
+
+    public void setPointerTo(LinkedList<Pointer> pointerTo) 
+    {
+        this.pointerTo = pointerTo;
     }
     
     /* Check if comparison is done and cast variable if it is */
@@ -167,17 +224,34 @@ public class ExpressionObject
         setCompared(false);
     }
 
-    public String getName() {
+    public MemoryClassEnum getArrayType() 
+    {
+        return arrayType;
+    }
+
+    public void setArrayType(MemoryClassEnum arrayType) 
+    {
+        this.arrayType = arrayType;
+    }
+
+    public String getName() 
+    {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(String name) 
+    {
         this.name = name;
     }
 
     public boolean isRegister() 
     {
         return (flags & ExpressionObject.REGISTER) != 0;
+    }
+    
+    public boolean isArray() 
+    {
+        return arrayType != null;
     }
     
     public boolean isStackVariable() 
@@ -195,15 +269,18 @@ public class ExpressionObject
         return (flags & VAR_EXTERN) != 0;
     }
     
-    public boolean isCompared() {
+    public boolean isCompared() 
+    {
         return compared;
     }
     
-    public String getStackDisp() {
+    public String getStackDisp() 
+    {
         return stackDisp;
     }
 
-    public void setStackDisp(String stackDisp) {
+    public void setStackDisp(String stackDisp) 
+    {
         this.stackDisp = stackDisp;
     }
 
@@ -294,11 +371,23 @@ public class ExpressionObject
     /* Function puts variable in register if there is any free registers */
     public boolean putInRegister() 
     {
-        if (this.flags == ExpressionObject.REGISTER)
+        String reloadedReg, nextFreeTemp;
+        int register;
+        
+        if (isRegister())
             return false;
-        String nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
+        if (isArray() || isDereferenced()) {
+            register = NasmTools.stringToRegister(stackDisp);
+            reloadedReg = NasmTools.registerToString(register, this.type);
+            Writers.emitInstruction("mov", reloadedReg, this.text);
+            this.setToRegister();
+            this.setText(reloadedReg);
+            return true;
+        }
+        nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
         if (!NasmTools.isRegister(nextFreeTemp))
             CompilationControler.errorOcured(null, null, "Out of registers!");
+        
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
         this.setText(nextFreeTemp);
@@ -340,17 +429,18 @@ public class ExpressionObject
     
     public final void insertPointerType(MemoryClassEnum type)
     {
-        pointerType.push(type);
+        Pointer ptr = new Pointer(type);
+        pointerTo.push(ptr);
     }
     
-    public MemoryClassEnum getTypeOfPointer()
+    public Pointer getPointer()
     {
-        return pointerType.peek();
+        return pointerTo.peek();
     }
 
     public boolean isPointer() 
     {
-        return !pointerType.isEmpty();
+        return !pointerTo.isEmpty();
     }
 
     /* Function dereferences pointer.   */
@@ -358,13 +448,17 @@ public class ExpressionObject
     {
         String cast, newText;
         MemoryClassEnum newType;
-        if (!isDereferenced()) {
+        
+        if (!isDereferenced() && !isArray()) {
             putInRegister();
             this.stackDisp = this.text;     // rax for example...
         } else {
-            Writers.emitInstruction("mov", this.stackDisp, this.text);
+            /* If variable is a pointer to a complex type like int (*)[10][5]
+            which is multidimensional array, than it can't be dereferenced */
+            if (!isArray())
+                Writers.emitInstruction("mov", this.stackDisp, this.text);
         }
-        newType = pointerType.pop();
+        newType = getTypeOfPointer();
         cast = NasmTools.getCast(newType);
         newText = cast + " [" + this.stackDisp + "]";
         setType(newType);
@@ -393,6 +487,8 @@ public class ExpressionObject
         this.flags = ExpressionObject.VAR_STACK;
     }
 
+    /* Simply insert minus prefix if there isn't any, and if there is
+        remove it. */
     public ExpressionObject insertIntMinusPrefix() 
     {
         if (this.text.startsWith("-"))
@@ -401,14 +497,17 @@ public class ExpressionObject
             this.text = "-" + this.text;
         return this;
     }
-    
-    public static void main(String[] args) {
-        String s = "1555";
-        if (s.startsWith("-"))
-            s = s.substring(1);
-        else
-            s = "-" + s;
-        System.out.println(s);
+
+    /* In order to switch array calculation to normal calculation, whenever
+        array is dereferenced it is checked if there are any left "array" 
+        types in pointerTo list. If there is not, this expression becomes
+        normal variable. */
+    public MemoryClassEnum getTypeOfPointer() 
+    {
+        Pointer ptr = pointerTo.pop();
+        if (pointerTo.peek() == null || pointerTo.peek().getSizes().isEmpty())
+            this.arrayType = null;
+        return ptr.getType();
     }
     
 }
