@@ -1,9 +1,9 @@
 int main()
 {
     
-    int niz[10][20];
-    
-        printf("%d\n", **(niz + 10));
+    int **niz[10][5][20];
+    int i = 10;
+    niz = 1000;
 
     return 0;
 }

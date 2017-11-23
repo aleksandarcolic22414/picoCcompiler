@@ -310,11 +310,14 @@ public class ExpressionObject
     }
     
     /* Function casts variables to bigger size of two. Also, the
-        bigger size is returned */
+        bigger size is returned. If one or both parameters are integers
+        0 is returned and no casting is done. */
     public static int castVariablesToMaxSize
     (ExpressionObject left, ExpressionObject right) 
     {
         String casted;
+        if (left.isInteger() || right.isInteger())
+            return 0;
         /* If size of variables already match, than nothing is done */
         if (left.getType() == right.getType())
             return NasmTools.getSize(left.getType());
@@ -447,21 +450,32 @@ public class ExpressionObject
     public void dereference() 
     {
         String cast, newText;
-        MemoryClassEnum newType;
+        Pointer ptr;
         
         if (!isDereferenced() && !isArray()) {
             putInRegister();
             this.stackDisp = this.text;     // rax for example...
         } else {
             /* If variable is a pointer to a complex type like int (*)[10][5]
-            which is multidimensional array, than it can't be dereferenced */
+            which is multidimensional array, than it can't be dereferenced.
+            In normal case, dereference it. */
             if (!isArray())
                 Writers.emitInstruction("mov", this.stackDisp, this.text);
+            else {
+                /* If it is and array, see if it is like simple pointer
+                   (Pointer to simple type. Like: int *). If it is not, no
+                    casting or referencing is done. */
+                if (!PointerTools.isSimplePointer(this)) {
+                    getTypeOfPointer();  // force poping to get next type of ptr
+                    return;
+                }
+            }
         }
-        newType = getTypeOfPointer();
-        cast = NasmTools.getCast(newType);
+        /* pop last pointer and calculate it's type and do proper cast */
+        ptr = getTypeOfPointer();    
+        cast = NasmTools.getCast(ptr.getType());
         newText = cast + " [" + this.stackDisp + "]";
-        setType(newType);
+        setType(ptr.getType());
         setText(newText);
         setDereferenced();
     }
@@ -502,12 +516,12 @@ public class ExpressionObject
         array is dereferenced it is checked if there are any left "array" 
         types in pointerTo list. If there is not, this expression becomes
         normal variable. */
-    public MemoryClassEnum getTypeOfPointer() 
+    public Pointer getTypeOfPointer() 
     {
         Pointer ptr = pointerTo.pop();
         if (pointerTo.peek() == null || pointerTo.peek().getSizes().isEmpty())
             this.arrayType = null;
-        return ptr.getType();
+        return ptr;
     }
     
 }

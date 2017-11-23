@@ -203,6 +203,8 @@ public class Checker
     public static void varInitCheck
     (boolean bool, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
+        if (newVar.isArray())
+            return;
         if (varInitCheck && bool && newVar != null && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
@@ -464,6 +466,19 @@ public class Checker
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Returning void type in non-void function");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkArrayAssign
+    (ExpressionObject left, picoCParser.AssignContext ctx) 
+    {
+        if (left.isArray()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Trying to assign to an array type");
             return false;
         }
         return true;

@@ -153,5 +153,38 @@ public class PointerTools
             res *= i;
         return res;
     }
+
+    /* Return wheather expression is pointer to a simple type.
+        Variable is simple pointer if it is pointer to simple type or
+        if it is one dimensional array. This could be weird 
+        because one dimensional
+        arrays and pointers are threated almost the same. Only diference is
+        that array's value can't be changed (READ: array's value, not it's
+        members value).
+        If variable is one dimensional array, than
+        it's next type is a simple pointer (It's sizes are empty).
+        So next pointer type needs to be reached and if it has no sizes
+        in it, variable is simple pointer. */
+    public static boolean isSimplePointer(ExpressionObject expr) 
+    {
+        LinkedList<Pointer> ptrList;
+        Pointer ptr;
+        ptrList = expr.getPointerTo();
+        /* If there is only one type to point to, than it's simple pointer type  */
+        if (ptrList.size() == 1)
+            return true;
+        /* Let's pop current pointer and analyze next type of pointer.  */
+        ptr = ptrList.pop();
+        /* If next type is simple pointer (but not array!), than this is simple
+            pointer. Little note: If next type is array, than this is complex
+            pointer.  */
+        if (ptrList.peek().getSizes().isEmpty()) {
+            ptrList.push(ptr);
+            return true;
+        }
+        /* Put back type, and return false (complex pointer) */
+        ptrList.push(ptr);
+        return false;
+    }
     
 }

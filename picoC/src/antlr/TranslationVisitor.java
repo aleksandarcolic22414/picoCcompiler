@@ -526,6 +526,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Check if there is variable to assign value to */
         if (!Checker.checkVariableExistance(left, ctx))
             return null;
+        /* Prevent assign to an array */
+        if (!Checker.checkArrayAssign(left, ctx))
+            return null;
         int operation = ctx.assignmentOperator().op.getType();
         /* Get variable context if it is local variable */
         Variable var = curFuncAna.getAnyVariable(id);
@@ -771,7 +774,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject leftExpr, rightExpr, help;
         String nextFreeTemp;
-        int maxSize;
+        
         /* Try to visit children and recover if error ocured */
         if ((leftExpr = visit(ctx.additiveExpression())) == null)
             return null;
@@ -802,7 +805,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
                 && rightExpr.getType() == MemoryClassEnum.CHAR)
             leftExpr.castVariable(MemoryClassEnum.INT);
         /* Cast smaller variable to the type of bigger if needed */
-        maxSize = ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         String operation = NasmTools.getOperation(ctx.op.getType());
         
         if (leftExpr.isPointer() || rightExpr.isPointer()) {
@@ -814,8 +817,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
                 rightExpr = leftExpr;
                 leftExpr = help;
             }
+            /* Emit poiner add/sub */
             Emitter.emitPointersAddSub(leftExpr, rightExpr, operation);
         } else {
+            /* Emit regular add sub */
             Emitter.emitAddSub(leftExpr, rightExpr, operation);
         }
         
