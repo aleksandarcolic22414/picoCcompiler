@@ -6,6 +6,7 @@ import constants.MemoryClassEnum;
 import java.util.ArrayList;
 import java.util.List;
 import tools.ExpressionObject;
+import tools.PointerTools;
 import tools.Variable;
 
 /**
@@ -55,15 +56,15 @@ public class DataSegment
         array:   times    5    dd    0 
     */
     public static void declareExternVariable
-    (Variable var, String value)
+    (Variable var, String value, int sizes)
     {
-        int sizeOfArray;     // in case variable is array
+        MemoryClassEnum type;
         String name = var.getName();
-        String inst = getDefineDataInst(var.getTypeSpecifier());
-        if (!var.getArraySizes().isEmpty()) {
-            sizeOfArray = NasmTools.multiplyList(var.getArraySizes());
+        type = PointerTools.getTypeForIncrement(var);
+        String inst = getDefineDataInst(type);
+        if (var.isArray()) {
             Writers.emitData(name + ":\t times " 
-                    + sizeOfArray + " " + inst + " " + value);
+                    + sizes + " " + inst + " " + value);
         } else
             Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
     }

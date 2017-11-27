@@ -84,6 +84,13 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPostInc(picoCParser.PostIncContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Subscript}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSubscript(picoCParser.SubscriptContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code DropPostfix}
 	 * labeled alternative in {@link picoCParser#postfixExpression}.
 	 * @param ctx the parse tree

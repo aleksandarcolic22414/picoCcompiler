@@ -27,6 +27,7 @@ primaryExpression
 
 postfixExpression
     :   primaryExpression                        #DropPostfix
+    |   postfixExpression '[' expression ']'     #Subscript
     |   postfixExpression '(' argumentList? ')'  #FuncCall
     |   postfixExpression '++'                   #PostInc
     |   postfixExpression '--'                   #PostDec

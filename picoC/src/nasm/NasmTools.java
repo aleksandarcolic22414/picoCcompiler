@@ -1052,8 +1052,10 @@ public class NasmTools
     {
         int register = -1;
         /* If all registers are taken */
-        if (!hasFreeRegisters()) 
+        if (!hasFreeRegisters()) {
+            System.err.println("Out of registers!");
             return getStackDispStr(type);
+        }
         /* Look for first free register */
         
         for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {

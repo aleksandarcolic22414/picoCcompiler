@@ -5,10 +5,8 @@ int numcmp(int *a, int *b)
 
 void memcpy(void *buff, void *a, int size)
 {
-    int i;
-    for (i = 0; i < size; i++)
-        buff[i] = a[i];
-
+    while (size--)
+        *buff++ = *a++;
 }
 
 void swapVal(void *a, void *b, int size)
@@ -66,3 +64,9 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+/*
+    Out:
+    20 random numbers
+    Those numbers sorted
+*/

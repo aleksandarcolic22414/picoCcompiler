@@ -66,6 +66,7 @@ public class Variable
         this.initialized = false;
         this.extern = extern;
         
+        
         if (!curArray.isEmpty()) {
             this.array = true;
             this.arrayType = type;
@@ -77,11 +78,11 @@ public class Variable
             this.typeSpecifier = MemoryClassEnum.POINTER;
         
         if (!curPointer.isEmpty())
-            PointerTools.switchStacks(curPointer, pointerTo);
+            PointerTools.switchStacks(pointerTo, curPointer);
         /* Insert array/s as pointer/s if array/s is/are declared */
-        if (!curArray.isEmpty()) {
+        if (!curArray.isEmpty())
             PointerTools.insertArrays(pointerTo, curArray, type);
-        }
+        
         /* Get size of variable's memory class */
         int hsize = NasmTools.getSize(typeSpecifier);  
         this.size = hsize;
@@ -194,6 +195,11 @@ public class Variable
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public Pointer getPointer() 
+    {
+        return pointerTo.peek();
     }
     
 }

@@ -132,6 +132,18 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitPostInc(picoCParser.PostIncContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Subscript}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterSubscript(picoCParser.SubscriptContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Subscript}
+	 * labeled alternative in {@link picoCParser#postfixExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitSubscript(picoCParser.SubscriptContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code DropPostfix}
 	 * labeled alternative in {@link picoCParser#postfixExpression}.
 	 * @param ctx the parse tree

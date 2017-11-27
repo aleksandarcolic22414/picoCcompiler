@@ -483,5 +483,31 @@ public class Checker
         }
         return true;
     }
+
+    public static boolean checkSubscript
+    (ExpressionObject array, picoCParser.SubscriptContext ctx) 
+    {
+        if (!array.isArray() && !array.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Subscripting non-array type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkSubscriptingType
+    (ExpressionObject expr, picoCParser.SubscriptContext ctx) 
+    {
+        if (expr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Subscripting with non-integer type");
+            return false;
+        }
+        return true;
+    }
     
 }

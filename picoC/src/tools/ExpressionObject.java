@@ -16,13 +16,13 @@ import nasm.NasmTools;
 public class ExpressionObject 
 {
     /* Holds text representation of current evaluated expression */
-    public String text = null;
+    private String text = null;
     
     /* Internal informations */
-    public int flags = 0x0;
+    private int flags = 0x0;
     
     /* Memory class of expression evaluated */
-    MemoryClassEnum type = MemoryClassEnum.VOID;
+    private MemoryClassEnum type = MemoryClassEnum.VOID;
     
     /* Type of array members if expression is an array */
     private MemoryClassEnum arrayType = null;
@@ -114,7 +114,7 @@ public class ExpressionObject
         Integer:        dword[rbp-256]
         Pointer         qword[rbp-256]
     */
-    public ExpressionObject(Variable var, boolean inDeclarationContext)
+    public ExpressionObject(Variable var)
     {
         this.text = "[" + var.getStackPosition() + "]";
         this.type = var.getTypeSpecifier();
@@ -122,29 +122,27 @@ public class ExpressionObject
         this.stackDisp = var.getStackPosition();
         this.size = var.getSize();
         this.arrayType = var.getArrayType();        // null is default
+        this.text = castStackVar(this.stackDisp, this.type);
         
         flags |= VAR_STACK;
         
         if (var.isExtern())
             flags |= VAR_EXTERN;
-        if (var.isArray())
-            initArray(inDeclarationContext);
-        else
-            this.text = castStackVar(this.stackDisp, this.type);
+        
         if (!var.getPointerTo().isEmpty())
             PointerTools.copyPointerList(pointerTo, var.getPointerTo());
     }
     
     /* If variable is array, it needs to be moved to register in order to
        access it's elements. */
-    private void initArray(boolean inDeclarationContext)
+    public void initArray()
     {
         String nextFreeTemp, help;
         nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.POINTER);
         /* If variable is not currently declaring, than it needs to be moved
             to register in order to do stack calculations */
-        if (!inDeclarationContext)
-            Writers.emitInstruction("lea", nextFreeTemp, this.text);
+        help = "[" + this.stackDisp + "]";
+        Writers.emitInstruction("lea", nextFreeTemp, help);
         
         /* Set new properties to variable */
         this.text = nextFreeTemp;
@@ -318,7 +316,7 @@ public class ExpressionObject
         String casted;
         if (left.isInteger() || right.isInteger())
             return 0;
-        /* If size of variables already match, than nothing is done */
+        /* If sizes of variables already match, than nothing is done */
         if (left.getType() == right.getType())
             return NasmTools.getSize(left.getType());
         /* Check if variable types matches */
@@ -380,6 +378,7 @@ public class ExpressionObject
         if (isRegister())
             return false;
         if (isArray() || isDereferenced()) {
+            /* Do not use new register, but instead use current one */
             register = NasmTools.stringToRegister(stackDisp);
             reloadedReg = NasmTools.registerToString(register, this.type);
             Writers.emitInstruction("mov", reloadedReg, this.text);
@@ -466,13 +465,13 @@ public class ExpressionObject
                    (Pointer to simple type. Like: int *). If it is not, no
                     casting or referencing is done. */
                 if (!PointerTools.isSimplePointer(this)) {
-                    getTypeOfPointer();  // force poping to get next type of ptr
+                    removePointerType();  // force poping to get next type of ptr
                     return;
                 }
             }
         }
         /* pop last pointer and calculate it's type and do proper cast */
-        ptr = getTypeOfPointer();    
+        ptr = removePointerType();    
         cast = NasmTools.getCast(ptr.getType());
         newText = cast + " [" + this.stackDisp + "]";
         setType(ptr.getType());
@@ -516,12 +515,105 @@ public class ExpressionObject
         array is dereferenced it is checked if there are any left "array" 
         types in pointerTo list. If there is not, this expression becomes
         normal variable. */
-    public Pointer getTypeOfPointer() 
+    public Pointer removePointerType() 
     {
         Pointer ptr = pointerTo.pop();
         if (pointerTo.peek() == null || pointerTo.peek().getSizes().isEmpty())
             this.arrayType = null;
         return ptr;
     }
+
+    /* In this case expr is in register or it is an integer.
+        If variable that needs to be subsripted is integer, simple 
+        caluclation is done like: cast[this.register + sizeoftype*expr].
+        If variable is register     */
+    public void simpleSubscript(ExpressionObject expr) 
+    {
+        MemoryClassEnum typeofptr;
+        /* Increment size represents size of bytes that needs to be added
+            to start of the source(array) for increment of 1. */
+        String cast, sizeOfElement, disp;
+        /* Let's do calculation */
+        /* First get size that needs to be multiplyed with element number */
+        sizeOfElement = Integer.toString(PointerTools.getByteIncrement(this));
+        typeofptr = getPointer().getType();
+        /* Get proper cast */
+        cast = NasmTools.getCast(typeofptr);
+        /* If expression is integer, directly caluculate it's position on stack
+            like cast [start + index * sizeofelement] */
+        if (expr.isInteger()) {
+            disp = cast + " [" + this.text + "+" + expr.getText() + "*" + sizeOfElement + "]";
+        } else {
+            /* If it is not, expr is in register, so first multiply it with
+                proper size to get displacement and add it to the start of the
+                array (source)  */
+            Writers.emitInstruction("imul", expr.getText(), sizeOfElement);
+            Writers.emitInstruction("add", this.text, expr.getText());
+            disp = cast + " [" + this.text + "]";
+        }
+        setText(disp);
+        setType(typeofptr);
+        setStackVariable();
+        /* Remove pointer type and clear taken register */
+        removePointerType();
+        if (expr.isRegister())
+            expr.freeRegister();
+    }
+
+    public void complexSubscript(ExpressionObject expr) 
+    {
+        MemoryClassEnum typeofptr;
+        /* Increment size represents size of bytes that needs to be added
+            to start of the source(array) for increment of 1. */
+        String cast, incrementSize, disp;
+        /* Let's do calculation */
+        /* First get size that needs to be multiplyed with element index */
+        incrementSize = Integer.toString(PointerTools.getByteIncrement(this));
+        typeofptr = getPointer().getType();
+        
+        /* If expression is integer, directly caluculate it's position on stack
+            like [start + index * sizeofelement] and mov that address to
+            source with lea instruction. */
+        if (expr.isInteger()) {
+            disp = "[" + this.text + "+" + expr.getText() + "*" + incrementSize + "]" ;
+            Writers.emitInstruction("lea", this.text, disp);
+        } else {
+            /* If it is not, expr is in register, so first multiply it with
+                proper size to get displacement and add it to the start of the
+                array (source)  */
+            Writers.emitInstruction("imul", expr.getText(), incrementSize);
+            Writers.emitInstruction("add", this.text, expr.getText());
+        }
+        
+        setType(typeofptr);
+        
+        /* Remove pointer type and clear taken register */
+        removePointerType();
+        if (expr.isRegister())
+            expr.freeRegister();
+    }
+
     
+    /* Put variable's address in register and cast that variable to register */
+    public void putAddressInRegister() 
+    {
+        String nextFreeTemp, stackPos;
+        
+        nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
+        stackPos = "[" + this.stackDisp + "]";
+        /* If variable about to be subsripted is pointer, than address that
+            that pointer points to needs to be load in register. 
+            In case that variable is array and parameter than it is threater
+            like pointer, so extra check for stack variable is needed.
+            If variable is an array, than address of the 
+            array is load into register. */
+        if (this.isArray() && !this.isStackVariable())
+            Writers.emitInstruction("lea", nextFreeTemp, stackPos);
+        else 
+            Writers.emitInstruction("mov", nextFreeTemp, this.text);
+        
+        this.setToRegister();
+        this.setText(nextFreeTemp);
+    }
+
 }

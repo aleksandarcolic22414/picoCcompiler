@@ -97,15 +97,16 @@ public class PointerTools
         curPointer.push(ptr);
     }
 
-    /* Switch elements from list1 to list2. Lists are implemented as stacks */
+    /* Switch elements from source list to destination list. 
+        Lists are implemented as stacks */
     public static void switchStacks
-    (LinkedList<Pointer> list1, LinkedList<Pointer> list2)
+    (LinkedList<Pointer> destination, LinkedList<Pointer> source)
     {
-        if (list1.isEmpty())
+        if (source.isEmpty())
             return;
-        Pointer type = list1.pop();
-        switchStacks(list1, list2);
-        list2.push(type);
+        Pointer type = source.pop();
+        switchStacks(destination, source);
+        destination.push(type);
     }
     
     /* Switch elements from list1 to list2. Lists are implemented as stacks */
@@ -130,18 +131,26 @@ public class PointerTools
         });
     }
 
+    /* Calculates byte increment for add operation. If expression is an
+        array than it's increment is the size of array type (int for instance)
+        and multiplyed with dimensions of the array. */
     public static int getByteIncrement(ExpressionObject leftExpr) 
     {
         int size, times;
-        if (!leftExpr.isArray())
+        MemoryClassEnum type;
+        /* If it is simple pointer, just calculate sizeof(type) in bytes
+            that pointer point's to. */
+        if (PointerTools.isSimplePointer(leftExpr))
              return NasmTools.getSize(leftExpr.getPointer().getType());
-        size = NasmTools.getSize(leftExpr.getArrayType());
+        /* Determine which is proper type to calculate offset. */
+        type = getTypeForIncrement(leftExpr);
+        size = NasmTools.getSize(type);
         times = PointerTools.mulPointerSizes(leftExpr.getPointer());
         
         return size*times;
     }
 
-    /* Sum sizes from pointerS list. */
+    /* Multiply sizes from pointers list. */
     public static int mulPointerSizes(Pointer pointer) 
     {
         LinkedList<Integer> sizes = pointer.getSizes();
@@ -186,5 +195,67 @@ public class PointerTools
         ptrList.push(ptr);
         return false;
     }
+
+    /* Function returns type that expr's pointer list has on it's end or
+        POINTER type if pointer on it's array's end is pointer.
+        This function is used because arrays, when passed to function as
+        arguments are threaded like normal pointers. 
+    */
+    public static MemoryClassEnum getTypeForIncrement(ExpressionObject expr) 
+    {
+        MemoryClassEnum type;
+        LinkedList<Pointer> hlist;
+        Pointer ptr;
+        int i, size;
+        /* If there is array type that is not null, it already hold's
+            information that is needed */
+        if ((type = expr.getArrayType()) != null)
+            return type;
+        /* Let's dig into list */
+        hlist = expr.getPointerTo();
+        size = hlist.size();
+        for (i = 0; i < size; ++i) {
+            ptr = hlist.get(i);
+            /* If there is simple pointer in the list, that means that
+                expr array is an array of pointers. */
+            if (ptr.getSizes().isEmpty()) {
+                return MemoryClassEnum.POINTER;
+            }   
+        }
+        /* Last element in the list holds information about which type
+            are elements in expr array (if all other cases failed of course) */
+        return hlist.getLast().getType();
+    }
     
+    
+    /* Function returns type that var's pointer list has on it's end or
+        POINTER type if pointer on it's array's end is pointer.
+        This function is used because arrays, when passed to function as
+        arguments are threaded like normal pointers. 
+    */
+    public static MemoryClassEnum getTypeForIncrement(Variable var) 
+    {
+        MemoryClassEnum type;
+        LinkedList<Pointer> hlist;
+        Pointer ptr;
+        int i, size;
+        /* If there is array type that is not null, it already hold's
+            information that is needed */
+        if ((type = var.getArrayType()) != null)
+            return type;
+        /* Let's dig into pointer list */
+        hlist = var.getPointerTo();
+        size = hlist.size();
+        for (i = 0; i < size; ++i) {
+            ptr = hlist.get(i);
+            /* If there is simple pointer in the list, that means that
+                var array is an array of pointers. */
+            if (ptr.getSizes().isEmpty()) {
+                return MemoryClassEnum.POINTER;
+            }   
+        }
+        /* Last element in the list holds information about which type
+            are elements in var array (if all other cases failed of course) */
+        return hlist.getLast().getType();
+    }
 }
