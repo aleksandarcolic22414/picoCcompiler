@@ -509,5 +509,73 @@ public class Checker
         }
         return true;
     }
+
+    public static boolean checkComplement
+    (ExpressionObject expr, picoCParser.ComplementContext ctx) 
+    {
+        if (expr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Wrong type of argument for '~' operation");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkCast
+    (ExpressionObject castExpr, picoCParser.CastContext ctx) 
+    {
+        if (castExpr.isArray()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Casting array type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkAnd
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.AndContext ctx) 
+    {
+        if (leftExpr.isPointer() || rightExpr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Trying to AND pointer type");
+            return false;
+        }
+        return true;
+    }
+    
+    public static boolean checkExclusiveOr
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.ExclusiveOrContext ctx) 
+    {
+        if (leftExpr.isPointer() || rightExpr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Trying to XOR pointer type");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkOr
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.InclusiveOrContext ctx) 
+    {
+        if (leftExpr.isPointer() || rightExpr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Trying to OR pointer type");
+            return false;
+        }
+        return true;
+    }
     
 }

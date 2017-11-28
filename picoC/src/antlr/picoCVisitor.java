@@ -140,6 +140,13 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAddress(picoCParser.AddressContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Complement}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComplement(picoCParser.ComplementContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code Minus}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
@@ -153,6 +160,20 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPlus(picoCParser.PlusContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropCast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropCast(picoCParser.DropCastContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Cast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCast(picoCParser.CastContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
@@ -209,6 +230,48 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code And}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnd(picoCParser.AndContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropAnd}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropAnd(picoCParser.DropAndContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropExclusiveOr(picoCParser.DropExclusiveOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExclusiveOr(picoCParser.ExclusiveOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropInclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropInclusiveOr(picoCParser.DropInclusiveOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code InclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInclusiveOr(picoCParser.InclusiveOrContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code LogicalAND}
 	 * labeled alternative in {@link picoCParser#logicalAndExpression}.

@@ -37,16 +37,22 @@ unaryExpression
     :   postfixExpression       #DropUnary
     |   '++' unaryExpression    #PreInc
     |   '--' unaryExpression    #PreDec
-    |   '*'  unaryExpression    #Deref
-    |   '!'  unaryExpression    #Negation
-    |   '&'  unaryExpression    #Address
-    |   '-'  unaryExpression    #Minus
-    |   '+'  unaryExpression    #Plus
+    |   '*'  castExpression     #Deref
+    |   '!'  castExpression     #Negation
+    |   '&'  castExpression     #Address
+    |   '~'  castExpression     #Complement
+    |   '-'  castExpression     #Minus
+    |   '+'  castExpression     #Plus
+    ;
+
+castExpression
+    :   unaryExpression                                   #DropCast
+    |   '(' typeSpecifier pointer? ')' castExpression     #Cast
     ;
 
 multiplicativeExpression 
-    :   unaryExpression                                               #DropMulDivMod
-    |   multiplicativeExpression op=('*'|'/'|'%') unaryExpression     #MulDivMod
+    :   castExpression                                             #DropMulDivMod
+    |   multiplicativeExpression op=('*'|'/'|'%') unaryExpression  #MulDivMod
     ;
 
 additiveExpression 
@@ -64,8 +70,23 @@ equalityExpression
     |   equalityExpression rel=('=='|'!=') relationalExpression    #Equality
     ;
 
+andExpression
+    :   equalityExpression                                 #DropAnd
+    |   andExpression '&' equalityExpression               #And
+    ;
+
+exclusiveOrExpression
+    :   andExpression                                      #DropExclusiveOr  
+    |   exclusiveOrExpression '^' andExpression            #ExclusiveOr  
+    ;
+
+inclusiveOrExpression
+    :   exclusiveOrExpression                              #DropInclusiveOr
+    |   inclusiveOrExpression '|' exclusiveOrExpression    #InclusiveOr
+    ;
+
 logicalAndExpression
-    :   equalityExpression                                  #DropLogicalAND
+    :   inclusiveOrExpression                               #DropLogicalAND
     |   logicalAndExpression '&&' equalityExpression        #LogicalAND
     ;
 
@@ -124,7 +145,7 @@ pointer
 
 directDeclarator
     :   ID                                  #DirDecl
-    |   directDeclarator '[' constant? ']'   #ArrayDecl
+    |   directDeclarator '[' constant? ']'  #ArrayDecl
     ;
 
 parameterList 

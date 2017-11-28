@@ -228,6 +228,18 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitAddress(picoCParser.AddressContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Complement}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterComplement(picoCParser.ComplementContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Complement}
+	 * labeled alternative in {@link picoCParser#unaryExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitComplement(picoCParser.ComplementContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code Minus}
 	 * labeled alternative in {@link picoCParser#unaryExpression}.
 	 * @param ctx the parse tree
@@ -251,6 +263,30 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPlus(picoCParser.PlusContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropCast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropCast(picoCParser.DropCastContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropCast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropCast(picoCParser.DropCastContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Cast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterCast(picoCParser.CastContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Cast}
+	 * labeled alternative in {@link picoCParser#castExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitCast(picoCParser.CastContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MulDivMod}
 	 * labeled alternative in {@link picoCParser#multiplicativeExpression}.
@@ -347,6 +383,78 @@ public interface picoCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitEquality(picoCParser.EqualityContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code And}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterAnd(picoCParser.AndContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code And}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitAnd(picoCParser.AndContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropAnd}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropAnd(picoCParser.DropAndContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropAnd}
+	 * labeled alternative in {@link picoCParser#andExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropAnd(picoCParser.DropAndContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropExclusiveOr(picoCParser.DropExclusiveOrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropExclusiveOr(picoCParser.DropExclusiveOrContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code ExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterExclusiveOr(picoCParser.ExclusiveOrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code ExclusiveOr}
+	 * labeled alternative in {@link picoCParser#exclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitExclusiveOr(picoCParser.ExclusiveOrContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropInclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropInclusiveOr(picoCParser.DropInclusiveOrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropInclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropInclusiveOr(picoCParser.DropInclusiveOrContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code InclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterInclusiveOr(picoCParser.InclusiveOrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code InclusiveOr}
+	 * labeled alternative in {@link picoCParser#inclusiveOrExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitInclusiveOr(picoCParser.InclusiveOrContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code LogicalAND}
 	 * labeled alternative in {@link picoCParser#logicalAndExpression}.

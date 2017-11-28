@@ -1,6 +1,6 @@
-int numcmp(int *a, int *b)
+int numcmp(void *a, void *b)
 {
-    return *a - *b;
+    return *(int *)a - *(int *)b;
 }
 
 void memcpy(void *buff, void *a, int size)

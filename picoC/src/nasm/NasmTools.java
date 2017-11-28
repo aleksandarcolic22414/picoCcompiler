@@ -1171,5 +1171,34 @@ public class NasmTools
             sum *= arraySizes.get(i);
         return sum;
     }
+
+    public static String and(String left, String right) 
+    {
+        int lvalue, rvalue;
+        /* Get left and right string's values */
+        lvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(left);
+        /* Return and */
+        return Integer.toString(lvalue & rvalue);
+    }
     
+    public static String or(String left, String right) 
+    {
+        int lvalue, rvalue;
+        /* Get left and right string's values */
+        lvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(left);
+        /* Return and */
+        return Integer.toString(lvalue | rvalue);
+    }
+    
+    public static String xor(String left, String right) 
+    {
+        int lvalue, rvalue;
+        /* Get left and right string's values */
+        lvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(left);
+        /* Return and */
+        return Integer.toString(lvalue ^ rvalue);
+    }
 }

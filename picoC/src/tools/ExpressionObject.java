@@ -44,7 +44,7 @@ public class ExpressionObject
     
     /* Pointers information. This variable operates as stack. The top of
         stack is current memory type that this variable points to.
-        If some variable is pointer to: pointer to a char, than this
+        If some variable is pointer to pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
     private LinkedList<Pointer> pointerTo = new LinkedList<>();
     
@@ -387,8 +387,6 @@ public class ExpressionObject
             return true;
         }
         nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
-        if (!NasmTools.isRegister(nextFreeTemp))
-            CompilationControler.errorOcured(null, null, "Out of registers!");
         
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
@@ -614,6 +612,24 @@ public class ExpressionObject
         
         this.setToRegister();
         this.setText(nextFreeTemp);
+    }
+
+    /* Function cast this expression to specific pointer type. */
+    public void castToPointer
+    (LinkedList<Pointer> ptrList)
+    {
+        /* Clear current pointer list and insert new list */
+        this.pointerTo.clear();
+        PointerTools.switchStacks(this.pointerTo, ptrList);
+        castVariable(MemoryClassEnum.POINTER);
+    }
+
+    /* Puts variable in register if it is not in one, and invert it's bits. */
+    public void setComplement() 
+    {
+        if (!this.isRegister())
+            this.putInRegister();
+        Writers.emitInstruction("not", this.text);
     }
 
 }

@@ -241,6 +241,8 @@ public class Emitter
     {
         String stackPosition = expr1.getText();
         expr1.putInRegister();
+        if (expr2.isInteger())
+            expr2.putInRegister();
         /* Emitter multiply will return same value pased as first argument, 
             but in case that that change in a future, let's store it in var */
         expr1 = Emitter.multiply(expr1, expr2);   
@@ -256,6 +258,8 @@ public class Emitter
         String stackPos;
         stackPos = expr1.getText();
         expr1.putInRegister();
+        if (expr2.isInteger())
+            expr2.putInRegister();
         /* Emitter divideOrModulo will return same value passed as first argument, 
             but in case that that could change in a future, let's store it in var */
         expr1 = Emitter.divideOrModulo(expr1, expr2, operation);
@@ -453,6 +457,12 @@ public class Emitter
             Writers.emitInstruction(op, leftExpr.getText(), temp);
             NasmTools.free(temp);
         }
+    }
+
+    public static void emitAnd
+    (ExpressionObject leftExpr, ExpressionObject rightExpr) 
+    {
+        
     }
    
     

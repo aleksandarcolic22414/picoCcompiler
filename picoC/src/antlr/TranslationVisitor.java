@@ -223,22 +223,25 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return super.visitParameter(ctx);
     }
-
+    
     /*
-        declaration
-            :   typeSpecifier initDeclarationList  ';'
+        typeSpecifier 
+            : type = ( 'int'
+            |          'char'
+            |          'void' )
             ;
-   */    
+
+    */
     @Override
-    public ExpressionObject visitDeclaration(picoCParser.DeclarationContext ctx) 
+    public ExpressionObject visitTypeSpecifier
+    (picoCParser.TypeSpecifierContext ctx) 
     {
         /* Get memory class for declaration */
-        int tokenType = ctx.typeSpecifier().type.getType();
+        int tokenType = ctx.type.getType();
         MemoryClassEnum memclass = NasmTools.getTypeOfVar(tokenType);
+        /* Set current type for declaration */
         curTypeSpecifier = memclass;
-        /* Keep declaring rest of the list */
-        
-        return super.visitDeclaration(ctx);
+        return null;
     }
     
     /*
@@ -600,6 +603,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (!Checker.checkReturnValue(curFuncAna.getMemoryClass(), ctx))
             return null;
         
+        /* Set function has return  */
+        curFuncAna.setHasReturn(true);
+        
         /* If ctx.expression is null, than it is void type */
         if (ctx.expression() == null) {
             Writers.emitJumpToExit(FunctionsAnalyser.getInProcess());
@@ -610,8 +616,6 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             
         expr.comparisonCheck();
         
-        /* Set function has return  */
-        curFuncAna.setHasReturn(true);
         /* Cast expression to proper size */
         expr.castVariable(curFuncAna.getMemoryClass());
         /* mov result to eax for return if result is not eax */
@@ -759,14 +763,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     
     /*
         unaryExpression 
-            :   '-'  unaryExpression    #Minus
+            :   '-'  castExpression    #Minus
             ;
     */
     @Override
     public ExpressionObject visitMinus(picoCParser.MinusContext ctx) 
     {
-        /* Visit rest of expression */
-        ExpressionObject expr = super.visitMinus(ctx);
+        /* Visit cast expression */
+        ExpressionObject expr;
+        if ((expr = visit(ctx.castExpression())) == null)
+            return null;
         expr.comparisonCheck();
         /* If result is integer just put - prefix */
         if (expr.isInteger())
@@ -1571,7 +1577,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         If eax was 0 it becomes 1.
     
         unaryExpression 
-            :   '!'  unaryExpression    #Negation
+            :   '!'  castExpression    #Negation
             ;
     */
     @Override
@@ -1579,7 +1585,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject expr;
         /* Visiti expression and try to recover */
-        if ((expr = visit(ctx.unaryExpression())) == null)
+        if ((expr = visit(ctx.castExpression())) == null)
             return null;
         expr.comparisonCheck();
         /* Compare it with zero and emit proper instruction */
@@ -1591,7 +1597,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     /*
         unaryExpression 
-            :   '&'  unaryExpression    #Adress
+            :   '&'  castExpression    #Adress
             ;
     */
     @Override
@@ -1599,7 +1605,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject expr;
         String nextFreeTemp, help;
-        if ((expr = visit(ctx.unaryExpression())) == null)
+        if ((expr = visit(ctx.castExpression())) == null)
             return null;
         expr.comparisonCheck();
         
@@ -1627,13 +1633,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
 
     /*
         unaryExpression
-            :   '*'  unaryExpression    #Deref   
+            :   '*'  castExpression    #Deref   
     */
     @Override
     public ExpressionObject visitDeref(picoCParser.DerefContext ctx) 
     {
         ExpressionObject expr;
-        if ((expr = visit(ctx.unaryExpression())) == null)
+        if ((expr = visit(ctx.castExpression())) == null)
             return null;
         if (!Checker.checkPointer(ctx, expr))
             return null;
@@ -1710,7 +1716,223 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return source;
     }
+
+    /*
+        castExpression
+            :   '(' typeSpecifier pointer? ')' castExpression     #Cast
+            ;
+    */
+    /* Only casts to simple types (including pointers) are allowed */
+    @Override
+    public ExpressionObject visitCast(picoCParser.CastContext ctx) 
+    {
+        ExpressionObject castExpr;
+        /* Let's visit castExpression and try to recover from error */
+        if ((castExpr = visit(ctx.castExpression())) == null)
+            return null;
+        castExpr.comparisonCheck();
+        
+        if (!Checker.checkCast(castExpr, ctx))
+            return null;
+        /* Visit typeSpecifier to enable visitSimple/Multiple pointer
+            to inser proper types */
+        visit(ctx.typeSpecifier());
+        /* If there is pointers, visit them */
+        if (ctx.pointer() != null)
+            visit(ctx.pointer());
+        /* Cast variable to proper pointer if pointer list is not empty */
+        if (!pointerTo.isEmpty())
+            castExpr.castToPointer(pointerTo);
+        else
+            castExpr.castVariable(curTypeSpecifier);
+        return castExpr;
+    }
+
+    /*      unaryExpression 
+                :   '~'  castExpression     #Complement
+                ;
+    */
+    @Override
+    public ExpressionObject visitComplement(picoCParser.ComplementContext ctx) 
+    {
+        ExpressionObject expr;
+        /* Visit expression about to be casted */
+        if ((expr = visit(ctx.castExpression())) == null)
+            return null;
+        expr.comparisonCheck();
+        
+        /* Let checker decide wheather expression can be casted */
+        if (!Checker.checkComplement(expr, ctx))
+            return null;
+        
+        expr.setComplement();
+        return expr;
+    }
+
+    /*
+        andExpression
+            :   andExpression '&' equalityExpression               #And
+            ;
+    */
+    @Override
+    public ExpressionObject visitAnd(picoCParser.AndContext ctx) 
+    {
+        ExpressionObject leftExpr, rightExpr, help;
+        String nextFreeTemp;
+        
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.andExpression())) == null)
+            return null;
+        leftExpr.comparisonCheck();
+        
+        if ((rightExpr = visit(ctx.equalityExpression())) == null)
+            return null;
+        rightExpr.comparisonCheck();
+        
+        /* Make sure that left and right expressions are valid */
+        if (!Checker.checkAnd(leftExpr, rightExpr, ctx))
+            return null;
+        
+        /* Before all calculations, if left and right operand are numbers, 
+            let java do the calculation and save some program's time */
+        if (leftExpr.isInteger() && rightExpr.isInteger()) {
+            String res = NasmTools.and(leftExpr.getText(), rightExpr.getText());
+            leftExpr.setText(res);
+            return leftExpr;
+        }
+        /* If left one is integer and right one is not switch left and 
+            right in order to optimize calculation */
+        if (leftExpr.isInteger()) {
+            help = rightExpr;
+            rightExpr = leftExpr;
+            leftExpr = help;
+        }
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!leftExpr.isRegister())
+            leftExpr.putInRegister();
+        
+        /* Cast smaller variable to the type of bigger if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
+        /* Emit standard "and" instruction */
+        Writers.emitInstruction("and", leftExpr.getText(), rightExpr.getText());
+        
+        if (rightExpr.isRegister())
+            rightExpr.freeRegister();
+        
+        return leftExpr;
+    }
+
+    /*
+        exclusiveOrExpression
+            |   exclusiveOrExpression '^' andExpression            #ExclusiveOr  
+            ;
+    */
+    @Override
+    public ExpressionObject visitExclusiveOr(picoCParser.ExclusiveOrContext ctx) 
+    {
+        ExpressionObject leftExpr, rightExpr, help;
+        String nextFreeTemp;
+        
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.exclusiveOrExpression())) == null)
+            return null;
+        leftExpr.comparisonCheck();
+        
+        if ((rightExpr = visit(ctx.andExpression())) == null)
+            return null;
+        rightExpr.comparisonCheck();
+        
+        /* Make sure that left and right expressions are valid */
+        if (!Checker.checkExclusiveOr(leftExpr, rightExpr, ctx))
+            return null;
+        
+        /* Before all calculations, if left and right operand are numbers, 
+            let java do the calculation and save some program's time */
+        if (leftExpr.isInteger() && rightExpr.isInteger()) {
+            String res = NasmTools.and(leftExpr.getText(), rightExpr.getText());
+            leftExpr.setText(res);
+            return leftExpr;
+        }
+        /* If left one is integer and right one is not switch left and 
+            right in order to optimize calculation */
+        if (leftExpr.isInteger()) {
+            help = rightExpr;
+            rightExpr = leftExpr;
+            leftExpr = help;
+        }
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!leftExpr.isRegister())
+            leftExpr.putInRegister();
+        
+        /* Cast smaller variable to the type of bigger if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
+        /* Emit standard "and" instruction */
+        Writers.emitInstruction("xor", leftExpr.getText(), rightExpr.getText());
+        
+        if (rightExpr.isRegister())
+            rightExpr.freeRegister();
+        
+        return leftExpr;
+    }
     
-    
+
+    /*
+        inclusiveOrExpression
+            :   inclusiveOrExpression '|' exclusiveOrExpression    #InclusiveOr
+            ;
+    */
+    @Override
+    public ExpressionObject visitInclusiveOr(picoCParser.InclusiveOrContext ctx) 
+    {
+        ExpressionObject leftExpr, rightExpr, help;
+        String nextFreeTemp;
+        
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.inclusiveOrExpression())) == null)
+            return null;
+        leftExpr.comparisonCheck();
+        
+        if ((rightExpr = visit(ctx.exclusiveOrExpression())) == null)
+            return null;
+        rightExpr.comparisonCheck();
+        
+        /* Make sure that left and right expressions are valid */
+        if (!Checker.checkOr(leftExpr, rightExpr, ctx))
+            return null;
+        
+        /* Before all calculations, if left and right operand are numbers, 
+            let java do the calculation and save some program's time */
+        if (leftExpr.isInteger() && rightExpr.isInteger()) {
+            String res = NasmTools.and(leftExpr.getText(), rightExpr.getText());
+            leftExpr.setText(res);
+            return leftExpr;
+        }
+        /* If left one is integer and right one is not switch left and 
+            right in order to optimize calculation */
+        if (leftExpr.isInteger()) {
+            help = rightExpr;
+            rightExpr = leftExpr;
+            leftExpr = help;
+        }
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!leftExpr.isRegister())
+            leftExpr.putInRegister();
+        
+        /* Cast smaller variable to the type of bigger if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
+        /* Emit standard "and" instruction */
+        Writers.emitInstruction("or", leftExpr.getText(), rightExpr.getText());
+        
+        if (rightExpr.isRegister())
+            rightExpr.freeRegister();
+        
+        return leftExpr;
+    }    
     
 }
