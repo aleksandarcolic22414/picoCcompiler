@@ -1177,7 +1177,7 @@ public class NasmTools
         int lvalue, rvalue;
         /* Get left and right string's values */
         lvalue = Integer.parseInt(left);
-        rvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(right);
         /* Return and */
         return Integer.toString(lvalue & rvalue);
     }
@@ -1187,7 +1187,7 @@ public class NasmTools
         int lvalue, rvalue;
         /* Get left and right string's values */
         lvalue = Integer.parseInt(left);
-        rvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(right);
         /* Return and */
         return Integer.toString(lvalue | rvalue);
     }
@@ -1197,8 +1197,21 @@ public class NasmTools
         int lvalue, rvalue;
         /* Get left and right string's values */
         lvalue = Integer.parseInt(left);
-        rvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(right);
         /* Return and */
         return Integer.toString(lvalue ^ rvalue);
+    }
+
+    public static String shift(String left, String right, int shift) 
+    {
+        int lvalue, rvalue;
+        /* Get left and right string's values */
+        lvalue = Integer.parseInt(left);
+        rvalue = Integer.parseInt(right);
+        /* Decide wheather it is left or right shift */
+        if (shift == picoCParser.SHIFT_LEFT)
+            return Integer.toString(lvalue << rvalue);
+        else
+            return Integer.toString(lvalue >> rvalue);
     }
 }

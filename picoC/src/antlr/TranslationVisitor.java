@@ -521,13 +521,12 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             ;
     
         assignmentOperator
-            :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=')
+            :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' | '>>=' | '<<=')
             ;
     */
     @Override
     public ExpressionObject visitAssign(picoCParser.AssignContext ctx) 
     {
-        
         /* Expressions */
         ExpressionObject left, right;
         /* Visit expression and try to recover from error. */
@@ -547,6 +546,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Prevent assign to an array */
         if (!Checker.checkArrayAssign(left, ctx))
             return null;
+        
         int operation = ctx.assignmentOperator().op.getType();
         /* Get variable context if it is local variable */
         Variable var = curFuncAna.getAnyVariable(id);
@@ -556,8 +556,11 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         var.setInitialized(true);
         
         /* Cast variable if needed */
+        if (right.isStackVariable())
+            right.putInRegister();
         if (!right.isInteger())
             right.castVariable(left.getType());
+        
         if (!Checker.checkAssign(left, right, ctx, operation))
             return null;
         
@@ -795,6 +798,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject leftExpr, rightExpr, help;
         String nextFreeTemp;
+        int op = ctx.op.getType();
         
         /* Try to visit children and recover if error ocured */
         if ((leftExpr = visit(ctx.additiveExpression())) == null)
@@ -812,13 +816,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             let java do the calculation and save some program's time */
         if (leftExpr.isInteger() && rightExpr.isInteger()) {
             String res = NasmTools.calculate
-                (leftExpr.getText(), rightExpr.getText(), ctx.op.getType(), ctx);
+                (leftExpr.getText(), rightExpr.getText(), op, ctx);
             leftExpr.setText(res);
             return leftExpr;
         }
         /* If left one is integer and right one is not switch left and 
             right in order to optimize calculation */
-        if (leftExpr.isInteger()) {
+        if (leftExpr.isInteger() && op == picoCParser.ADD) {
             help = rightExpr;
             rightExpr = leftExpr;
             leftExpr = help;
@@ -834,7 +838,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.castVariable(MemoryClassEnum.INT);
         /* Cast smaller variable to the type of bigger if needed */
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
-        String operation = NasmTools.getOperation(ctx.op.getType());
+        String operation = NasmTools.getOperation(op);
         
         /* Set left to be pointer and make it easier to code.
                 Only valid operation if right one is pointer and left is not,
@@ -1800,13 +1804,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.setText(res);
             return leftExpr;
         }
-        /* If left one is integer and right one is not switch left and 
-            right in order to optimize calculation */
-        if (leftExpr.isInteger()) {
-            help = rightExpr;
-            rightExpr = leftExpr;
-            leftExpr = help;
-        }
+        
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
         if (!leftExpr.isRegister())
@@ -1815,7 +1813,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast smaller variable to the type of bigger if needed */
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
-        /* Emit standard "and" instruction */
+        /* Emit "and" instruction */
         Writers.emitInstruction("and", leftExpr.getText(), rightExpr.getText());
         
         if (rightExpr.isRegister())
@@ -1855,13 +1853,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.setText(res);
             return leftExpr;
         }
-        /* If left one is integer and right one is not switch left and 
-            right in order to optimize calculation */
-        if (leftExpr.isInteger()) {
-            help = rightExpr;
-            rightExpr = leftExpr;
-            leftExpr = help;
-        }
+        
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
         if (!leftExpr.isRegister())
@@ -1870,7 +1862,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast smaller variable to the type of bigger if needed */
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
-        /* Emit standard "and" instruction */
+        /* Emit "xor" instruction */
         Writers.emitInstruction("xor", leftExpr.getText(), rightExpr.getText());
         
         if (rightExpr.isRegister())
@@ -1911,13 +1903,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             leftExpr.setText(res);
             return leftExpr;
         }
-        /* If left one is integer and right one is not switch left and 
-            right in order to optimize calculation */
-        if (leftExpr.isInteger()) {
-            help = rightExpr;
-            rightExpr = leftExpr;
-            leftExpr = help;
-        }
+        
         /* If there is free registers, and leftExpr is variable, than it needs
             to be moved to one */
         if (!leftExpr.isRegister())
@@ -1926,7 +1912,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Cast smaller variable to the type of bigger if needed */
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
         
-        /* Emit standard "and" instruction */
+        /* Emit "or" instruction */
         Writers.emitInstruction("or", leftExpr.getText(), rightExpr.getText());
         
         if (rightExpr.isRegister())
@@ -1934,5 +1920,60 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return leftExpr;
     }    
+
+    /*
+        shiftExpression
+            :   shiftExpression op=('<<'|'>>') additiveExpression      #Shift
+            ;
+    */
+    @Override
+    public ExpressionObject visitShift(picoCParser.ShiftContext ctx) 
+    {
+        ExpressionObject leftExpr, rightExpr, help;
+        String instruction;
+        int shift = ctx.op.getType();
+        /* Try to visit children and recover if error ocured */
+        if ((leftExpr = visit(ctx.shiftExpression())) == null)
+            return null;
+        leftExpr.comparisonCheck();
+        
+        if ((rightExpr = visit(ctx.additiveExpression())) == null)
+            return null;
+        rightExpr.comparisonCheck();
+        
+        /* Make sure that left and right expressions are valid */
+        if (!Checker.checkShift(leftExpr, rightExpr, ctx))
+            return null;
+        
+        /* Before all calculations, if left and right operand are numbers, 
+            let java do the calculation and save some program's time */
+        if (leftExpr.isInteger() && rightExpr.isInteger()) {
+            String res = 
+                    NasmTools.shift
+                        (leftExpr.getText(), rightExpr.getText(), shift);
+            leftExpr.setText(res);
+            return leftExpr;
+        }
+        
+        /* If there is free registers, and leftExpr is variable, than it needs
+            to be moved to one */
+        if (!leftExpr.isRegister())
+            leftExpr.putInRegister();
+        /* If right is on stack, move it to register */
+        if (rightExpr.isStackVariable())
+            rightExpr.putInRegister();
+        
+        /* Cast smaller variable to the type of bigger if needed */
+        ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
+        /* Emit proper instruction */
+        instruction = shift == picoCParser.SHIFT_LEFT ? "shl" : "sar";
+        Emitter.emitShifting(leftExpr, rightExpr, instruction);
+        
+        if (rightExpr.isRegister())
+            rightExpr.freeRegister();
+        
+        return leftExpr;
+    }
     
 }

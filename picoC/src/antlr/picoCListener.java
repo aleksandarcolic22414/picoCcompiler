@@ -336,6 +336,30 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitDropAddSub(picoCParser.DropAddSubContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code Shift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterShift(picoCParser.ShiftContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Shift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitShift(picoCParser.ShiftContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code DropShift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterDropShift(picoCParser.DropShiftContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code DropShift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitDropShift(picoCParser.DropShiftContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code DropRelational}
 	 * labeled alternative in {@link picoCParser#relationalExpression}.
 	 * @param ctx the parse tree

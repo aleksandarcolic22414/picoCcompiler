@@ -203,6 +203,20 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDropAddSub(picoCParser.DropAddSubContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code Shift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitShift(picoCParser.ShiftContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DropShift}
+	 * labeled alternative in {@link picoCParser#shiftExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDropShift(picoCParser.DropShiftContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code DropRelational}
 	 * labeled alternative in {@link picoCParser#relationalExpression}.
 	 * @param ctx the parse tree

@@ -18,3 +18,7 @@ int main()
 
     return 0;
 }
+/* 
+    In: Prirodan broj
+    Out: Broj jedinica u binarnoj reprezentaciji broja 
+ */

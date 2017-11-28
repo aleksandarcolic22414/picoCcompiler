@@ -577,5 +577,25 @@ public class Checker
         }
         return true;
     }
+
+    public static boolean checkShift
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, 
+    picoCParser.ShiftContext ctx) 
+    {
+        if (leftExpr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Shifting pointer type");
+            return false;
+        } else if (rightExpr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Shifting with pointer type");
+            return false;
+        } else
+            return true;
+    }
     
 }

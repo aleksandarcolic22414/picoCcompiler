@@ -60,8 +60,13 @@ additiveExpression
     |   additiveExpression op=('+'|'-') multiplicativeExpression  #AddSub
     ;
 
+shiftExpression
+    :   additiveExpression                                     #DropShift
+    |   shiftExpression op=('<<'|'>>') additiveExpression      #Shift
+    ;
+
 relationalExpression 
-    :   additiveExpression					         #DropRelational	
+    :   shiftExpression                                                  #DropRelational	
     |   relationalExpression rel=('<'|'<='|'>='|'>') additiveExpression  #Relation
     ;    
 
@@ -106,7 +111,7 @@ assignmentExpression
     ;
 
 assignmentOperator
-    :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=')
+    :   op=('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '^=' | '|=' | '>>=' | '<<=')
     ;
 
 expression
@@ -236,6 +241,11 @@ ASSIGN_SUB : '-=' ;
 ASSIGN_MUL : '*=' ;
 ASSIGN_DIV : '/=' ;
 ASSIGN_MOD : '%=' ;
+ASSIGN_AND : '&=' ;
+ASSIGN_OR  : '|=' ;
+ASSIGN_XOR : '^=' ;
+ASSIGN_SHIFT_LEFT  : '<<=' ;
+ASSIGN_SHIFT_RIGHT : '>>=' ;
 
 MUL : '*' ;
 DIV : '/' ;
@@ -243,6 +253,12 @@ MOD : '%' ;
 ADD : '+' ;
 SUB : '-' ;
 
+AND : '&' ;
+XOR : '^' ;
+OR  : '|' ;
+
+SHIFT_LEFT  : '<<' ;
+SHIFT_RIGHT : '>>' ;
 
 EQUAL :          '==' ;
 NOT_EQUAL :      '!=' ;

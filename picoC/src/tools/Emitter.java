@@ -201,10 +201,7 @@ public class Emitter
     {
         MemoryClassEnum type = expr1.getType();
         
-        if (expr2.isRegister()) {
-            Writers.emitInstruction("add", expr1.getText(), expr2.getText());
-            NasmTools.free(expr2.getText());
-        } else if (expr2.isInteger()) {
+        if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("add", expr1.getText(), expr2.getText());
         } else {
             String temp = NasmTools.getNextFreeTempStr(type);
@@ -221,10 +218,7 @@ public class Emitter
     {
         MemoryClassEnum type = expr1.getType();
         
-        if (expr2.isRegister()) {
-            Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
-            NasmTools.free(expr2.getText());
-        } else if (expr2.isInteger()) {
+        if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
         } else {
             String temp = NasmTools.getNextFreeTempStr(type);
@@ -314,6 +308,21 @@ public class Emitter
                 break;
             case picoCParser.ASSIGN_MOD :
                 Emitter.assignDivMod(expr1, expr2, operation);
+                break;
+            case picoCParser.ASSIGN_AND :
+                Emitter.assignAnd(expr1, expr2);
+                break;
+            case picoCParser.ASSIGN_OR :
+                Emitter.assignOr(expr1, expr2);
+                break;
+            case picoCParser.ASSIGN_XOR :
+                Emitter.assignXor(expr1, expr2);
+                break;
+            case picoCParser.ASSIGN_SHIFT_LEFT :
+                Emitter.assignShift(expr1, expr2, operation);
+                break;
+            case picoCParser.ASSIGN_SHIFT_RIGHT :
+                Emitter.assignShift(expr1, expr2, operation);
                 break;
         }
     }
@@ -459,11 +468,81 @@ public class Emitter
         }
     }
 
-    public static void emitAnd
-    (ExpressionObject leftExpr, ExpressionObject rightExpr) 
+    private static void assignAnd
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
-        
+        if (expr2.isRegister() || expr2.isInteger()) {
+            Writers.emitInstruction("and", expr1.getText(), expr2.getText());
+        } else {
+            String temp = NasmTools.getNextFreeTempStr(expr1.getType());
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("and", expr1.getText(), temp);
+            NasmTools.free(temp);
+        }
+    }
+
+    private static void assignOr
+    (ExpressionObject expr1, ExpressionObject expr2) 
+    {
+        if (expr2.isRegister() || expr2.isInteger()) {
+            Writers.emitInstruction("or", expr1.getText(), expr2.getText());
+        } else {
+            String temp = NasmTools.getNextFreeTempStr(expr1.getType());
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("or", expr1.getText(), temp);
+            NasmTools.free(temp);
+        }
+    }
+
+    private static void assignXor
+    (ExpressionObject expr1, ExpressionObject expr2) 
+    {
+        if (expr2.isRegister() || expr2.isInteger()) {
+            Writers.emitInstruction("xor", expr1.getText(), expr2.getText());
+        } else {
+            String temp = NasmTools.getNextFreeTempStr(expr1.getType());
+            Writers.emitInstruction("mov", temp, expr2.getText());
+            Writers.emitInstruction("xor", expr1.getText(), temp);
+            NasmTools.free(temp);
+        }
+    }
+
+    /* When right operand of shifting is not integer, shifting can only be done
+        by using cl register. */
+    public static void emitShifting
+    (ExpressionObject leftExpr, ExpressionObject rightExpr, String instruction) 
+    {
+        String temp, rightByte;
+        temp = null;
+        /* leftExpr is in register! */
+        if (rightExpr.isInteger()) {
+            Writers.emitInstruction(instruction, leftExpr.getText(), rightExpr.getText());
+        } else {  
+            if (NasmTools.isTakenRegisterCREG()) {
+                /* Store whole c register and reload it later */
+                temp = NasmTools.getNextFreeTempStr(MemoryClassEnum.POINTER);
+                Writers.emitInstruction("mov", temp, "rcx");
+                rightByte = NasmTools.castRegisterToChar(rightExpr.getText());
+                Writers.emitInstruction("mov", "cl", rightByte);
+                Writers.emitInstruction(instruction, leftExpr.getText(), "cl");
+                /* Restoring c register */
+                Writers.emitInstruction("mov", "rcx", temp);
+            } else {
+                rightByte = NasmTools.castRegisterToChar(rightExpr.getText());
+                Writers.emitInstruction("mov", "cl", rightByte);
+                Writers.emitInstruction(instruction, leftExpr.getText(), "cl");
+            }
+        }
+        if (temp != null)
+            NasmTools.free(temp);
+    }
+
+    private static void assignShift
+    (ExpressionObject expr1, ExpressionObject expr2, int shift) 
+    {
+        String op;
+        op = shift == picoCParser.SHIFT_LEFT ? "shl" : "sar";
+        emitShifting(expr1, expr2, op);
     }
    
-    
 }
