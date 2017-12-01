@@ -27,10 +27,10 @@ public class Constants
     public static final String STRING_QWORD = "qword";
     /* path to Desktop for testing puropse. */
     /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */
-    public static final String PATH_TO_OUTPUT_FILE = 
+    public static String PATH_TO_OUTPUT_FILE = 
             "//home//aleksandar//Desktop//compilerTesting//compiledProgram.asm";
     /* path to input file */
-    public static final String PATH_TO_INPUT_FILE = "ulazi//program.c";
+    public static String PATH_TO_INPUT_FILE = "ulazi//program.c";
     
     /* using gcc's C extern functions in text segment */
     public static final String EXTERN_GCC_LIB = "\textern printf\n"

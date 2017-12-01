@@ -92,14 +92,14 @@ public class NasmTools
     private static final Map<Integer, String> rtosMap8Bytes;
     
     /* Positions of registers in registers flags */
-    public static final int AREG = 0x1;
-    public static final int BREG = 0x2;
-    public static final int CREG = 0x4;
-    public static final int DREG = 0x8;
-    public static final int SIREG = 0x10;
-    public static final int DIREG = 0x20;
-    public static final int R8REG = 0x40;
-    public static final int R9REG = 0x80;
+    public static final int AREG   = 0x1;
+    public static final int BREG   = 0x2;
+    public static final int CREG   = 0x4;
+    public static final int DREG   = 0x8;
+    public static final int SIREG  = 0x10;
+    public static final int DIREG  = 0x20;
+    public static final int R8REG  = 0x40;
+    public static final int R9REG  = 0x80;
     public static final int R10REG = 0x100;
     public static final int R11REG = 0x200;
     public static final int R12REG = 0x400;
@@ -107,15 +107,34 @@ public class NasmTools
     public static final int R14REG = 0x1000;
     public static final int R15REG = 0x2000;
     
+    
+    /* Next variables is string representation of the 
+        least significant byte in registers (right most byte)   */
+    public static final String STRING_AL   = "al";
+    public static final String STRING_BL   = "bl";
+    public static final String STRING_CL   = "cl";
+    public static final String STRING_DL   = "dl";
+    public static final String STRING_SIL  = "sil";
+    public static final String STRING_DIL  = "dil";
+    public static final String STRING_R8B  = "r8b";
+    public static final String STRING_R9B  = "r9b";
+    public static final String STRING_R10B = "r10b";
+    public static final String STRING_R11B = "r11b";
+    public static final String STRING_R12B = "r12b";
+    public static final String STRING_R13B = "r13b";
+    public static final String STRING_R14B = "r14b";
+    public static final String STRING_R15B = "r15b";
+    
+    
     /* Next variables is string representation of 4 byte parts of registers */
-    public static final String STRING_EAX = "eax";
-    public static final String STRING_EBX = "ebx";
-    public static final String STRING_ECX = "ecx";
-    public static final String STRING_EDX = "edx";
-    public static final String STRING_ESI = "esi";
-    public static final String STRING_EDI = "edi";
-    public static final String STRING_R8D = "r8d";
-    public static final String STRING_R9D = "r9d";
+    public static final String STRING_EAX  = "eax";
+    public static final String STRING_EBX  = "ebx";
+    public static final String STRING_ECX  = "ecx";
+    public static final String STRING_EDX  = "edx";
+    public static final String STRING_ESI  = "esi";
+    public static final String STRING_EDI  = "edi";
+    public static final String STRING_R8D  = "r8d";
+    public static final String STRING_R9D  = "r9d";
     public static final String STRING_R10D = "r10d";
     public static final String STRING_R11D = "r11d";
     public static final String STRING_R12D = "r12d";
@@ -130,31 +149,14 @@ public class NasmTools
     public static final String STRING_RDX = "rdx";
     public static final String STRING_RSI = "rsi";
     public static final String STRING_RDI = "rdi";
-    public static final String STRING_R8 = "r8";
-    public static final String STRING_R9 = "r9";
+    public static final String STRING_R8  = "r8";
+    public static final String STRING_R9  = "r9";
     public static final String STRING_R10 = "r10";
     public static final String STRING_R11 = "r11";
     public static final String STRING_R12 = "r12";
     public static final String STRING_R13 = "r13";
     public static final String STRING_R14 = "r14";
     public static final String STRING_R15 = "r15";
-    
-    /* Next variables is string representation of the 
-        least significant byte in registers (right most byte)   */
-    public static final String STRING_AL = "al";
-    public static final String STRING_BL = "bl";
-    public static final String STRING_CL = "cl";
-    public static final String STRING_DL = "dl";
-    public static final String STRING_SIL = "sil";
-    public static final String STRING_DIL = "dil";
-    public static final String STRING_R8B = "r8b";
-    public static final String STRING_R9B = "r9b";
-    public static final String STRING_R10B = "r10b";
-    public static final String STRING_R11B = "r11b";
-    public static final String STRING_R12B = "r12b";
-    public static final String STRING_R13B = "r13b";
-    public static final String STRING_R14B = "r14b";
-    public static final String STRING_R15B = "r15b";
     
     /* Initialize mapping and pushed registers list */
     static {
@@ -260,39 +262,39 @@ public class NasmTools
         
         /* Initialize map for rdi register */
         Map<MemoryClassEnum, String> diMap = new HashMap<>();
-        diMap.put(MemoryClassEnum.CHAR, "dil");
-        diMap.put(MemoryClassEnum.INT, "edi");
-        diMap.put(MemoryClassEnum.POINTER, "rdi");
+        diMap.put(MemoryClassEnum.CHAR, STRING_DIL);
+        diMap.put(MemoryClassEnum.INT, STRING_EDI);
+        diMap.put(MemoryClassEnum.POINTER, STRING_RDI);
         
         /* Initialize map for rsi register */
         Map<MemoryClassEnum, String> siMap = new HashMap<>();
-        siMap.put(MemoryClassEnum.CHAR, "sil");
-        siMap.put(MemoryClassEnum.INT, "esi");
-        siMap.put(MemoryClassEnum.POINTER, "rsi");
+        siMap.put(MemoryClassEnum.CHAR, STRING_SIL);
+        siMap.put(MemoryClassEnum.INT, STRING_ESI);
+        siMap.put(MemoryClassEnum.POINTER, STRING_RSI);
         
         /* Initialize map for rdx register */
         Map<MemoryClassEnum, String> dxMap = new HashMap<>();
-        dxMap.put(MemoryClassEnum.CHAR, "dl");
-        dxMap.put(MemoryClassEnum.INT, "edx");
-        dxMap.put(MemoryClassEnum.POINTER, "rdx");
+        dxMap.put(MemoryClassEnum.CHAR, STRING_DL);
+        dxMap.put(MemoryClassEnum.INT, STRING_EDX);
+        dxMap.put(MemoryClassEnum.POINTER, STRING_RDX);
         
         /* Initialize map for rcx register */
         Map<MemoryClassEnum, String> cxMap = new HashMap<>();
-        cxMap.put(MemoryClassEnum.CHAR, "cl");
-        cxMap.put(MemoryClassEnum.INT, "ecx");
-        cxMap.put(MemoryClassEnum.POINTER, "rcx");
+        cxMap.put(MemoryClassEnum.CHAR, STRING_CL);
+        cxMap.put(MemoryClassEnum.INT, STRING_ECX);
+        cxMap.put(MemoryClassEnum.POINTER, STRING_RCX);
         
         /* Initialize map for r8 register */
         Map<MemoryClassEnum, String> r8Map = new HashMap<>();
-        r8Map.put(MemoryClassEnum.CHAR, "r8b");
-        r8Map.put(MemoryClassEnum.INT, "r8d");
-        r8Map.put(MemoryClassEnum.POINTER, "r8");
+        r8Map.put(MemoryClassEnum.CHAR, STRING_R8B);
+        r8Map.put(MemoryClassEnum.INT, STRING_R8D);
+        r8Map.put(MemoryClassEnum.POINTER, STRING_R8);
         
         /* Initialize map for r9 register */
         Map<MemoryClassEnum, String> r9Map = new HashMap<>();
-        r9Map.put(MemoryClassEnum.CHAR, "r9b");
-        r9Map.put(MemoryClassEnum.INT, "r9d");
-        r9Map.put(MemoryClassEnum.POINTER, "r9");
+        r9Map.put(MemoryClassEnum.CHAR, STRING_R9B);
+        r9Map.put(MemoryClassEnum.INT, STRING_R9D);
+        r9Map.put(MemoryClassEnum.POINTER, STRING_R9);
         
         registersPicker = new HashMap<>();
         registersPicker.put(0, diMap);
@@ -360,8 +362,6 @@ public class NasmTools
     {
         return (flags & DREG) != 0;
     }
-
-    
 
     /* Function determines which is next position on stack
         that can hold value and returns Expression object with that information. */
@@ -741,9 +741,9 @@ public class NasmTools
     /* Not implemented yet */
     public static String pushArgumentOnStack(MemoryClassEnum memclass) 
     {
-        return null;
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
+    
     /* Function determines wheather 4 general purpose registers a, b, c and are
         available or not */
     public static boolean isTakenRegisterMightyFour() 
@@ -1103,11 +1103,6 @@ public class NasmTools
                 return "3";
         }
         return null;
-    }
- 
-    public static void main(String[] args) 
-    {
-        
     }
 
     /* Converts char constant such as 'A', '\t' ect. into integer value.

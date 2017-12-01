@@ -25,6 +25,15 @@ public class Main
   
     public static void main(String[] args) 
     {
+        if (args.length > 0) {
+            final String dir = System.getProperty("user.dir");
+            Constants.PATH_TO_INPUT_FILE = dir + "//" + args[0];
+            Constants.PATH_TO_OUTPUT_FILE = dir + "//out.asm";
+        } else {
+            System.err.println("No input files specified.");
+            return;
+        }
+        
         try {
             InputStream is = new FileInputStream(Constants.PATH_TO_INPUT_FILE);
             ANTLRInputStream in = new ANTLRInputStream(is);
