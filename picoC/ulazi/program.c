@@ -1,20 +1,9 @@
-int onbits(int n)
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
 {
-    int c = 0;
-    while (n) {
-        c += n & 1;
-        n >>= 1;
-    }
-    return c;
-}
-
-int main()
-{
-    int n = 0;
-    printf("Unosi se prirodan broj: ");
-    scanf("%d", &n);
-
-    printf("Broj jedinica u binarnoj reprezentaciji broja je: %d\n", onbits(n));
-
+    printf("%d\n", atoi("500"));
     return 0;
 }
+

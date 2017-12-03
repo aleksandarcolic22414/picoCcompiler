@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import nasm.IncludeSegment;
 import org.antlr.v4.runtime.RuleContext;
 import tools.Emitter;
 import tools.ExpressionObject;
@@ -83,8 +84,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         } else {
             System.err.println("Errors: " + CompilationControler.errors);
             System.err.println("Compilation failed!");
-            /* If output is not needed for testing, then terminate process -> 
-            System.exit(0); */
+            /* Terminate compilation */
+            System.exit(0);
         }
         try {    
             Writers writers = new Writers();
@@ -95,6 +96,39 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return null;
     }
+
+    
+    /*
+        include
+            :   '#' 'include' '<' headerFile '>'
+            ;
+    */
+    /* Simulate preproccessor and just use extern gcc's functions. */
+    @Override
+    public ExpressionObject visitInclude(picoCParser.IncludeContext ctx) 
+    {
+        String lib = ctx.headerFile().getText();
+        
+        if (lib.equalsIgnoreCase("stdio.h")) {
+            Writers.emitText(Constants.GCC_LIB_STDIO);
+            IncludeSegment.includeStdio();
+        } else if (lib.equalsIgnoreCase("ctype.h")) {
+            Writers.emitText(Constants.GCC_LIB_CTYPE);
+            IncludeSegment.includeCtype();
+        } else if (lib.equalsIgnoreCase("stdlib.h")) {
+            Writers.emitText(Constants.GCC_LIB_STDLIB);
+            IncludeSegment.includeStdlib();
+        } else if (lib.equalsIgnoreCase("string.h")) {
+            Writers.emitText(Constants.GCC_LIB_STRING);
+            IncludeSegment.includeString();
+        } else {
+            System.err.println("File " + lib + " does not exist;");
+        }
+        
+        return null;
+    }
+    
+    
     
     /*  
         functionDefinition 
@@ -268,6 +302,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if ((expr = visit(ctx.assignmentExpression())) == null) 
             return null;
         expr.comparisonCheck();
+        
+        Checker.checkInitWithAssign(newVariable, expr, ctx);
         
         /* If it is external declaration, just check if expression is constant.
             If it is not external, emit initialization instruction. */
@@ -545,7 +581,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         /* Prevent assign to an array */
         if (!Checker.checkArrayAssign(left, ctx))
-            return null;
+            return null; 
         
         int operation = ctx.assignmentOperator().op.getType();
         /* Get variable context if it is local variable */
@@ -560,7 +596,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             right.putInRegister();
         if (!right.isInteger())
             right.castVariable(left.getType());
-        
+        /* Check if types of variables match */
         if (!Checker.checkAssign(left, right, ctx, operation))
             return null;
         

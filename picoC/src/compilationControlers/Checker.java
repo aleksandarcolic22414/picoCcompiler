@@ -1,11 +1,13 @@
 package compilationControlers;
 
+import constants.Constants;
 import antlr.TranslationVisitor;
 import antlr.picoCParser;
 import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnum;
 import java.util.List;
+import nasm.IncludeSegment;
 import tools.ExpressionObject;
 
 /**
@@ -47,20 +49,23 @@ public class Checker
             if ((paramCount = funcAnalyser.getNumberOfParameters()) > argumentList.size()) {
                 CompilationControler.errorOcured
                     (ctx.getStart(),
-                            TranslationVisitor.curFuncAna.getFunctionName(), "Too few arguments in function call");
+                            TranslationVisitor.curFuncAna.getFunctionName(), 
+                                "Too few arguments in function call");
                 return false;
             }
             if (paramCount < argumentList.size()) {
                 CompilationControler.errorOcured
                     (ctx.getStart(),
-                            TranslationVisitor.curFuncAna.getFunctionName(), "Too many arguments in function call");
+                            TranslationVisitor.curFuncAna.getFunctionName(), 
+                                "Too many arguments in function call");
                 return false;
             }
         } else {
             if (funcAnalyser.getNumberOfParameters() > 0) {
                 CompilationControler.errorOcured
                     (ctx.getStart(),
-                            TranslationVisitor.curFuncAna.getFunctionName(), "Too few arguments in function call");
+                            TranslationVisitor.curFuncAna.getFunctionName(), 
+                                "Too few arguments in function call");
                 return false;
             }
         }
@@ -70,16 +75,15 @@ public class Checker
         That could be some functions from gcc's standard library */
     public static boolean externalFunctionCheck(String functionName) 
     {
-        switch (functionName) {
-            case "printf":
-                return true;
-            case "scanf":
-                return true;
-            case "malloc":
-                return true;
-            case "rand":
-                return true;
-        }
+        if (Constants.GCC_LIB_CTYPE.contains(functionName) && IncludeSegment.isIncludedCtype())
+            return true;
+        if (Constants.GCC_LIB_STRING.contains(functionName) && IncludeSegment.isIncludedString())
+            return true;
+        if (Constants.GCC_LIB_STDIO.contains(functionName) && IncludeSegment.isIncludedStdio())
+            return true;
+        if (Constants.GCC_LIB_STDLIB.contains(functionName) && IncludeSegment.isIncludedStdlib())
+            return true;
+        
         return false;
     }
     /* Check for multiple definitions of function */
@@ -596,6 +600,18 @@ public class Checker
             return false;
         } else
             return true;
+    }
+
+    public static void checkInitWithAssign
+    (ExpressionObject left, ExpressionObject right, 
+     picoCParser.DeclWithInitContext ctx) 
+    {
+        if (left.getType() != right.getType()) {
+            CompilationControler.warningOcured(
+                    ctx.getStart(),
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Different type of variables in assign context");
+        }
     }
     
 }

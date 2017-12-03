@@ -1,7 +1,24 @@
 grammar picoC;
 
+/* includeList is preproccessor simulation. */
+
 compilationUnit 
-    :   translationUnit? EOF  ;
+    :   includeList? translationUnit? EOF  
+    ;
+
+includeList
+    :   include
+    |   includeList include
+    ;
+
+include
+    :   '#' 'include' '<' headerFile '>'
+    ;
+
+headerFile
+    :   HEADERFILE
+    ;
+
 
 translationUnit 
     :   externalDeclaration
@@ -274,6 +291,7 @@ ID              : [a-zA-Z_] ( [a-zA-Z]+ | [0-9]+ )* ;
 INT             : [0-9]+ ;
 CHAR            : '\'' . '\'' | '\'\\' . '\'' ;
 STRING_LITERAL  : '"' (ESC|.)*? '"' ;
+HEADERFILE      : ID '.h' ;
 
 fragment
 ESC     : '\\"' | '\\\\' ; // 2-char sequences \" and \\

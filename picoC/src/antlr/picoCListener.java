@@ -18,6 +18,36 @@ public interface picoCListener extends ParseTreeListener {
 	 */
 	void exitCompilationUnit(picoCParser.CompilationUnitContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link picoCParser#includeList}.
+	 * @param ctx the parse tree
+	 */
+	void enterIncludeList(picoCParser.IncludeListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#includeList}.
+	 * @param ctx the parse tree
+	 */
+	void exitIncludeList(picoCParser.IncludeListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#include}.
+	 * @param ctx the parse tree
+	 */
+	void enterInclude(picoCParser.IncludeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#include}.
+	 * @param ctx the parse tree
+	 */
+	void exitInclude(picoCParser.IncludeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link picoCParser#headerFile}.
+	 * @param ctx the parse tree
+	 */
+	void enterHeaderFile(picoCParser.HeaderFileContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link picoCParser#headerFile}.
+	 * @param ctx the parse tree
+	 */
+	void exitHeaderFile(picoCParser.HeaderFileContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link picoCParser#translationUnit}.
 	 * @param ctx the parse tree
 	 */

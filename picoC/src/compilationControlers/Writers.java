@@ -2,6 +2,7 @@ package compilationControlers;
 
 import constants.Constants;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -15,6 +16,9 @@ public class Writers
     public static StringBuilder DATA_SEGMENT;
     public static StringBuilder BSS_SEGMENT;
     
+    public static File inputFile;
+    public static File outputFile;
+    
     FileWriter out;
     BufferedWriter buff;
     
@@ -25,18 +29,18 @@ public class Writers
         BSS_SEGMENT = new StringBuilder(Constants.ENTER_BSS_SEGMENT);
     }
     
+    public static void init() 
+    {
+        inputFile = new File(Constants.PATH_TO_INPUT_FILE);
+        outputFile = new File(Constants.PATH_TO_OUTPUT_FILE);
+    }
+    
     public Writers() throws IOException 
     {
-        this.out = new FileWriter(Constants.PATH_TO_OUTPUT_FILE);
+        this.out = new FileWriter(outputFile);
         this.buff = new BufferedWriter(out);
     }
 
-    public Writers(String pathToOutputFile) throws IOException 
-    {
-        this.out = new FileWriter(pathToOutputFile);
-        this.buff = new BufferedWriter(out);
-    }
-    
     /* Function flushes all 3 string builders into output file. */
     public void writeOutput() throws IOException 
     {

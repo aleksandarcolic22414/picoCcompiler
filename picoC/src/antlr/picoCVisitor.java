@@ -17,6 +17,24 @@ public interface picoCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCompilationUnit(picoCParser.CompilationUnitContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link picoCParser#includeList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIncludeList(picoCParser.IncludeListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#include}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInclude(picoCParser.IncludeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link picoCParser#headerFile}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitHeaderFile(picoCParser.HeaderFileContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link picoCParser#translationUnit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
