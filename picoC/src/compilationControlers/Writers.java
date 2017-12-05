@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import main.Main;
 
 /**
  *
@@ -31,8 +32,8 @@ public class Writers
     
     public static void init() 
     {
-        inputFile = new File(Constants.PATH_TO_INPUT_FILE);
-        outputFile = new File(Constants.PATH_TO_OUTPUT_FILE);
+        inputFile = new File(Main.PATH_TO_INPUT_FILE);
+        outputFile = new File(Main.PATH_TO_OUTPUT_FILE);
     }
     
     public Writers() throws IOException 

@@ -5,7 +5,6 @@ import antlr.picoCParser;
 import antlr.TranslationVisitor;
 import antlr.TranslationListener;
 import compilationControlers.Writers;
-import constants.Constants;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,21 +23,37 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
  */
 public class Main 
 {
-  
     /* Path to current directory */
-    public static String dir;
+    public static final String CURRENT_DIRECTORY = System.getProperty("user.dir");
     
-    public static void main(String[] args) throws IOException, InterruptedException 
+    /* Path to output file */
+    public static String PATH_TO_OUTPUT_FILE = CURRENT_DIRECTORY + "//";
+    /* Path to input file */
+    public static String PATH_TO_INPUT_FILE = CURRENT_DIRECTORY + "//";
+    
+    /* Compilation commands */
+    public static String nasm  = "nasm -f elf64 ";
+    public static String gcc   = "gcc -m64 ";
+    public static String clean = "rm ";
+    
+    /* File names */
+    public static String outputFileName = "out.s";
+    public static String inputFileName = null;
+    public static String rawFileName = null;
+    
+    /* Options flags */
+    public static int options = 0x0;
+    
+    /* Position of options in options flags */
+    public static final int OUTPUT_FILE_SPECIFIED = 0x1;
+    public static final int INPUT_FILE_SPECIFIED  = 0x2;
+    public static final int COMPILE_ONLY          = 0x4;
+    
+    
+    public static void main(String[] args) 
     {
-        if (args.length > 0) {
-            dir = System.getProperty("user.dir");
-            Constants.PATH_TO_INPUT_FILE = dir + "//" + args[0];
-            Constants.PATH_TO_OUTPUT_FILE = dir + "//out.asm";
-            Writers.init();
-        } else {
-            System.err.println("No input files specified.");
-            return;
-        }
+        Main.scanArgs(args);
+        Writers.init();
         
         try {
             InputStream is = new FileInputStream(Writers.inputFile);
@@ -56,7 +71,7 @@ public class Main
             visitor.visit(tree);
             
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Error: " + inputFileName + ": No such file or directory");
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -68,11 +83,11 @@ public class Main
         with gcc's linker    . */
     private static void assembleAndLink() 
     {
+        /* If -S option is specified than assemble and link are not done */
+        if (isCompileOnly())
+            return ;
         try {
-            File pathToDirectory = new File(dir);
-            String nasm = "nasm -f elf64 -o out.o out.asm";
-            String gcc = "gcc -m64 -o run out.o";
-            String clean = "rm out.o out.asm";
+            File pathToDirectory = new File(CURRENT_DIRECTORY);
             Runtime runtime = Runtime.getRuntime();
             Process p = runtime.exec(nasm, null, pathToDirectory);
             p.waitFor();
@@ -85,5 +100,140 @@ public class Main
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    /* Function that manage args */
+    private static void scanArgs(String[] args) 
+    {
+        int i = 0;
+        
+        if (args.length == 0) {
+            System.err.println("No input files specified.");
+            System.exit(0);
+        } 
+        
+        while (i < args.length) {
+            /* If end of command line arguments is reached, that is 
+                name of input file */
+            if (!args[i].equals("--help") && i == args.length - 1) {
+                inputFileName = args[i];
+                setInputFileSpecified();
+                ++i;
+                continue;
+            }
+            
+            switch (args[i]) {
+                case "-o" :
+                    if (args[i+1] == null) break;
+                    outputFileName = args[i+1];
+                    setOutputFileSpecified();
+                    i += 2;
+                    break;
+                case "-S" :
+                    setCompileOnly();
+                    ++i;
+                    break;
+                case "--help" :
+                    Main.displayHelp();
+                    break;
+                default :
+                    Main.unrecognizedCommand(args[i]);
+                    break;
+            }
+        }
+        Main.setOptions();
+    }
+
+    /* Set specified compiler options  */
+    private static void setOptions() 
+    {
+        if (!isInputFileSpecified()) {
+            System.err.println("No input files specified.");
+            System.exit(0);
+        } else if (!inputFileName.endsWith(".c")) {
+            System.err.println("Trying to compile non-c file.");
+            System.exit(0);
+        } else
+            PATH_TO_INPUT_FILE += inputFileName;
+        /* rawFileName will be name of the input file without extension.
+            If input file is "program.c", raw will be "program" */
+        rawFileName = inputFileName.substring(0, inputFileName.lastIndexOf("."));
+        
+        if (isCompileOnly()) {  // compile only
+            if (isOutputFileSpecified()) {
+                PATH_TO_OUTPUT_FILE += outputFileName;  // only assembly like program.s
+            } else {
+                PATH_TO_OUTPUT_FILE += rawFileName + ".s";  // only assembly like program.s
+            }
+        } else {  // compile, assemble and link
+            if (isOutputFileSpecified()) {
+                PATH_TO_OUTPUT_FILE += rawFileName;   // not important (in between name)
+                nasm +=  "-o out.o " + rawFileName;
+                gcc +=  "-o " + outputFileName +  " out.o";
+                clean += "out.o " + rawFileName;
+            } else {
+                PATH_TO_OUTPUT_FILE += rawFileName + ".s"; // in between name program.s
+                nasm +=  "-o out.o " + rawFileName + ".s"; // assemble program.s
+                gcc +=  "-o " + rawFileName +  " out.o";   // raw run file like program
+                clean += "out.o " + rawFileName + ".s";
+            }
+        }
+        
+    }
+
+    /* Display compiler's options */
+    private static void displayHelp() 
+    {
+        System.out.println("Usage: acac [options] file...");
+        System.out.println("Options:");
+        System.out.println("--help               Display this information");
+        System.out.println("-o <file>            Place the output into <file>");
+        System.out.println("-S                   Compile only; do not assemble or link");
+        System.exit(0);
+    }
+     
+    public static void setOutputFileSpecified()
+    {
+        options |= OUTPUT_FILE_SPECIFIED;
+    }
+    
+    public static void setInputFileSpecified()
+    {
+        options |= INPUT_FILE_SPECIFIED;
+    }
+    
+    public static void setCompileOnly()
+    {
+        options |= COMPILE_ONLY;
+    }
+    
+    private static boolean isInputFileSpecified() 
+    {
+        return (options & INPUT_FILE_SPECIFIED) != 0;
+    }
+
+    private static boolean isOutputFileSpecified() 
+    {
+        return (options & OUTPUT_FILE_SPECIFIED) != 0;
+    }
+
+    private static boolean isCompileOnly() 
+    {
+        return (options & COMPILE_ONLY) != 0;
+    }
+
+    private static void unrecognizedCommand(String arg) 
+    {
+        System.err.println("error: unrecognized command line option " + arg);
+        System.exit(0);
+    }
     
 }
+
+
+
+/*
+dir = System.getProperty("user.dir");
+Constants.PATH_TO_INPUT_FILE = dir + "//" + args[0];
+Constants.PATH_TO_OUTPUT_FILE = dir + "//out.s";
+Writers.init();
+*/

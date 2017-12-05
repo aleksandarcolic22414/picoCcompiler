@@ -25,12 +25,6 @@ public class Constants
     public static final String STRING_DWORD = "dword";
     /* Represents value of quad word in string */
     public static final String STRING_QWORD = "qword";
-    /* path to Desktop for testing puropse. */
-    /* public static final String PATH_TO_OUTPUT_FILE = "izlazi//output.asm"; */
-    public static String PATH_TO_OUTPUT_FILE = 
-            "//home//aleksandar//Desktop//compilerTesting//out.asm";
-    /* path to input file */
-    public static String PATH_TO_INPUT_FILE = "ulazi//program.c";
     
     /* using gcc's C extern functions in text segment */
     public static final String GCC_LIB_CTYPE =  "\textern isalnum\n"
