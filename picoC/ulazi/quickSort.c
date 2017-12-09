@@ -6,7 +6,7 @@ int numcmp(void *a, void *b)
 void memcpy(void *buff, void *a, int size)
 {
     while (size--)
-        *buff++ = *a++;
+        *(char *)buff++ = *(char *)a++;
 }
 
 void swapVal(void *a, void *b, int size)

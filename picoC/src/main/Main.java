@@ -27,14 +27,16 @@ public class Main
     public static final String CURRENT_DIRECTORY = System.getProperty("user.dir");
     
     /* Path to output file */
-    public static String PATH_TO_OUTPUT_FILE = CURRENT_DIRECTORY + "//";
+    public static StringBuilder 
+    PATH_TO_OUTPUT_FILE = new StringBuilder(CURRENT_DIRECTORY).append("//");
     /* Path to input file */
-    public static String PATH_TO_INPUT_FILE = CURRENT_DIRECTORY + "//";
+    public static StringBuilder 
+    PATH_TO_INPUT_FILE = new StringBuilder(CURRENT_DIRECTORY).append("//");
     
     /* Compilation commands */
-    public static String nasm  = "nasm -f elf64 ";
-    public static String gcc   = "gcc -m64 ";
-    public static String clean = "rm ";
+    public static StringBuilder nasm  = new StringBuilder("nasm -f elf64 ");
+    public static StringBuilder gcc   = new StringBuilder("gcc -m64 ");
+    public static StringBuilder clean = new StringBuilder("rm ");
     
     /* File names */
     public static String outputFileName = "out.s";
@@ -48,7 +50,7 @@ public class Main
     public static final int OUTPUT_FILE_SPECIFIED = 0x1;
     public static final int INPUT_FILE_SPECIFIED  = 0x2;
     public static final int COMPILE_ONLY          = 0x4;
-    
+    public static final int NO_DELETE             = 0x8;
     
     public static void main(String[] args) 
     {
@@ -89,11 +91,16 @@ public class Main
         try {
             File pathToDirectory = new File(CURRENT_DIRECTORY);
             Runtime runtime = Runtime.getRuntime();
-            Process p = runtime.exec(nasm, null, pathToDirectory);
+            /* Assemble by invoking nasm */
+            Process p = runtime.exec(nasm.toString(), null, pathToDirectory);
             p.waitFor();
-            p = runtime.exec(gcc, null, pathToDirectory);
-            p.waitFor();
-            runtime.exec(clean, null, pathToDirectory);
+            /* Link object files with gcc */
+            p = runtime.exec(gcc.toString(), null, pathToDirectory);
+            /* Delete object and assembly files if needed */
+            if (!isNoDelete()) {
+                p.waitFor();
+                runtime.exec(clean.toString(), null, pathToDirectory);
+            }
         } catch (IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {
@@ -107,7 +114,8 @@ public class Main
         int i = 0;
         
         if (args.length == 0) {
-            System.err.println("No input files specified.");
+            System.err.println("No input file specified.");
+            System.out.println("Type --help for help");
             System.exit(0);
         } 
         
@@ -132,6 +140,10 @@ public class Main
                     setCompileOnly();
                     ++i;
                     break;
+                case "-no-delete" :
+                    Main.setNoDelete();
+                    ++i;
+                    break;
                 case "--help" :
                     Main.displayHelp();
                     break;
@@ -153,28 +165,46 @@ public class Main
             System.err.println("Trying to compile non-c file.");
             System.exit(0);
         } else
-            PATH_TO_INPUT_FILE += inputFileName;
+            PATH_TO_INPUT_FILE.append(inputFileName);
         /* rawFileName will be name of the input file without extension.
             If input file is "program.c", raw will be "program" */
         rawFileName = inputFileName.substring(0, inputFileName.lastIndexOf("."));
         
         if (isCompileOnly()) {  // compile only
             if (isOutputFileSpecified()) {
-                PATH_TO_OUTPUT_FILE += outputFileName;  // only assembly like program.s
+                PATH_TO_OUTPUT_FILE.append(outputFileName);  // only assembly like program.s
             } else {
-                PATH_TO_OUTPUT_FILE += rawFileName + ".s";  // only assembly like program.s
+                PATH_TO_OUTPUT_FILE.append(rawFileName);  // only assembly like program.s
+                PATH_TO_OUTPUT_FILE.append(".s");
             }
         } else {  // compile, assemble and link
             if (isOutputFileSpecified()) {
-                PATH_TO_OUTPUT_FILE += rawFileName;   // not important (in between name)
-                nasm +=  "-o out.o " + rawFileName;
-                gcc +=  "-o " + outputFileName +  " out.o";
-                clean += "out.o " + rawFileName;
+                PATH_TO_OUTPUT_FILE.append(rawFileName);   // not important (in between name)
+                
+                nasm.append("-o out.o ");
+                nasm.append(rawFileName);
+                
+                gcc.append("-o ");
+                gcc.append(outputFileName);
+                gcc.append(" out.o");
+                
+                clean.append("out.o ");
+                clean.append(rawFileName);
             } else {
-                PATH_TO_OUTPUT_FILE += rawFileName + ".s"; // in between name program.s
-                nasm +=  "-o out.o " + rawFileName + ".s"; // assemble program.s
-                gcc +=  "-o " + rawFileName +  " out.o";   // raw run file like program
-                clean += "out.o " + rawFileName + ".s";
+                PATH_TO_OUTPUT_FILE.append(rawFileName); // in between name program.s
+                PATH_TO_OUTPUT_FILE.append(".s");
+                
+                nasm.append("-o out.o ");
+                nasm.append(rawFileName);
+                nasm.append(".s"); // assemble program.s
+                
+                gcc.append("-o ");
+                gcc.append(rawFileName);    // raw run file like "program"
+                gcc.append(" out.o");   
+                
+                clean.append("out.o ");
+                clean.append(rawFileName);
+                clean.append(".s");  // clear object and assembly file
             }
         }
         
@@ -188,6 +218,7 @@ public class Main
         System.out.println("--help               Display this information");
         System.out.println("-o <file>            Place the output into <file>");
         System.out.println("-S                   Compile only; do not assemble or link");
+        System.out.println("-no-delete           Do not delete any files created by compiler or assembler");
         System.exit(0);
     }
      
@@ -206,6 +237,11 @@ public class Main
         options |= COMPILE_ONLY;
     }
     
+    private static void setNoDelete() 
+    {
+        options |= NO_DELETE;
+    }
+    
     private static boolean isInputFileSpecified() 
     {
         return (options & INPUT_FILE_SPECIFIED) != 0;
@@ -221,6 +257,11 @@ public class Main
         return (options & COMPILE_ONLY) != 0;
     }
 
+    private static boolean isNoDelete() 
+    {
+        return (options & NO_DELETE) != 0;
+    }
+    
     private static void unrecognizedCommand(String arg) 
     {
         System.err.println("error: unrecognized command line option " + arg);
@@ -228,12 +269,3 @@ public class Main
     }
     
 }
-
-
-
-/*
-dir = System.getProperty("user.dir");
-Constants.PATH_TO_INPUT_FILE = dir + "//" + args[0];
-Constants.PATH_TO_OUTPUT_FILE = dir + "//out.s";
-Writers.init();
-*/

@@ -312,6 +312,13 @@ public class Checker
                             "Trying to dereference non-pointer type " + ctx.getText());
             return false;
         }
+        if (expr.getPointer().getType() == MemoryClassEnum.VOID) {
+            CompilationControler.errorOcured(
+                    ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Dereferencing void pointer " + ctx.getText());
+            return false;
+        }
         return true;
     }
 

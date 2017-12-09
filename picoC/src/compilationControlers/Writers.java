@@ -32,8 +32,8 @@ public class Writers
     
     public static void init() 
     {
-        inputFile = new File(Main.PATH_TO_INPUT_FILE);
-        outputFile = new File(Main.PATH_TO_OUTPUT_FILE);
+        inputFile = new File(Main.PATH_TO_INPUT_FILE.toString());
+        outputFile = new File(Main.PATH_TO_OUTPUT_FILE.toString());
     }
     
     public Writers() throws IOException 
