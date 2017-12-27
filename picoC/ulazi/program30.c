@@ -2,7 +2,7 @@ int main(int argc, char **argv)
 {
     for (++argv; --argc > 0; argv++) {
         for ( ; **argv; ++*argv)
-        printf("%c", **argv);
+            printf("%c", **argv);
         printf("\n");
     }
     

@@ -1209,4 +1209,19 @@ public class NasmTools
         else
             return Integer.toString(lvalue >> rvalue);
     }
+
+    public static String takeARegister(MemoryClassEnum type) 
+    {
+        if (isTakenRegisterAREG()) {
+            System.out.println("Register A already taken; Funtion takeARegister!");
+            return null;
+        }
+        flags |= AREG;
+        return getARegister(type);
+    }
+
+    public static void freeARegister() 
+    {
+        flags &= ~AREG;
+    }
 }

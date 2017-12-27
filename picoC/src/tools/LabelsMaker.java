@@ -19,6 +19,12 @@ public class LabelsMaker
     public static long logicalElseCounter = 1;
     public static long logicalAfterElseCounter = 1;
     
+    /* Variables holds information about next free conditional label number */
+    public static long conditionalCounter = 1;
+    public static long conditionalIfCounter = 1;
+    public static long conditionalElseCounter = 1;
+    public static long conditionalAfterElseCounter = 1;
+    
     /* Variables holds information about next free 'for' label number */
     public static long forStartCounter = 1;
     public static long forCheckCounter = 1;
@@ -31,8 +37,6 @@ public class LabelsMaker
     public static long WhileEndCounter = 1;
     /* Holds information about current depth of if else statement */
     public static long selectionDepthCounter = 0;
-    /* List contains depths of all if else statements in program */
-    public static List<Long> ifElseLabelHelper;
     
     /* These two listes contains information about current for labels
         in order to help with break and continue instructions */
@@ -46,6 +50,9 @@ public class LabelsMaker
     public static final String IF_LABEL = "IF_LABEL_";
     public static final String ELSE_LABEL = "ELSE_LABEL_";
     public static final String AFTER_ELSE_LABEL = "AFTER_ELSE_LABEL_";
+    public static final String COND_IF_LABEL = "COND_IF_LABEL_";
+    public static final String COND_ELSE_LABEL = "COND_ELSE_LABEL_";
+    public static final String COND_AFTER_ELSE_LABEL = "COND_AFTER_ELSE_LABEL_";
     public static final String FOR_START_LABEL = "FOR_START_LABEL_";
     public static final String FOR_CHECK_LABEL = "FOR_CHECK_LABEL_";
     public static final String FOR_INCREMENT_LABEL = "FOR_INCREMENT_LABEL_";
@@ -53,9 +60,9 @@ public class LabelsMaker
     public static final String WHILE_START_LABEL = "WHILE_START_LABEL_";
     public static final String WHILE_CHECK_LABEL = "WHILE_CHECK_LABEL_";
     public static final String WHILE_END_LABEL = "WHILE_END_LABEL_";
-            
+    
+    
     static {
-        ifElseLabelHelper = new LinkedList<>();
         currentBreakLabel = new LinkedList<>();
         currentContinueLabel = new LinkedList<>();
     }
@@ -78,6 +85,24 @@ public class LabelsMaker
         return AFTER_FALSE_LABEL + Long.toString(logicalAfterFalseCounter++);
     }
     
+    /* Function returns next free condtional if label conditional expression */
+    public static String getNextCondtionalIfLabel()
+    {
+        return COND_IF_LABEL + Long.toString(conditionalIfCounter++);
+    }
+    
+    /* Function returns next free condtional else label conditional expression */
+    public static String getNextCondtionalElseLabel()
+    {
+        return COND_ELSE_LABEL + Long.toString(conditionalElseCounter++);
+    }
+    
+    /* Function returns next free condtional after else label conditional expression */
+    public static String getNextCondtionalAfterElseLabel()
+    {
+        return COND_AFTER_ELSE_LABEL + Long.toString(conditionalAfterElseCounter++);
+    }
+    
     /* Function returns next free if label */
     public static String getNextIfLabel()
     {
@@ -90,61 +115,10 @@ public class LabelsMaker
         return ELSE_LABEL + Long.toString(logicalElseCounter++);
     }
     
-    /* Function returns next free after else label. But this could get tricky
-        in case of multiple else if statements. For example:
-        
-        C like:                 Assembly:           cmp   cond1,0
-        if (cond1)                                  je    ELSE_LABEL_1
-            code1;              IF_LABEL_1:         code1;   
-        else if (cond2)                             jmp   AFTER_ELSE_LABEL_1
-            code2;              ELSE_LABEL_1:       cmp   cond2,0
-        else if (cond3)                             je    ELSE_LABEL_2 
-            code3;              IF_LABEL_2:         code2;
-        else                                        jmp   AFTER_ELSE_LABEL_2 -> problem
-            code4;              ELSE_LABEL_2:       cmp   cond3,0
-        afterElseLabel_1;                       ....
-                                                ....
-                                                ....
-                                AFTER_ELSE_LABEL_3:   -> These are stoped within visitor
-                                    ...                 /
-                                AFTER_ELSE_LABEL_2:   -
-                                    ...
-                                AFTER_ELSE_LABEL_1:  
-    
-        In this example if cond1 is satisfied, program must 
-        jump to after else label 1. But if first condition is not satisfied,
-        second condition is checked and if it is true, than program must
-        execute code2 and jump to afterElseLabel_1 !!! So that initial jump is
-        calculated by substracting the depth of condition.
-        So now, if cond2 is satisfied, code2 is executed and program jumps to
-        afterElseLabel_(labelnumber - depth) which is afterElseLabel_(2 - 1)
-        which is finally afterElseLabel_1.
-    */
+    /* Function returns next free after else label */
     public static String getNextAfterElseLabel()
     {
-        long depth = ifElseLabelHelper.remove(0);
-        return AFTER_ELSE_LABEL + Long.toString(logicalAfterElseCounter++ - depth);
-    }
-
-    /* Insert depth at the end of ifelselabelhelper list */
-    public static void insertDepth() 
-    {
-        ifElseLabelHelper.add(selectionDepthCounter);
-    }
-    /* Resets selectionDeptCounter */
-    public static void resetSelectionDepthCounter() 
-    {
-        selectionDepthCounter = 0;
-    }
-    /* Increasses depth by 1 */
-    public static void increaseDepth() 
-    {
-        ++selectionDepthCounter;
-    }
-    /* Get current if depth */
-    public static long getIfDepth()
-    {
-        return ifElseLabelHelper.get(0);
+        return AFTER_ELSE_LABEL + Long.toString(logicalAfterElseCounter++);
     }
 
     public static String getNextForStartLabel() 

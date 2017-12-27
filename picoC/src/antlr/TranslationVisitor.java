@@ -1210,29 +1210,28 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             right.freeRegister();
         return left;
     }
-
+    
     /*
         selectionStatement
-            :   'if' '(' expression ')' statement ('else' statement)? ;
+            :   'if' '(' assignmentExpression ')' statement ('else' statement)? ;
     */
     @Override
-    public ExpressionObject visitSelectionStatement(picoCParser.SelectionStatementContext ctx) 
+    public ExpressionObject visitSelectionStatement
+    (picoCParser.SelectionStatementContext ctx) 
     {
-        ExpressionObject expr;
+        ExpressionObject expr1;
         String right, labelIf, labelElse, labelAfterElse, jump;
-        long depthIfElse;
-        /* Get depth of if else */
-        depthIfElse = LabelsMaker.getIfDepth();
+        
         /* Get all tree labels, to keep their counters equal for easier debugging */
         labelIf = LabelsMaker.getNextIfLabel();
         labelElse = LabelsMaker.getNextElseLabel();
         labelAfterElse = LabelsMaker.getNextAfterElseLabel();
         
         /* Visit statement and try to recover if error ocurs */
-        if ((expr = visit(ctx.assignmentExpression())) == null)
+        if ((expr1 = visit(ctx.assignmentExpression())) == null)
             return null;
-        if (!expr.isCompared())
-            expr.compareWithZero();
+        if (!expr1.isCompared())
+            expr1.compareWithZero();
         /* Free all registers taken by calculating the expression */
         NasmTools.freeAllRegisters();
         /* Get opposite jump */
@@ -1242,6 +1241,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         Writers.emitLabel(labelIf);
         /* Insert code within if statement */
         visit(ctx.statement(0));
+        
         /* Jump to after else label if expression is true */
         Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, labelAfterElse);
         Writers.emitLabel(labelElse);
@@ -1249,15 +1249,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (ctx.statement(1) != null)
             visit(ctx.statement(1));
         
-        /* Stop multiple emiting of same label */
-        if (depthIfElse == 0)
-            Writers.emitLabel(labelAfterElse);
+        Writers.emitLabel(labelAfterElse);
         
         RelationHelper.setComparisonUsed();
-        expr.setCompared(false);
+        expr1.setCompared(false);
+        
         return null;
     }
-
+    
+    
     /*
         unaryExpression 
             :   '++' unaryExpression    #PreInc
@@ -1566,34 +1566,55 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitConditional(picoCParser.ConditionalContext ctx) 
     {
         ExpressionObject expr1, expr2, expr3;
-        /* Visit all children and do compare operation if it is not done */
-        /* First visit conditional expression (expr3) */
-        if ((expr3 = visit(ctx.conditionalExpression())) == null)
-            return null;
-        if (expr3.isInteger())  // right operand of cmovcc instruction can't be integer
-            expr3.putInRegister();
-        /* Than visit expression (expr2) */
-        if ((expr2 = visit(ctx.expression())) == null)
-            return null;
-        /* And finaly logicalOrExpression (expr1) */
+        String right, labelIf, labelElse, labelAfterElse, jump;
+        
+        /* Get all tree labels, to keep their counters equal for easier debugging */
+        labelIf = LabelsMaker.getNextCondtionalIfLabel();
+        labelElse = LabelsMaker.getNextCondtionalElseLabel();
+        labelAfterElse = LabelsMaker.getNextCondtionalAfterElseLabel();
+        
+        /* Visit statement and try to recover if error ocurs */
         if ((expr1 = visit(ctx.logicalOrExpression())) == null)
             return null;
         if (!expr1.isCompared())
-            expr1.compareWithZero(); // do comparison if it is not done
-        if (expr1.isRegister())              // free taken register
-            expr1.freeRegister();
+            expr1.compareWithZero();
+        /* Free all registers taken by calculating the expression */
+        NasmTools.freeAllRegisters();
+        /* Get opposite jump */
+        jump = RelationHelper.getFalseJump();
+        /* Here goes emiting  */
+        Writers.emitInstruction(jump, labelElse);
+        Writers.emitLabel(labelIf);
+        /* Insert code within if statement */
+        if ((expr2 = visit(ctx.expression())) == null)
+            return null;
+        expr2.comparisonCheck();
+        /* Result must be in A register */
+        if (!expr2.isRegisterA())
+            expr2.putInRegisterA();
+        /* Register "A" is tehnicaly taken, but in order to expr3 take it, let's
+            simulate that it is taken */
+        NasmTools.freeARegister();
+      
+        /* Jump to after else label if expression is true */
+        Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, labelAfterElse);
+        Writers.emitLabel(labelElse);
+        /* Insert code within else statement if it is there */
+        if ((expr3 = visit(ctx.conditionalExpression())) == null)
+            return null;
+        expr3.comparisonCheck();
         
-        if (!expr2.isRegister())    // and left must be register
-            expr2.putInRegister();
-        if (expr3.isStringLiteral())
-            expr3.putInRegister();
+        if (!expr3.isRegisterA())
+            expr3.putInRegisterA();
         
-        ExpressionObject.castVariablesToMaxSize(expr2, expr3);
-        Emitter.setConditionalMoveOperator(expr2, expr3);
+        Writers.emitLabel(labelAfterElse);
         
-        return expr2;
+        RelationHelper.setComparisonUsed();
+        expr1.setCompared(false);
+        
+        return ExpressionObject.returnBigger(expr2, expr3);
     }
-
+   
     /*
         blockItem
             :   declarationList

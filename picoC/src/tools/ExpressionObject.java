@@ -632,4 +632,22 @@ public class ExpressionObject
         Writers.emitInstruction("not", this.text);
     }
 
+    /* Function return object with bigger size of 2 */
+    public static ExpressionObject returnBigger
+    (ExpressionObject expr2, ExpressionObject expr3) 
+    {
+        return expr2.size > expr3.size ? expr2 : expr3;
+    }
+
+    /* Function puts variable in A register */
+    public void putInRegisterA() 
+    {
+        if (this.isRegisterA())
+            return;
+        String aReg = NasmTools.takeARegister(this.getType());;
+        Writers.emitInstruction("mov", aReg, this.text);
+        this.setText(aReg);
+        this.setToRegister();
+    }
+    
 }

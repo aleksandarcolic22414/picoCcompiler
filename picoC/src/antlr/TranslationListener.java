@@ -201,20 +201,4 @@ public class TranslationListener extends picoCBaseListener
         currentDeclaratorType = NasmTools.getTypeOfVar(tokenType);
     }
 
-    /* If selectionStatement is visited, it's depth is stored in list
-        in LabelsMaker class. It is needed for calculating else if () statement 
-        labels. */
-    @Override
-    public void enterSelectionStatement(picoCParser.SelectionStatementContext ctx) 
-    {
-        LabelsMaker.insertDepth();
-        LabelsMaker.increaseDepth();
-    }
-    /* Counter of depth in LabelsMaker class is reset to 0. */
-    @Override
-    public void exitSelectionStatement(picoCParser.SelectionStatementContext ctx) 
-    {
-        LabelsMaker.resetSelectionDepthCounter();
-    }
-
 }

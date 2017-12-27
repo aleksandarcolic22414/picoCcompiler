@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 char *c = "Aleksandar Colic";
 
 int isdigit(int ch)
@@ -33,7 +36,7 @@ char *strdup(char *s)
     return nstr;
 }
 
-int atoi(char *c)
+int atoia(char *c)
 {
     int i, n, sign;
     while (isspace(*c)) // ignorisu se escape-znaci
@@ -50,7 +53,7 @@ int atoi(char *c)
 int main(int argc, char **argv)
 {
     while (--argc)          // stampaj brojeve sa ulaza
-        printf("%d\n", atoi(*++argv));
+        printf("%d\n", atoia(*++argv));
     
     return 0;
 }

@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 int numcmp(void *a, void *b)
 {
     return *(int *)a - *(int *)b;

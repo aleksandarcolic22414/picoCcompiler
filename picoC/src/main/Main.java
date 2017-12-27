@@ -27,7 +27,7 @@ public class Main
     public static final String CURRENT_DIRECTORY = System.getProperty("user.dir");
     
     /* Path to output file */
-    public static StringBuilder 
+    public static StringBuilder
     PATH_TO_OUTPUT_FILE = new StringBuilder(CURRENT_DIRECTORY).append("//");
     /* Path to input file */
     public static StringBuilder 
@@ -213,7 +213,7 @@ public class Main
     /* Display compiler's options */
     private static void displayHelp() 
     {
-        System.out.println("Usage: acac [options] file...");
+        System.out.println("Usage: acc [options] file...");
         System.out.println("Options:");
         System.out.println("--help               Display this information");
         System.out.println("-o <file>            Place the output into <file>");
