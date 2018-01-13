@@ -620,5 +620,17 @@ public class Checker
                             "Different type of variables in assign context");
         }
     }
+
+    public static boolean checkVarMatch
+    (picoCParser.ConditionalContext ctx, ExpressionObject expr2, ExpressionObject expr3) 
+    {
+        if (expr2.getType() != expr3.getType()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
+                    "Different types in conditional expression");
+            return false;
+        }
+        return true;
+    }
     
 }

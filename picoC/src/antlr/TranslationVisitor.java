@@ -1578,8 +1578,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         if (!expr1.isCompared())
             expr1.compareWithZero();
-        /* Free all registers taken by calculating the expression */
-        NasmTools.freeAllRegisters();
+        
         /* Get opposite jump */
         jump = RelationHelper.getFalseJump();
         /* Here goes emiting  */
@@ -1590,12 +1589,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         expr2.comparisonCheck();
         /* Result must be in A register */
-        if (!expr2.isRegisterA())
-            expr2.putInRegisterA();
-        /* Register "A" is tehnicaly taken, but in order to expr3 take it, let's
-            simulate that it is taken */
-        NasmTools.freeARegister();
-      
+        if (!expr2.isRegister())
+            expr2.putInRegister();
+        
         /* Jump to after else label if expression is true */
         Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, labelAfterElse);
         Writers.emitLabel(labelElse);
@@ -1604,15 +1600,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         expr3.comparisonCheck();
         
-        if (!expr3.isRegisterA())
-            expr3.putInRegisterA();
+        if (!Checker.checkVarMatch(ctx, expr2, expr3))
+            return null;
+        /* Mov result to expr2 register in order to return expr2, whatever
+            condition is true */
+        Writers.emitInstruction("mov", expr2.getText(), expr3.getText());
+        if (expr3.isRegister())
+            expr3.freeRegister();
         
         Writers.emitLabel(labelAfterElse);
         
         RelationHelper.setComparisonUsed();
         expr1.setCompared(false);
         
-        return ExpressionObject.returnBigger(expr2, expr3);
+        return expr2;
     }
    
     /*
