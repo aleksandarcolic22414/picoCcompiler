@@ -13,7 +13,7 @@ Sada se komandom:
 $ acc
 Pokreće kompajler.
 
-Takođe je potrebno skinuti NASM assembler komandom
+Takođe je potrebno skinuti NASM assembler komandom:
 $ sudo apt install nasm
 
 Što se tiče gcc-a, on je već instaliran na većini linux distribucija, ali, ukoliko nije, potrebno ga je skinuti.
