@@ -1,38 +1,44 @@
 # picoCcompiler
 
-Korišćenje:
+# Korišćenje:
 
 Objasnimo ukratko kako se koristi kompajler na 64-bitnim Linux operativnim sistemima. 
 Prvo, potrebno je skinuti kompajler sa github-a u neki direktorijum. Uzmimo /usr/local/lib za naš folder. 
 To ćemo uraditi komandama:
+```
 $ cd  /usr/local/lib
 $ sudo wget https://github.com/aleksandarcolic22414/picoCcompiler/releases/download/v1.0/picoC.zip
 $ sudo unzip picoC.zip
 $ export CLASSPATH=”.:/usr/local/lib/picoC.jar:$CLASSPATH”
 $ alias acc=’java -jar /usr/local/lib/picoC.jar’
-
+```
 Sada se komandom:
+```
 $ acc
+```
 Pokreće kompajler.
 
 Takođe je potrebno skinuti NASM assembler komandom:
+```
 $ sudo apt install nasm
-
+```
 Što se tiče gcc-a, on je već instaliran na većini linux distribucija, ali, ukoliko nije, potrebno ga je skinuti.
 
 Sada imamo sve što nam je potrebno za prevođenje.
 
 Prevedimo neki C program. Recimo da se zove originalno “program.c”.
 Pozovimo kompajler komandom:
+```
 $ acc program.c
-
+```
 Izlaz je novi fajl “program” koji možemo pokrenuti komandom:
+```
 $ ./program
-
+```
 Ta da!
 
 -------------------------------------------------------------------------------------------------------------------------------------
-UVOD:
+# UVOD
 
 Pre samog objašnjavanja procesa prevođenja, potrebno je objasniti par osnovnih stvari. 
 Dakle, svrha samog kompajlera je da kod, napisan u programskom jeziku C, prevede u asemblerski jezik. 
@@ -55,7 +61,7 @@ NASM pravi objektni fajl od assemblerskog fajla.
 Sledeća stvar koju treba odraditi je linkovanje objektnih fajlova.
 Ovde je izabran gcc-ov linker, kako bi se mogle koristiti već napravljene standardne biblioteke (<stdio.h>, <stdlib.h> itd...).
 Izlaz linkovanja je izvrsni fajl koji se sada moze pokrenuti (odnosno “program”).
-Pokretanje programa se vrsi komandom ./imePrograma .
+Pokretanje programa se vrsi komandom: ```./imePrograma```
 
 Kada se pozove kompajler bez opcija ($ acc program.c), on automatski izvrsava ceo gore pomenuti proces i izlaz
 je samo izvršni “program” koji moze da se pokrene, a ostale fajlove, koji se pojavljuju u koracima izmedju, kompajler briše.
@@ -66,16 +72,23 @@ Videćemo kasnije kako se to lako u Javi može odraditi.
 Prikažimo sada postupak pravljenja izvrsnog fajla od ulaznog c fajla, korak po korak.
 Pretpostavimo da imamo C program “prviProgram.c” .
 Pokrenimo kompajler i prosledimo mu opciju -S (compile only):
+```
 $ acc -S prviProgram.c
+```
 Dobija se asemblerski fajl prviProgram.s
 Sada pozovimo nasm assembler nad tim fajlom:
+```
 $ nasm -f elf64 prviProgram.s
+```
 Dobija se objektni fajl program.o
 Pozovimo linker:
+```
 $ gcc -m64 program.o
+```
 Dobija se izvrsni fajl a.out koji se moze pokrenuti komandom:
+```
 $ ./a.out
-
+```
 Dakle, kao što smo videli, ovaj kompajler prevodi direktno C jezik u asemblerski jezik. 
 Većina kompajlera ne radi direktno prevođenje, već viši programski jezik prebacuje u neku vrstu među jezika
 koji nije zavistan od same arhitekture i koji se kasnije može lako prevesti u asembler bez obzira na tip mašine. 
@@ -92,7 +105,7 @@ Pogledati na internetu kako se to može odraditi.
 Sva naredna uputstva su data za NetBeans IDE.
 
 -------------------------------------------------------------------------------------------------------------------------------------
-Ukratko o ANTLR-u:
+# Ukratko o ANTLR-u:
 
 ANTLR (Another Tool For Language Recognition) predstavlja alat za generisanje parsera i lexera na osnovu zadate gramatike.
 ANTLR je top-down parser koji automatski generiše parser i lexer. 
@@ -128,7 +141,7 @@ Biće kasnije jasno zašto je to važno.
 Pogledajmo sada (uprošćeno) kako izgleda prevodjenje i šta je zamisao...
 
 -------------------------------------------------------------------------------------------------------------------------------------
-Prevodjenje:
+# Prevodjenje:
 
 Sada će ukratko biti objašnjeno kako se može odraditi prevodjenje jednostavnog programa.
 Pretpostavimo da treba prevesti program prvi.c . 
@@ -138,15 +151,17 @@ Sada je moguće napraviti parsno stablo. Neka naš prvi.c izgleda ovako:
 U nastavku teksta je koriscena takva notacija za sve fajlove.)
 
 /prvi.c
+```
 int main()
 {
     int a = 5;
     return a;
 }
-
+```
 Ono što treba da dobijemo je fajl prvi.s koji izgleda ovako:
 
 /prvi.s
+```
 segment .data
 
 segment .text
@@ -165,7 +180,7 @@ mainExit:
 	ret
 
 segment .bss
-
+```
 Da bi to dobili, napravimo parsno stablo od naseg programa prvi.c .
 Ono će izgledati ovako:
 
@@ -257,35 +272,42 @@ Kada stignemo u function definition pravilo iz njega izvlačimo neke informacije
 o nazivu funkcije, parametrima, povratnoj vrednosti itd… 
 Stampamo u fajl:
 
+```
 global    main
 main:
 	push	rbp
 	mov	rbp, rsp
-
+```
 Nastavljamo obilazak. Idemo u functionBody, compoundStatement, blockItemList (takođe se ništa interesantno ne dešava). 
 Ulazimo u levo podstablo do pravila declaration i tu izvlačimo tip promenljive koja se deklariše (int). 
 Stižemo do pravila initDeclarator iz koga izvlačimo naziv promenljive i vrednost promenljive i štampamo u prvi.s:
+```
 	sub	rsp, 4
 	mov	dword [rbp-4], 5
+```
 Sada se vraćamo do blockItemLista (ispod functionBody) i obilazimo desno podstablo. 
 Stižemo do jumpStatement pravila i izvlačimo podatke da je skok return i vrednost desnog podstabla promenljiva a.
 Stampamo u prvi.s:
+```
 	mov	eax, dword [rbp-4]
 	jmp	mainExit
-
+```
 Na kraju izlazimo iz svih pravila i ponovo se vraćamo u pravilo functionDefinition. 
 Pošto smo obišli sva njegova podstabla, štampamo u prvi.s:
 mainExit:
+```
 	mov	rsp,rbp                                 
 	pop	rbp                                 
 	ret
+```
 Vraćamo se u compilationUnit i završavamo prevodjenje.
 Kada se naš program (kompajler) izvršio dobili smo izlaz prvi.s u kome se nalazi asemblerski jezik. 
 Prilično jednostavno, ha?
-Ali da bi se sve ovo izvelo potrebno je objasniti čitav proces korak po korak. Pa krenimo od pravljenja gramatike...
+Ali da bi se sve ovo izvelo potrebno je objasniti čitav proces korak po korak.
+Pa krenimo od pravljenja gramatike...
 
 ------------------------------------------------------------------------------------------------------------------------------
-Pravljenje Gramatike:
+# Pravljenje Gramatike:
 
 Da bi mogli da počnemo prevođenje potrebno je da u gramatici definišemo naš jezik. 
 Zatim će ANTLR da izgeneriše lexer i parser pomoću kojih ćemo napraviti parsno stablo koje se može 
@@ -302,6 +324,7 @@ sastojati od “translationUnit” i EOF znaka (znak za kraj fajla).
 Gramatika sada izgleda ovako:
 
 /picoC.g4
+```
 grammar picoC;
 
 compilationUnit
@@ -323,12 +346,12 @@ functionBody
 WHITE_SPACE
 :	[ \t\r\n]+ -> skip
 ;
-
+```
 Lexersko pravilo WHITE_SPACE služi da bi se ignorisali space znaci.
 Pređimo na pravljenje klase visitor.
 
 ------------------------------------------------------------------------------------------------------------------------------
-Pravljenje Visitora:
+# Pravljenje Visitora:
 
 Pre nego sto se odradi build projekta, potrebno je u fajlu NetBeansProject/.../nbproject/project.properties 
 omogućiti pravljenje klase visitor tako što treba naći liniju koja se nalazi pri kraju fajla
@@ -336,24 +359,26 @@ antlr.generator.option.code.visitor=false
 i promeniti vrednost sa false na true.
 
 Kada se sada uradi build projekta, ANTLR (odnosno NetBeans pomoću ANTLR-ovog Plugina) će izgenerisati klase:
-
-picoCBaseListener.java	picoCLexer.java
+```
+picoCBaseListener.java
+picoCLexer.java
 picoCListener.java  
 picoC.tokens picoCLexer.tokens
 picoCParser.java
 picoCBaseVisitor.java
 picoCVisitor.java ;
-
+```
 Da bi ugradili akcije u čvorove stabla potrebno je da napravimo novu klasu koja će da nasledi klasu picoCBaseVisitor. 
 Nazovimo je TranslationVisitor. Klasa BaseVisitor je generička, sa tim da svaka funkcija iz nje vraća
 generički tip kog je tipa klasa.
 Ako sada nasledimo klasu BaseVisitor kao:
 
+```java
 public class TranslationVisitor extends picoCBaseVisitor<String>  
 {
 	// sve visit funkcije
 }
-    
+```
 svaka metoda koju budemo override-ovali će imati povratnu vrednost String. 
 
 Za svako parsersko pravilo koje smo naveli u gramatici postoji po jedna visit funkcija koja će biti pozvana
@@ -362,6 +387,7 @@ Da bi izvršili akcije u tim funkcijama potrebno je da ih override-ujemo.
 Override-ujmo funkciju compilationUnit (to je uvek prvo pravilo, odnosno koren stabla). 
 Ispišimo samo na standardnom izlazu u kom se pravilu nalazimo.
 
+```java
 @Override 
 public String visitCompilationUnit
 (PicoCParser.compilationUnitContext ctx)
@@ -370,22 +396,23 @@ public String visitCompilationUnit
     super.visitCompilationUnit();  // obidji svu decu
     return null;
 }
-
+```
 Parametar funkcije PicoCParser.compilationUnitContext ctx
 je kontekstni čvor u kome se nalazimo. U ovom slučaju to je compilationUnit čvor.
 Iz gramatike se vidi da ctx može da ima samo jedno dete i to dete je translationUnit.
 
 Linija super.visitCompilationUnit(); obilazi svu decu od čvora compilationUnit.
 To je zgodno u situacijama kada naš čvor ima više dece i ima isti efekat kao kada bi napisali 
-
+```
 visit(ctx.prvoDete);
 visit(ctx.drugoDete);
 visit(ctx.treceDete);
 …
 visit(ctx.poslednjeDete);
-
+```
 Odradimo istu stvar za sve visit funkcije koje mogu da se override-uju.
 
+```java
 @Override 
 public String visitTranslationUnit
 (PicoCParser.translationUnitContext ctx)
@@ -412,15 +439,16 @@ public String visitFunctionBody
     super.functionBody();  // obidji svu decu
     return null;
 }
-
+```
 Sada, kada imamo akcije ugradjene u čvorove, potrebno nam je stablo koje ćemo da obiđemo. 
 Pogledajmo kako to može da se odradi.
 
 ------------------------------------------------------------------------------------------------------------------------------
-Pravljenje I Obilazak Parsnog Stabla:
+# Pravljenje I Obilazak Parsnog Stabla:
 
 Napravimo posebno Main klasu u kojoj ćemo napraviti sve što nam je potrebno za prevodjenje.
 
+``` java
 public class Main
 {	
     public static final String pathToInputFile = “//putanja//do//ulaznog//fajla.c”
@@ -442,7 +470,7 @@ public class Main
 		}
 	}
 }
-
+```
 Za više informacija o tome kako ANTLR funkcionise pogledati: The Definitive ANTLR 4 Reference - Terence Parr.
 
 Ukratko objašnjenje postupka:
@@ -467,10 +495,11 @@ Linija	public static final String pathToInputFile = “//putanja//do//ulaznog//f
 označava putanju do ulaznog fajla koji “prevodimo”. Neka naš fajl izgleda ovako:
 
 //putanja//do//ulaznog//fajla.c
+```c
 int main()
 {
 }
-
+```
 Kada se napravi parsno stablo (ParseTree tree) od ulaznog fajla (u main metodi od malopre),
 ono će izgledati ovako:
 
@@ -499,6 +528,7 @@ Kada se pozove metoda visitor.visit(tree) visitor kreće od korena stabla odnosn
 compilationUnit pravila i redom aktivitra metode koje smo override-ovali u TranslationVisitor klasi.
 Prvo se poziva metoda:
 
+```java
 @Override 
 public String visitCompilationUnit
 (PicoCParser.compilationUnitContext ctx)
@@ -507,7 +537,7 @@ public String visitCompilationUnit
     super.visitCompilationUnit();  // obidji svu decu
     return null;
 }
-
+```
 Ova metoda ispisuje na ekranu:
 Pravilo: compilationUnit 
 i poziva metodu nadklase koja obilazi svu decu (super.visitCompilationUnit()).
@@ -518,15 +548,16 @@ Pravilo: translationUnit
 I tako dalje...
 
 Na kraju će na ekranu biti ispisano:
+```
 Pravilo: compilationUnit 
 Pravilo: translationUnit
 Pravilo: main
 Pravilo: functionBody.
-
+```
 Dodajmo sada po jednu liniju svakoj metodi da bismo videli kako se može nastaviti rad
 posle obilaženja dece (što i jeste osnovna zamisao kod pravljenja kompajlera).
 Prepravimo metodu compilationUnit tako da igleda ovako:
-
+```java
 @Override 
 public String visitCompilationUnit
 (PicoCParser.compilationUnitContext ctx)
@@ -537,10 +568,10 @@ public String visitCompilationUnit
     System.out.println(“Povratak u pravilo: compilationUnit”); 
     return null;
 }
-
+```
 Ubacimo dodatno štampanje u svaku metodu i pokrenimo program ponovo.
 Sada će na ekranu biti ispisano:
-
+```
 Pravilo: compilationUnit 
 Pravilo: translationUnit
 Pravilo: main
@@ -549,7 +580,7 @@ Povratak u pravilo: functionBody
 Povratak u pravilo: main
 Povratak u pravilo: translationUnit
 Povratak u pravilo: compilationUnit
-
+```
 Primećujemo da se posle svakog rekurzivnog obilaska dece, vraćamo u pravilo iz kog smo krenuli u obilazak. 
 To je mehanizam koji omogućava samo prevodjenje i vrlo je jednostavan za korišćenje.
 Sve što sada treba uraditi da bi dobili pravo prevođenje je pravljenje novog fajla
@@ -563,13 +594,15 @@ Naravno, imaćemo i metodu init() koja će da inicijalizuje potrebne stvari za r
 Sada je potrebno, da u nekim metodama u visitor klasi, štampamo asemblerski kod u naš fajl. 
 Pošto je naša gramatika vrlo jednostavna, jedina motoda iz koje treba stampati neke instrukcije je visitMain(). 
 U njoj treba odštampati instrukcije kao sto su:
-
+```
 	global main
-main: 
+main:
+```
 itd...
 
 Prepravimo visitMain:
 
+```java
 @Override 
 public String visitMain
 (PicoCParser.mainContext ctx)
@@ -585,7 +618,7 @@ public String visitMain
 
     return null;
 }
-
+```
 Dakle, prvo će se odstampati standardni ulaz u main funkciju (prve četiri instrukcije), 
 pa će metoda visit(ctx.functionBody) štampati instrukcije koje se nalaze u telu main funkcije
 programa koji prevodimo, pa će se tek onda nastaviti sa stampanjem standardon
@@ -594,9 +627,9 @@ Naravno, naša funkcija za obilazak tela funkcije visit.(ctx.FunctionBody) neće
 pošto je ostala nepromenjena, ali je bitno da uvidimo kako će teći proces prevođenja...
 
 Takodje je potrebno pre svih štampanja instrukcija odštampati:
-
+```
 segment .text
-
+```
 što označava segment koda u asembleru. 
 To se može odraditi u compilationUnit pravilu na primer…
 
