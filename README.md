@@ -1,5 +1,3 @@
-# picoCcompiler
-
 # Korišćenje:
 
 Objasnimo ukratko kako se koristi kompajler na 64-bitnim Linux operativnim sistemima. 
@@ -147,8 +145,8 @@ Sada će ukratko biti objašnjeno kako se može odraditi prevodjenje jednostavno
 Pretpostavimo da treba prevesti program prvi.c . 
 Pretpostavimo takođe da imamo već napravljenu gramatiku jezika kao i parser i lexer. 
 Sada je moguće napraviti parsno stablo. Neka naš prvi.c izgleda ovako:
-("/prvi.c" je fajl na disku cija je putanja .../prvi.c , a u nastavku je njegov sadrzaj; 
-U nastavku teksta je koriscena takva notacija za sve fajlove.)
+("/prvi.c" je fajl na disku čija je putanja .../prvi.c , a u nastavku je njegov sadržaj; 
+U nastavku teksta je korišcena takva notacija za sve fajlove.)
 
 /prvi.c
 ```
@@ -207,7 +205,8 @@ Ono će izgledati ovako:
                                                           {    blockItemList      }
                                                                     |
                                                                     |
-                                         ---------------------------------------------------------------                                                                          |                                                              |
+                                         ---------------------------------------------------------------
+					 |								|
                                     blockItemList                                                    statement
                                          |                                                              |
                                       blockItem                                                    jumpStatement
