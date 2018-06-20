@@ -205,8 +205,8 @@ Ono će izgledati ovako:
                                                           {    blockItemList      }
                                                                     |
                                                                     |
-                                         ---------------------------------------------------------------
-					 |								|
+                                         ----------------------------------------------------------------
+                                         |                                                              |
                                     blockItemList                                                    statement
                                          |                                                              |
                                       blockItem                                                    jumpStatement
