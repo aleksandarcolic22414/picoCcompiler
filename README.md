@@ -329,24 +329,24 @@ Gramatika sada izgleda ovako:
 grammar picoC;
 
 compilationUnit
-:	translationUnit? EOF
-;
+	:	translationUnit? EOF
+	;
 
 translationUnit
-:	main
-;
+    :	main
+    ;
 
 main
-:	'int' 'main' '(' ')' functionBody
-;
+    :	'int' 'main' '(' ')' functionBody
+    ;
 
 functionBody
-:	'{' '}'
-;	
+    :	'{' '}'
+    ;	
 
 WHITE_SPACE
-:	[ \t\r\n]+ -> skip
-;
+    :	[ \t\r\n]+ -> skip
+    ;
 ```
 Lexersko pravilo WHITE_SPACE služi da bi se ignorisali space znaci.
 Pređimo na pravljenje klase visitor.
