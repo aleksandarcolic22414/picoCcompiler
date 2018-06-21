@@ -456,20 +456,20 @@ public class Main
 	
     public static void main(String[] args) 
     {
-		try {
-			InputStream is = new FileInputStream(pathToInputFile);
-			ANTLRInputStream in = new ANTLRInputStream(is);
-			picoCLexer lexer = new picoCLexer(in);
-			CommonTokenStream tokens = new  CommonTokenStream(lexer);
-			picoCParser parser = new picoCParser(tokens);
-			ParseTree tree = parser.compilationUnit();
-		
-			TranslationVisitor visitor = new TranslationVisitor();
-			visitor.visit(tree);
-		} catch (Exception ex) {
-			System.err.println(ex); 
-		}
-	}
+        try {
+            InputStream is = new FileInputStream(pathToInputFile);
+            ANTLRInputStream in = new ANTLRInputStream(is);
+            picoCLexer lexer = new picoCLexer(in);
+            CommonTokenStream tokens = new  CommonTokenStream(lexer);
+            picoCParser parser = new picoCParser(tokens);
+            ParseTree tree = parser.compilationUnit();
+            
+            TranslationVisitor visitor = new TranslationVisitor();
+            visitor.visit(tree);
+        } catch (Exception ex) {
+            System.err.println(ex); 
+        }
+    }
 }
 ```
 Za više informacija o tome kako ANTLR funkcionise pogledati: The Definitive ANTLR 4 Reference - Terence Parr.
