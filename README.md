@@ -589,11 +589,17 @@ na početku našeg programa u koji ćemo upisivati neki asemblerski kod tokom ob
 
 Pretpostavimo da smo napravili klasu Writers koja će raditi sa našim izlaznim fajlom.
 Pretpostavimo i da ta klasa ima statičku metodu za upis u naš fajl koja glasi: 
-Writers.emitInstruction(String instruction). 
+```
+Writers.emitInstruction(String instruction)
+```
 Kada se pozove, ova metoda stampa String instruction u fajl i znak za prelazak u novi red (‘\n’). 
-Naravno, imaćemo i metodu init() koja će da inicijalizuje potrebne stvari za rad sa fajlom. 
+Naravno, imaćemo i metodu 
+```
+init()
+```
+koja će da inicijalizuje potrebne stvari za rad sa fajlom. 
 Sada je potrebno, da u nekim metodama u visitor klasi, štampamo asemblerski kod u naš fajl. 
-Pošto je naša gramatika vrlo jednostavna, jedina motoda iz koje treba stampati neke instrukcije je visitMain(). 
+Pošto je naša gramatika vrlo jednostavna, jedina motoda iz koje treba stampati neke instrukcije je ```visitMain()```. 
 U njoj treba odštampati instrukcije kao sto su:
 ```
 	global main
@@ -621,10 +627,10 @@ public String visitMain
 }
 ```
 Dakle, prvo će se odstampati standardni ulaz u main funkciju (prve četiri instrukcije), 
-pa će metoda visit(ctx.functionBody) štampati instrukcije koje se nalaze u telu main funkcije
+pa će metoda ```visit(ctx.functionBody)``` štampati instrukcije koje se nalaze u telu main funkcije
 programa koji prevodimo, pa će se tek onda nastaviti sa stampanjem standardon
 izlaza iz funkcije (poslednje 3 instrukcije).
-Naravno, naša funkcija za obilazak tela funkcije visit.(ctx.FunctionBody) neće odstampati nista,
+Naravno, naša funkcija za obilazak tela funkcije ```visit.(ctx.FunctionBody)``` neće odstampati nista,
 pošto je ostala nepromenjena, ali je bitno da uvidimo kako će teći proces prevođenja...
 
 Takodje je potrebno pre svih štampanja instrukcija odštampati:
@@ -637,11 +643,17 @@ To se može odraditi u compilationUnit pravilu na primer…
 Kada se sada pokrene program, kao rezultat ćemo imati izlazni fajl koji će u sebi
 sadržati asemblerske instrukcije.
 Nad tim fajlom se sada treba pozvati asembler:
+```
 $ nasm -f elf64 -o out.o izlazniFajl.s
+```
 I linker:
+```
 $ gcc -m64 -o izlaz out.o
+```
 I program se sada može pokrenuti instrukcijom:
+```
 $ ./izlaz
+```
 
 ------------------------------------------------------------------------------------------------------------------------
 Čestitam! Upravo smo napravili naš prvi kompajler! 
