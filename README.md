@@ -329,8 +329,8 @@ Gramatika sada izgleda ovako:
 grammar picoC;
 
 compilationUnit
-	:	translationUnit? EOF
-	;
+    :   translationUnit? EOF
+    ;
 
 translationUnit
     :	main
@@ -542,7 +542,7 @@ public String visitCompilationUnit
 Ova metoda ispisuje na ekranu:
 Pravilo: compilationUnit 
 i poziva metodu nadklase koja obilazi svu decu (super.visitCompilationUnit()).
-Prvo dete in-order obilaskom je translationUnit, pa se ulazi u taj čvor i poziva metoda 
+Prvo dete je translationUnit, pa se ulazi u taj čvor i poziva metoda 
 visitTranslationUnit() na sličan način kao i compilationUnit malopre…
 Ispisuje se na ekranu:
 Pravilo: translationUnit
