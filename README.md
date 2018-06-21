@@ -294,8 +294,9 @@ Stampamo u prvi.s:
 ```
 Na kraju izlazimo iz svih pravila i ponovo se vraćamo u pravilo functionDefinition. 
 Pošto smo obišli sva njegova podstabla, štampamo u prvi.s:
-mainExit:
+
 ```
+mainExit:
 	mov	rsp,rbp                                 
 	pop	rbp                                 
 	ret
