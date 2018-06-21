@@ -126,8 +126,9 @@ odnosno obilaženje odredjenog pravila u izgenerisanom parsnom stablu.
 Listener klasa omogućava ugradnju akcija u svaki čvor parsnog stabla.
 Funkcioniše tako što svaki čvor u stablu osluškuje, odnosno očekuje određeni događaj.
 Taj događaj je obilazak tog (kontekstnog) čvora. Obilazak celog stabla se vrši pomocu klase Walker.
-Walker klasa je pomoćnik listener klase. Kada se napravi "šetac", on po default-u obilazi stablo In-order obilaskom.
-Prvo se obilazi levo podstablo, zatim trenutni čvor i na kraju desno podstablo. 
+Walker klasa je pomoćnik listener klase. 
+Kada se napravi "šetac", on kreće svoj obilazak od vrha parsnog stabla.
+U svakom koraku se obilazi trenutni čvor, a zatim sva deca tog kontekstnog čvora.
 Kada walker stigne do nekog kontekstnog čvora, tada se aktivira osluškivac za to pravilo (koji je napravljen u klasi listener).
 U klasi listener se prave određene akcije koje se izvršavaju kada walker aktivira pravilo.
 Ovaj mehanizam omogućava jednostavnu ugradnju akcija za prevodjenje.
