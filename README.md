@@ -3,21 +3,25 @@
 Objasnimo ukratko kako se koristi kompajler na 64-bitnim Linux operativnim sistemima. 
 Prvo, potrebno je skinuti kompajler sa github-a u neki direktorijum. Uzmimo /usr/local/lib za naš folder. 
 To ćemo uraditi komandama:
-```
+```bash
 $ cd  /usr/local/lib
 $ sudo wget https://github.com/aleksandarcolic22414/picoCcompiler/releases/download/v1.0/picoC.zip
 $ sudo unzip picoC.zip
-$ export CLASSPATH=”.:/usr/local/lib/picoC.jar:$CLASSPATH”
-$ alias acc=’java -jar /usr/local/lib/picoC.jar’
+$ export CLASSPATH=".:/usr/local/lib/picoC.jar:$CLASSPATH"
+$ alias acc='java -jar /usr/local/lib/picoC.jar'
 ```
 Sada se komandom:
-```
+```bash
 $ acc
 ```
 Pokreće kompajler.
 
-Takođe je potrebno skinuti NASM assembler komandom:
+Potrebno je skinuti Java Runtime Environment ukoliko se ne nalazi na računaru:
+```bash
+$ sudo apt install default-jre
 ```
+Takođe je potrebno skinuti NASM assembler komandom:
+```bash
 $ sudo apt install nasm
 ```
 Što se tiče gcc-a, on je već instaliran na većini linux distribucija, ali, ukoliko nije, potrebno ga je skinuti.
@@ -26,11 +30,11 @@ Sada imamo sve što nam je potrebno za prevođenje.
 
 Prevedimo neki C program. Recimo da se zove originalno “program.c”.
 Pozovimo kompajler komandom:
-```
+```bash
 $ acc program.c
 ```
 Izlaz je novi fajl “program” koji možemo pokrenuti komandom:
-```
+```bash
 $ ./program
 ```
 Ta da!
@@ -70,21 +74,21 @@ Videćemo kasnije kako se to lako u Javi može odraditi.
 Prikažimo sada postupak pravljenja izvrsnog fajla od ulaznog c fajla, korak po korak.
 Pretpostavimo da imamo C program “prviProgram.c” .
 Pokrenimo kompajler i prosledimo mu opciju -S (compile only):
-```
+```bash
 $ acc -S prviProgram.c
 ```
 Dobija se asemblerski fajl prviProgram.s
 Sada pozovimo nasm assembler nad tim fajlom:
-```
+```bash
 $ nasm -f elf64 prviProgram.s
 ```
 Dobija se objektni fajl program.o
 Pozovimo linker:
-```
+```bash
 $ gcc -m64 program.o
 ```
 Dobija se izvrsni fajl a.out koji se moze pokrenuti komandom:
-```
+```bash
 $ ./a.out
 ```
 Dakle, kao što smo videli, ovaj kompajler prevodi direktno C jezik u asemblerski jezik. 
