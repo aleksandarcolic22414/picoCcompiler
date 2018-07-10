@@ -282,7 +282,7 @@ public class ExpressionObject
         this.stackDisp = stackDisp;
     }
 
-    /* Cast variable to specific size and return wheather it is casted in */
+    /* Cast variable to specific size and return whether it is casted in */
     public boolean castVariable(MemoryClassEnum type) 
     {
         /* Check if cast is needed */
@@ -394,7 +394,7 @@ public class ExpressionObject
         return true;
     }
 
-    /* Check wheather text is "a" register */
+    /* Check whether text is "a" register */
     public boolean isRegisterA() 
     {
         return NasmTools.stringToRegister(this.text) == NasmTools.AREG;

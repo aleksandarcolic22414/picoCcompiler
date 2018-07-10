@@ -39,8 +39,8 @@ public class Main
     public static StringBuilder clean = new StringBuilder("rm ");
     
     /* File names */
-    public static String outputFileName = "out.s";
-    public static String inputFileName = null;
+    public static String outputFileName = "test//out.s";
+    public static String inputFileName = "ulazi//testingScopes.c";
     public static String rawFileName = null;
     
     /* Options flags */
@@ -54,9 +54,20 @@ public class Main
     
     public static void main(String[] args) 
     {
-        Main.scanArgs(args);
-        Writers.init();
+        /*
+        Bese:
+        */
+            Main.scanArgs(args);
+            Writers.init();
+        /**/
         
+        /*
+        Sad:
+        
+            PATH_TO_INPUT_FILE.append(inputFileName);
+            PATH_TO_OUTPUT_FILE.append(outputFileName);
+            Writers.init();
+        /**/
         try {
             InputStream is = new FileInputStream(Writers.inputFile);
             ANTLRInputStream in = new ANTLRInputStream(is);
@@ -164,8 +175,10 @@ public class Main
         } else if (!inputFileName.endsWith(".c")) {
             System.err.println("Trying to compile non-c file.");
             System.exit(0);
-        } else
+        } else {
             PATH_TO_INPUT_FILE.append(inputFileName);
+        }
+            
         /* rawFileName will be name of the input file without extension.
             If input file is "program.c", raw will be "program" */
         rawFileName = inputFileName.substring(0, inputFileName.lastIndexOf("."));
@@ -222,6 +235,12 @@ public class Main
         System.exit(0);
     }
      
+    private static void unrecognizedCommand(String arg) 
+    {
+        System.err.println("error: unrecognized command line option " + arg);
+        System.exit(0);
+    }
+    
     public static void setOutputFileSpecified()
     {
         options |= OUTPUT_FILE_SPECIFIED;
@@ -260,12 +279,6 @@ public class Main
     private static boolean isNoDelete() 
     {
         return (options & NO_DELETE) != 0;
-    }
-    
-    private static void unrecognizedCommand(String arg) 
-    {
-        System.err.println("error: unrecognized command line option " + arg);
-        System.exit(0);
     }
     
 }

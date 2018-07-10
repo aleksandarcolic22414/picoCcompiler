@@ -98,7 +98,7 @@ public class PointerTools
     }
 
     /* Switch elements from source list to destination list. 
-        Lists are implemented as stacks */
+        Lists are implemented as stacks. */
     public static void switchStacks
     (LinkedList<Pointer> destination, LinkedList<Pointer> source)
     {
@@ -109,7 +109,7 @@ public class PointerTools
         destination.push(type);
     }
     
-    /* Switch elements from list1 to list2. Lists are implemented as stacks */
+    /* Switch elements from list1 to list2. Lists are implemented as stacks. */
     public static void switchArrays
     (LinkedList<Integer> list1, LinkedList<Integer> list2)
     {
@@ -163,7 +163,7 @@ public class PointerTools
         return res;
     }
 
-    /* Return wheather expression is pointer to a simple type.
+    /* Return whether expression is pointer to a simple type.
         Variable is simple pointer if it is pointer to simple type or
         if it is one dimensional array. This could be weird 
         because one dimensional

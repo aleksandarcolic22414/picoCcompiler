@@ -1,4 +1,4 @@
-// Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompilerCloneRemote/picoC/grammar/picoC.g4 by ANTLR 4.6
+// Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompiler/picoC/grammar/picoC.g4 by ANTLR 4.6
 package antlr;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -10,8 +10,7 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * @param <T> The return type of the visit operation. Use {@link Void} for
  * operations with no return type.
  */
-public class picoCBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements picoCVisitor<T> 
-{
+public class picoCBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements picoCVisitor<T> {
 	/**
 	 * {@inheritDoc}
 	 *

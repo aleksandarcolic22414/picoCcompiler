@@ -78,7 +78,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if (CompilationControler.warnings != 0) {
             System.err.println("Warnings : " + CompilationControler.warnings);
         }
-        /* Check wheather compilation is successful */
+        /* Check whether compilation is successful */
         if (CompilationControler.errors == 0) {
             System.out.println("Compilation successful!");
         } else {
@@ -147,8 +147,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         curTypeSpecifier = memclass;
         String name = visit(ctx.declarator()).getText();
         
-        
-        /* Chech weather function is already defined */
+        /* Chech whether function is already defined */
         if (!Checker.funcDefCheck(ctx, name))
             return null;
         
@@ -179,12 +178,15 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Setup text segment for function definition */
         Writers.emitFunctionSetup(name);
+        
         /* Substract number of bytes needed for variables if there is any */
         if (localsAndArgsSize > 0)
             Writers.emitInstruction("sub", "rsp", ls);    
+        
         /* Visit rest of the function. (parameterList and functionBody) */
         if (ctx.parameterList() != null)
             visit(ctx.parameterList());
+        
         visit(ctx.functionBody());
         
         /* Check for return statement */
@@ -193,6 +195,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         /* Emit return label and reset stack */
         Writers.emitLabelReturn(curFuncAna.getFunctionName());
         Writers.emitText(Constants.FUNCTION_EXIT);
+        
         /* Set current function context to null */
         curFuncAna = null;
         FunctionsAnalyser.setFunctionInProcess(false);
@@ -213,24 +216,21 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         int numberOfParams = paramsList.size();
         curFuncAna.setNumberOfParameters(numberOfParams);
         curFuncAna.setParameterContext(true);
-        String reg, paramName, stackPos, paramPos, cast;
-        MemoryClassEnum memclass;
-        ExpressionObject arg;
         
         NasmTools.initializeNewPickers();
         for (int i = 0; i < numberOfParams; ++i) {
             /* Visit parameter (declare it) */
-            arg = visit(paramsList.get(i));
+            ExpressionObject arg = visit(paramsList.get(i));
             /* argument name needed for it's position on stack */
-            paramName = arg.getName();
+            String paramName = arg.getName();
             /* get argument's position on stack */
-            stackPos = arg.getStackDisp();
+            String stackPos = arg.getStackDisp();
             /* Get memory class of typeSpecifier and register 
                 in which it is passed to function */
-            memclass = arg.getType();
-            cast = NasmTools.getCast(memclass);
-            paramPos = cast + " [" + stackPos + "]";
-            reg = NasmTools.getNextRegForFuncCall(memclass);
+            MemoryClassEnum memclass = arg.getType();
+            String cast = NasmTools.getCast(memclass);
+            String paramPos = cast + " [" + stackPos + "]";
+            String reg = NasmTools.getNextRegForFuncCall(memclass);
             
             /* Emit copying from registers to stack for arguments */
             Writers.emitInstruction("mov", paramPos, reg);
@@ -336,14 +336,17 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         /* Get index of the rule that invoked this state. If it is same
             rule as ctx, than go to the parent. Since rule declarator will
-            always invoke this state, than one level above that rule needs
-            to be reached. */
+            always invoke this state, one level above needs to be reached. */
         RuleContext rule = ctx.parent;
         int ruleIndex;
         while (rule.getRuleIndex() == ctx.getRuleIndex() 
                 || rule.getRuleIndex() == picoCParser.RULE_declarator)
+        {
             rule = rule.parent;
+        }
+        
         ruleIndex = rule.getRuleIndex();
+        
         /* Call proper function for the rule that invoked direct declaration */
         switch (ruleIndex) {
             case picoCParser.RULE_parameter:
@@ -368,8 +371,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         MemoryClassEnum typeSpecifier;
         MemoryClassEnum typeForDeclaration;
         Variable var;
+        
         /* Chech if variable is already declared */
-        if (!Checker.varDeclCheck(ctx, name))
+        if (!Checker.CheckParameter(ctx, name))
             return null;
         
         /* Check if variable is pointer or array. In both cases variable
@@ -403,7 +407,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Even thou variable constructor will clear both 
             pointerTo and arrayDecl lists, just to be sure that lists are empty
-            let's clear them */
+            let's clear them. */
         pointerTo.clear();
         arrayDecl.clear();
         
@@ -429,6 +433,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         currentVariableName = name = ctx.ID().getText();
         MemoryClassEnum typeSpecifier;
         Variable var;
+        
         /* Chech if variable is already declared */
         if (!Checker.varDeclCheck(ctx, name))
             return null;
@@ -447,8 +452,9 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         var = new Variable
             (name, stackPosition, typeSpecifier, pointerTo, arrayDecl, false);
+        
         /* Insert new variable in local variables */
-        curFuncAna.getLocalVariables().put(name, var);
+        curFuncAna.getLocalVariablesInLastBlock().put(name, var);
             
         /* Check size of variable */
         if (!Checker.varSizeCheck(ctx, typeSpecifier))
@@ -638,7 +644,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     {
         ExpressionObject expr;
         String retReg;
-        /* Let checker decide wheather return value is correct */
+        /* Let checker decide whether return value is correct */
         if (!Checker.checkReturnValue(curFuncAna.getMemoryClass(), ctx))
             return null;
         
@@ -968,15 +974,17 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         /* Check if variable is local, extern or parameter */
         Variable newVar;
-        if ((newVar = curFuncAna.getLocalVariables().get(id)) != null)
+        if ((newVar = curFuncAna.findLocalVariable(id)) != null)
             local = true;
         else if ((newVar = curFuncAna.getParameterVariables().get(id)) != null)
             param = true;
         else if ((newVar = externVariables.get(id)) != null)
             extern = true;
+        
         /* Check if variable is declared */
         if (!Checker.varCheck(local, param, extern, ctx, id))
             return null;
+        
         /* Check if variable is initialized */
         Checker.varInitCheck(local || extern, newVar, id, ctx);
         
@@ -985,6 +993,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         res = new ExpressionObject(newVar);
         if (res.isArray())
             res.initArray();
+        
         /* Return new variable */
         return res;
     }
@@ -1615,7 +1624,34 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return expr2;
     }
-   
+
+    
+    
+    /*
+        In every compound statement new layer of local variables is inserted.
+        That allows user to declare variables with same name within same
+        function as long as they are in different compound statements.
+        
+        compoundStatement
+            :   '{' blockItemList? '}'
+            ;
+    */
+    @Override
+    public ExpressionObject visitCompoundStatement(picoCParser.CompoundStatementContext ctx) 
+    {
+        Map<String, Variable> localVarMap = new HashMap<>();
+        curFuncAna.initNewCompoundContext(localVarMap);
+        
+        if (ctx.getParent().getParent().getRuleIndex() == picoCParser.RULE_iterationStatement) {
+            // Not implemented yet. Scope for foor loop;
+        }
+    
+        super.visitCompoundStatement(ctx); // visit children
+        curFuncAna.deleteCurrentCompoundContext();
+        
+        return null;
+    }
+
     /*
         blockItem
             :   declarationList
@@ -1823,7 +1859,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             return null;
         expr.comparisonCheck();
         
-        /* Let checker decide wheather expression can be casted */
+        /* Let checker decide whether expression can be casted */
         if (!Checker.checkComplement(expr, ctx))
             return null;
         

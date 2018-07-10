@@ -1,4 +1,4 @@
-// Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompilerCloneRemote/picoC/grammar/picoC.g4 by ANTLR 4.6
+// Generated from /home/aleksandar/NetBeansProjects/Clone/picoCcompiler/picoC/grammar/picoC.g4 by ANTLR 4.6
 package antlr;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

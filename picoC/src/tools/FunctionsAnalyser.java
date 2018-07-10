@@ -8,6 +8,7 @@ import nasm.NasmTools;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  *
@@ -19,19 +20,39 @@ public class FunctionsAnalyser
     /* Represents function name that are curently in process */
     private static String inProcess = null;
     
-    /* Determines wheather walker is in function context */
+    /* Determines whether walker is in function context */
     private static boolean functionInProcess = false;
     
     /* Function name */
     private String functionName;
     
     /* Parameters of function 
-       Pairs K->varName, V->Variable object */
+       Pairs K->varName, V->Variable object. */
     private Map<String, Variable> parameterVariables;
     
     /* Local variables of function 
-       Pairs K->varName, V->Variable object */
-    private Map<String, Variable> localVariables;
+       Pairs K->varName, V->Variable object.
+       This variable operates like stack.
+       Each level of stack represents one compound statement.
+       Scope of variable starts at one point in compound statement
+       (at the point where it is declared) and last until the end
+       of that compound statement. Example:
+       
+        {
+            int i = 0;
+            
+            {
+                int i = 2;
+                printf("%d\n", i);  // refers to new i
+            }
+            printf("%d\n", i);
+        }
+    
+        Output would be:
+        2
+        0
+    */
+    private final LinkedList<Map<String, Variable>> localVariables;
     
     /* Number of parameters */
     private int numberOfParameters = 0;
@@ -51,18 +72,18 @@ public class FunctionsAnalyser
         about that pointer. */
     private LinkedList<Pointer> pointerType;
     
-    /* Wheather function has return statement */
+    /* Whether function has return statement. */
     private boolean hasReturn = false;
 
-    /* Represent wheather visitor is parameter contex or not */
+    /* Represent whether visitor is parameter contex or not */
     private boolean parameterContext = false;
     
-    /* Represent wheather visitor is parameter contex or not */
+    /* Represent whether visitor is parameter contex or not */
     private boolean functionContext = false;
     
     public FunctionsAnalyser(String functionName) 
     {
-        this.localVariables = new HashMap<>();
+        this.localVariables = new LinkedList<>();
         this.parameterVariables = new HashMap<>();
         this.pointerType = new LinkedList<>();
         this.functionName = functionName;
@@ -88,10 +109,6 @@ public class FunctionsAnalyser
         this.functionName = functionName;
     }
 
-    public void setLocalVariables(Map<String, Variable> localVariables) {
-        this.localVariables = localVariables;
-    }
-
     public void setNumberOfParameters(int numberOfParameters) {
         this.numberOfParameters = numberOfParameters;
     }
@@ -112,7 +129,7 @@ public class FunctionsAnalyser
         return functionName;
     }
 
-    public Map<String, Variable> getLocalVariables() {
+    public LinkedList<Map<String, Variable>> getLocalVariables() {
         return localVariables;
     }
 
@@ -207,13 +224,21 @@ public class FunctionsAnalyser
         return "rbp-" + Integer.toString(taken + spaceForParams);
     }
 
+    /* Returns variable if it exists. First searching of local variables is done.
+        If it is not found in locals, search of parameters is done.
+        Search for local variables goes from top of the stack 
+        (last compound statement in function) and goes to the bottom 
+        (fist compound statement in function). */
     public Variable getAnyVariable(String id) 
     {
         Variable var;
-        if ((var = getLocalVariables().get(id)) != null)
+        
+        if ((var = findLocalVariable(id)) != null)
             return var;
+        
         if ((var = getParameterVariables().get(id)) != null)
             return var;
+        
         return null;
     }
 
@@ -236,6 +261,33 @@ public class FunctionsAnalyser
         
         return "rbp-" + Integer.toString(spaceForLocals);
     }
+
+    public void initNewCompoundContext(Map<String, Variable> localVarMap) 
+    {
+        getLocalVariables().push(localVarMap);
+    }
+
+    public void deleteCurrentCompoundContext() 
+    {
+        getLocalVariables().pop().clear();
+    }
     
+    public Map<String, Variable> getLocalVariablesInLastBlock() 
+    {
+        return localVariables.peek();
+    }
+
+    /* Start from top of the stack (last compount block) 
+        and go to the bootom. */
+    public Variable findLocalVariable(String id) 
+    {
+        Variable var = null;
+        for (Map<String, Variable> myVars : localVariables) {
+            if ((var = myVars.get(id)) != null)
+                break;        
+        }
+        
+        return var;
+    }
     
 }

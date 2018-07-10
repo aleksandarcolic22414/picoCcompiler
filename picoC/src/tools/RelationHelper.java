@@ -9,12 +9,12 @@ import constants.Constants;
  */
 public class RelationHelper 
 {
-    /* Variable represents wheather comparison is done or not */
+    /* Variable represents whether comparison is done or not */
     private static boolean comparisonDone = false;
     /* Variable holds the information about last relation done */
     private static int lastRelation = picoCParser.EQUAL;
     
-    /* Return wheather comparison is done and set comparisonDone to false for
+    /* Return whether comparison is done and set comparisonDone to false for
         further checking */
     public static boolean isCompared() 
     {

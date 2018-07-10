@@ -21,7 +21,7 @@ public class Emitter
     {
         String nextFreeTemp;
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
-        /* Chech wheather leftExpr is register. If it's not then it needs to be
+        /* Chech whether leftExpr is register. If it's not then it needs to be
             moved to one and then multiplied */
         if (!leftExpr.isRegister()) {
             nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);

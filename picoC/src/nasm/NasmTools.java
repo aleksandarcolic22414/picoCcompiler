@@ -46,6 +46,7 @@ public class NasmTools
         which represents new function call context.
     */
     private static final int registerPikcersFlags[] = new int[256];
+    
     /* This variable holds information in which function call contex program is */
     private static int regPickFlagsTop = -1;
     
@@ -53,6 +54,7 @@ public class NasmTools
         It holds information in every function call, how many registers are
         taken by the picker */
     public static int registersPickerCounters[] = new int [256];
+    
     /* This variable holds information in which function call contex program is */
     public static int registerPikcerCountersTop = -1;
     
@@ -744,7 +746,7 @@ public class NasmTools
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
-    /* Function determines wheather 4 general purpose registers a, b, c and are
+    /* Function determines whether 4 general purpose registers a, b, c and are
         available or not */
     public static boolean isTakenRegisterMightyFour() 
     {
@@ -914,13 +916,13 @@ public class NasmTools
         return flags != ((1 << NUMBER_OF_REGISTERS) - 1);
     }
 
-    /* Function check wheather var is integer */
+    /* Function check whether var is integer */
     public static boolean isInteger(String var) 
     {
         return var.matches("\\d+");
     }
 
-    /* Function check wheather var is Stack Variable */
+    /* Function check whether var is Stack Variable */
     public static boolean isStackVariable(String var) 
     {
         return var.matches(".?word( )*\\[.*\\]");
@@ -1203,7 +1205,7 @@ public class NasmTools
         /* Get left and right string's values */
         lvalue = Integer.parseInt(left);
         rvalue = Integer.parseInt(right);
-        /* Decide wheather it is left or right shift */
+        /* Decide whether it is left or right shift */
         if (shift == picoCParser.SHIFT_LEFT)
             return Integer.toString(lvalue << rvalue);
         else

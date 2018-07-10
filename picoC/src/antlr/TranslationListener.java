@@ -21,13 +21,13 @@ public class TranslationListener extends picoCBaseListener
     picoCParser parser;
     TranslationVisitor visitor;
     /* Map that contains informations about all functions
-        that are beeing compiled */
+        that are beeing compiled. */
     public static Map<String, FunctionsAnalyser> mapFuncAna;
     
     /* Current function context.  */
     public static FunctionsAnalyser curFuncCtx = null;
     
-    /* Current declarator  */
+    /* Current declarator.  */
     public static MemoryClassEnum currentDeclaratorType = null;
     
     /* List represent current pointer  */

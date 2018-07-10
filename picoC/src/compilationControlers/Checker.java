@@ -7,6 +7,7 @@ import tools.FunctionsAnalyser;
 import tools.Variable;
 import constants.MemoryClassEnum;
 import java.util.List;
+import java.util.Map;
 import nasm.IncludeSegment;
 import tools.ExpressionObject;
 
@@ -106,7 +107,7 @@ public class Checker
         if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnum.VOID && 
                 !TranslationVisitor.curFuncAna.isHasReturn()) 
         {
-            CompilationControler.warningOcured
+            CompilationControler.errorOcured
                 (ctx.getStart(), 
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Missing return statement in function " + 
@@ -164,11 +165,19 @@ public class Checker
         return true;
     }
     
+    /* Checks whether variable is already declared. If it is not declared
+        in current compound block, it can be declared. If we are in
+        first compound block, then variable can't have the same name
+        as one the parameters. */
     public static boolean varDeclCheck(picoCParser.DirDeclContext ctx, String name) 
     {
-        if (TranslationVisitor.curFuncAna.getLocalVariables().containsKey(name)
-                || TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) 
-        {
+        FunctionsAnalyser fa = TranslationVisitor.curFuncAna;
+        
+        if (fa.getLocalVariablesInLastBlock().containsKey(name)
+                || 
+                fa.getLocalVariables().size() == 1 && 
+                fa.getParameterVariables().containsKey(name)) {
+            
             CompilationControler.errorOcured
                 (ctx.getStart(), 
                         TranslationVisitor.curFuncAna.getFunctionName(),
@@ -197,6 +206,7 @@ public class Checker
     {
         if (local || param || extern)
             return true;
+        
         CompilationControler.errorOcured
             (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                 "Variable " + "'" + id + "'"
@@ -205,11 +215,12 @@ public class Checker
     }
 
     public static void varInitCheck
-    (boolean bool, Variable newVar, String id, picoCParser.IdContext ctx) 
+    (boolean localOrExtern, Variable newVar, String id, picoCParser.IdContext ctx) 
     {
         if (newVar.isArray())
             return;
-        if (varInitCheck && bool && newVar != null && !newVar.isInitialized()) {
+        
+        if (varInitCheck && localOrExtern && !newVar.isInitialized()) {
             CompilationControler.warningOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Variable " + "'" + id  + "'" 
@@ -629,6 +640,19 @@ public class Checker
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                     "Different types in conditional expression");
             return false;
+        }
+        return true;
+    }
+
+    public static boolean CheckParameter(picoCParser.DirDeclContext ctx, String name) 
+    {
+        if (TranslationVisitor.curFuncAna.getParameterVariables().containsKey(name)) 
+        {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Multiple declaration of " + name);
+            return false;    
         }
         return true;
     }
