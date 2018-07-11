@@ -2,12 +2,13 @@
 
 int main()
 {
-    int i, c = 15;
+    int c = 15;
     
-    for (i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         if (((i >= 20 && i <= 30) || i == 35) && c-- > -10)
             continue;
-        else if (i == 40) {
+        else if (i == 40) 
+        {
             int a = i*i;
             printf("\nI je cetrdeset. a = %d\n", a);
             break;

@@ -1,32 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int cmp(int *a, int *b)
+int numcmp(void *a, void *b)
 {
-    return *a - *b;
+    return *(int *)a - *(int *)b;
 }
 
-void memcpy(void *a, void *b, int size)
+void memcpy(void *buff, void *a, int size)
 {
     while (size--)
-        *a++ = *b++;
+        *(char *)buff++ = *(char *)a++;
 }
 
 void swapVal(void *a, void *b, int size)
 {
-    void *buff = malloc(64);
+    char buff[64];
     memcpy(buff, a, size);
     memcpy(a, b, size);
     memcpy(b, buff, size);
 }
-
 
 void *part(void *niz, void* start, void* end, int size)
 {
     void *i, *j, *pivot;
     pivot = start;                  /* pivot je prvi element podniza */
     for (i = start + size, j = start; i <= end; i += size)
-        if (cmp(i, pivot) < 0)       /* ukoliko je element na koji pokazuje *i manji od pivota */
+        if (numcmp(i, pivot) < 0)       /* ukoliko je element na koji pokazuje *i manji od pivota */
             swapVal(i, j += size, size);    /* menjaju se vrednosti dva elementa */
     swapVal(pivot, j, size);    /* postavlja se pivot u "sredinu" */
     return j;       /* vraca se njegova pozicija */
@@ -41,39 +40,36 @@ void quickSortEx(void *niz, void *start, void *end, int size)
     quickSortEx(niz, i+size, end, size);       /* poziv za desni podniz */
 }
 
-
 void quickSort(void *niz, int num, int size)
 {
     quickSortEx(niz, niz, niz + size*(num-1), size);
 }
 
-/* Funkcija za stampanje elemenata niza brojeva. */
-void parray(int *niz, int size)
+void stampaj(int *niz, int size)
 {
     int i;
     for (i = 0; i < size; i++)
-        printf("%s%d", i ? " " : "", *(niz + i));
+        printf("%s%d", i ? " " : "", niz[i]);
     printf("\n");
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
-    int i, N;
-    N = 20;
-    int *niz = malloc(1000);
-    int *h = niz;
-    for (i = 0; i < N; i++)
-        *(h+i) = rand() % 50;
-    parray(niz, N);
-    quickSort(niz, N, 4);
-    parray(niz, N);
+    int i;
+    int niz[20];
+    
+    for (i = 0; i < 20; ++i)
+        niz[i] = rand() % 50;
+
+    stampaj(niz, 20);
+    quickSort(niz, 20, 4);
+    stampaj(niz, 20);
 
     return 0;
 }
 
 /*
-    Error in function memcpy: line 12: Dereferencing void pointer *b++;
-    Errors: 1
-    Compilation failed!
-
+    Out:
+    20 random numbers
+    Those numbers sorted
 */

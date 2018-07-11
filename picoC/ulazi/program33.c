@@ -1,12 +1,18 @@
+#include <stdio.h>
+
 int main(int argc, char **argv)
 {
     char ch = '0';
-    do {
+    
+    do 
+    {
         if (ch == 'A' || ch == 'B')
             continue;
         printf("%c", ch);
-    } while (ch++ < 'z');
-
+    } 
+    while (ch++ < 'z');
+    
+    printf("\n");
     return 0;
 }
 

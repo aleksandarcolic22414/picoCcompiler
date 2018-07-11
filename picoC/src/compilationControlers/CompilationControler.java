@@ -20,9 +20,15 @@ public class CompilationControler {
         ++errors;
         int line = token.getLine();
         int pos = token.getStartIndex();
-        System.err.println
+        
+        if (functionName == null) {
+            System.err.println
+            ("Error: line " + line + ": " + error + ";");
+        } else {
+            System.err.println
             ("Error in function " + functionName + 
                     ": line " + line + ": " + error + ";");
+        }
     }
     
     /* Handle warnings */
@@ -31,9 +37,15 @@ public class CompilationControler {
         ++warnings;
         int line = token.getLine();
         int pos = token.getStartIndex();
-        System.err.println
+        
+        if (functionName == null) {
+            System.err.println
+            ("Warning: line " + line + ": " + warning + ";");
+        } else {
+            System.err.println
             ("Warning in function " + functionName + 
                     ": line " + line + ": " + warning + ";");
+        }
     }        
     
 }

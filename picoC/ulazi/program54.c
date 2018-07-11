@@ -1,7 +1,10 @@
+#include <stdio.h>
+
 int onbits(int n)
 {
     int c = 0;
-    while (n) {
+    while (n) 
+    {
         c += n & 1;
         n >>= 1;
     }

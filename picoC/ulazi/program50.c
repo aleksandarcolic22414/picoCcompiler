@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int niz[5][5][5];
 
 int main()

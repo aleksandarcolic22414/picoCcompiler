@@ -4301,7 +4301,7 @@ public class picoCParser extends Parser {
 				setState(472);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__7) | (1L << T__8) | (1L << T__9) | (1L << T__10) | (1L << MUL) | (1L << ADD) | (1L << SUB) | (1L << AND) | (1L << ID) | (1L << INT) | (1L << CHAR) | (1L << STRING_LITERAL))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__7) | (1L << T__8) | (1L << T__9) | (1L << T__10) | (1L << VOIDTYPE) | (1L << INTTYPE) | (1L << CHARTYPE) | (1L << MUL) | (1L << ADD) | (1L << SUB) | (1L << AND) | (1L << ID) | (1L << INT) | (1L << CHAR) | (1L << STRING_LITERAL))) != 0)) {
 					{
 					setState(471);
 					forInit();
@@ -4409,6 +4409,12 @@ public class picoCParser extends Parser {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
+		public TypeSpecifierContext typeSpecifier() {
+			return getRuleContext(TypeSpecifierContext.class,0);
+		}
+		public InitDeclarationListContext initDeclarationList() {
+			return getRuleContext(InitDeclarationListContext.class,0);
+		}
 		public ForInitContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -4432,10 +4438,41 @@ public class picoCParser extends Parser {
 		ForInitContext _localctx = new ForInitContext(_ctx, getState());
 		enterRule(_localctx, 86, RULE_forInit);
 		try {
-			enterOuterAlt(_localctx, 1);
-			{
-			setState(503);
-			expression(0);
+			setState(507);
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
+			case T__3:
+			case T__7:
+			case T__8:
+			case T__9:
+			case T__10:
+			case MUL:
+			case ADD:
+			case SUB:
+			case AND:
+			case ID:
+			case INT:
+			case CHAR:
+			case STRING_LITERAL:
+				enterOuterAlt(_localctx, 1);
+				{
+				setState(503);
+				expression(0);
+				}
+				break;
+			case VOIDTYPE:
+			case INTTYPE:
+			case CHARTYPE:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(504);
+				typeSpecifier();
+				setState(505);
+				initDeclarationList(0);
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -4450,8 +4487,8 @@ public class picoCParser extends Parser {
 	}
 
 	public static class ForCheckContext extends ParserRuleContext {
-		public AssignmentExpressionContext assignmentExpression() {
-			return getRuleContext(AssignmentExpressionContext.class,0);
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
 		}
 		public ForCheckContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -4478,8 +4515,8 @@ public class picoCParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(505);
-			assignmentExpression();
+			setState(509);
+			expression(0);
 			}
 		}
 		catch (RecognitionException re) {
@@ -4522,7 +4559,7 @@ public class picoCParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(507);
+			setState(511);
 			expression(0);
 			}
 		}
@@ -4566,7 +4603,7 @@ public class picoCParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(509);
+			setState(513);
 			assignmentExpression();
 			}
 		}
@@ -4614,21 +4651,21 @@ public class picoCParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(511);
+			setState(515);
 			argument();
-			setState(516);
+			setState(520);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__13) {
 				{
 				{
-				setState(512);
+				setState(516);
 				match(T__13);
-				setState(513);
+				setState(517);
 				argument();
 				}
 				}
-				setState(518);
+				setState(522);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -4674,7 +4711,7 @@ public class picoCParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(519);
+			setState(523);
 			assignmentExpression();
 			}
 		}
@@ -4739,14 +4776,14 @@ public class picoCParser extends Parser {
 		ConstantContext _localctx = new ConstantContext(_ctx, getState());
 		enterRule(_localctx, 98, RULE_constant);
 		try {
-			setState(523);
+			setState(527);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case INT:
 				_localctx = new IntContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(521);
+				setState(525);
 				match(INT);
 				}
 				break;
@@ -4754,7 +4791,7 @@ public class picoCParser extends Parser {
 				_localctx = new CharContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(522);
+				setState(526);
 				match(CHAR);
 				}
 				break;
@@ -4948,7 +4985,7 @@ public class picoCParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3B\u0210\4\2\t\2\4"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3B\u0214\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -4984,23 +5021,23 @@ public class picoCParser extends Parser {
 		"\'\3(\3(\3(\3(\3(\7(\u01c1\n(\f(\16(\u01c4\13(\3)\3)\5)\u01c8\n)\3*\5"+
 		"*\u01cb\n*\3*\3*\3+\3+\3+\3+\3+\3+\3+\5+\u01d6\n+\3,\3,\3,\5,\u01db\n"+
 		",\3,\3,\5,\u01df\n,\3,\3,\5,\u01e3\n,\3,\3,\3,\3,\3,\5,\u01ea\n,\3,\3"+
-		",\3,\3,\3,\3,\3,\5,\u01f3\n,\3,\3,\3,\5,\u01f8\n,\3-\3-\3.\3.\3/\3/\3"+
-		"\60\3\60\3\61\3\61\3\61\7\61\u0205\n\61\f\61\16\61\u0208\13\61\3\62\3"+
-		"\62\3\63\3\63\5\63\u020e\n\63\3\63\2\24\4\n\22\30\32\34\36 \"$&(*\628"+
-		">@N\64\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<"+
-		">@BDFHJLNPRTVXZ\\^`bd\2\t\3\2)+\3\2,-\3\2\61\62\3\2\658\3\2\63\64\3\2"+
-		"\36(\3\2\33\35\u021f\2g\3\2\2\2\4n\3\2\2\2\6x\3\2\2\2\b~\3\2\2\2\n\u0080"+
-		"\3\2\2\2\f\u008d\3\2\2\2\16\u008f\3\2\2\2\20\u009f\3\2\2\2\22\u00a1\3"+
-		"\2\2\2\24\u00c9\3\2\2\2\26\u00d4\3\2\2\2\30\u00d6\3\2\2\2\32\u00e1\3\2"+
-		"\2\2\34\u00ec\3\2\2\2\36\u00f7\3\2\2\2 \u0102\3\2\2\2\"\u010d\3\2\2\2"+
-		"$\u0118\3\2\2\2&\u0123\3\2\2\2(\u012e\3\2\2\2*\u0139\3\2\2\2,\u014b\3"+
-		"\2\2\2.\u0152\3\2\2\2\60\u0154\3\2\2\2\62\u0156\3\2\2\2\64\u0161\3\2\2"+
-		"\2\66\u0165\3\2\2\28\u0167\3\2\2\2:\u0177\3\2\2\2<\u017a\3\2\2\2>\u017e"+
+		",\3,\3,\3,\3,\3,\5,\u01f3\n,\3,\3,\3,\5,\u01f8\n,\3-\3-\3-\3-\5-\u01fe"+
+		"\n-\3.\3.\3/\3/\3\60\3\60\3\61\3\61\3\61\7\61\u0209\n\61\f\61\16\61\u020c"+
+		"\13\61\3\62\3\62\3\63\3\63\5\63\u0212\n\63\3\63\2\24\4\n\22\30\32\34\36"+
+		" \"$&(*\628>@N\64\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62"+
+		"\64\668:<>@BDFHJLNPRTVXZ\\^`bd\2\t\3\2)+\3\2,-\3\2\61\62\3\2\658\3\2\63"+
+		"\64\3\2\36(\3\2\33\35\u0224\2g\3\2\2\2\4n\3\2\2\2\6x\3\2\2\2\b~\3\2\2"+
+		"\2\n\u0080\3\2\2\2\f\u008d\3\2\2\2\16\u008f\3\2\2\2\20\u009f\3\2\2\2\22"+
+		"\u00a1\3\2\2\2\24\u00c9\3\2\2\2\26\u00d4\3\2\2\2\30\u00d6\3\2\2\2\32\u00e1"+
+		"\3\2\2\2\34\u00ec\3\2\2\2\36\u00f7\3\2\2\2 \u0102\3\2\2\2\"\u010d\3\2"+
+		"\2\2$\u0118\3\2\2\2&\u0123\3\2\2\2(\u012e\3\2\2\2*\u0139\3\2\2\2,\u014b"+
+		"\3\2\2\2.\u0152\3\2\2\2\60\u0154\3\2\2\2\62\u0156\3\2\2\2\64\u0161\3\2"+
+		"\2\2\66\u0165\3\2\2\28\u0167\3\2\2\2:\u0177\3\2\2\2<\u017a\3\2\2\2>\u017e"+
 		"\3\2\2\2@\u0188\3\2\2\2B\u0196\3\2\2\2D\u019e\3\2\2\2F\u01a1\3\2\2\2H"+
 		"\u01a8\3\2\2\2J\u01b3\3\2\2\2L\u01b5\3\2\2\2N\u01bb\3\2\2\2P\u01c7\3\2"+
-		"\2\2R\u01ca\3\2\2\2T\u01ce\3\2\2\2V\u01f7\3\2\2\2X\u01f9\3\2\2\2Z\u01fb"+
-		"\3\2\2\2\\\u01fd\3\2\2\2^\u01ff\3\2\2\2`\u0201\3\2\2\2b\u0209\3\2\2\2"+
-		"d\u020d\3\2\2\2fh\5\4\3\2gf\3\2\2\2gh\3\2\2\2hj\3\2\2\2ik\5\n\6\2ji\3"+
+		"\2\2R\u01ca\3\2\2\2T\u01ce\3\2\2\2V\u01f7\3\2\2\2X\u01fd\3\2\2\2Z\u01ff"+
+		"\3\2\2\2\\\u0201\3\2\2\2^\u0203\3\2\2\2`\u0205\3\2\2\2b\u020d\3\2\2\2"+
+		"d\u0211\3\2\2\2fh\5\4\3\2gf\3\2\2\2gh\3\2\2\2hj\3\2\2\2ik\5\n\6\2ji\3"+
 		"\2\2\2jk\3\2\2\2kl\3\2\2\2lm\7\2\2\3m\3\3\2\2\2no\b\3\1\2op\5\6\4\2pu"+
 		"\3\2\2\2qr\f\3\2\2rt\5\6\4\2sq\3\2\2\2tw\3\2\2\2us\3\2\2\2uv\3\2\2\2v"+
 		"\5\3\2\2\2wu\3\2\2\2xy\7\3\2\2yz\7\4\2\2z{\7\65\2\2{|\5\b\5\2|}\7\67\2"+
@@ -5126,17 +5163,19 @@ public class picoCParser extends Parser {
 		"\u01f2\7\6\2\2\u01f1\u01f3\5^\60\2\u01f2\u01f1\3\2\2\2\u01f2\u01f3\3\2"+
 		"\2\2\u01f3\u01f4\3\2\2\2\u01f4\u01f5\7\7\2\2\u01f5\u01f6\7\5\2\2\u01f6"+
 		"\u01f8\3\2\2\2\u01f7\u01d7\3\2\2\2\u01f7\u01e6\3\2\2\2\u01f7\u01ed\3\2"+
-		"\2\2\u01f8W\3\2\2\2\u01f9\u01fa\5\62\32\2\u01faY\3\2\2\2\u01fb\u01fc\5"+
-		".\30\2\u01fc[\3\2\2\2\u01fd\u01fe\5\62\32\2\u01fe]\3\2\2\2\u01ff\u0200"+
-		"\5.\30\2\u0200_\3\2\2\2\u0201\u0206\5b\62\2\u0202\u0203\7\20\2\2\u0203"+
-		"\u0205\5b\62\2\u0204\u0202\3\2\2\2\u0205\u0208\3\2\2\2\u0206\u0204\3\2"+
-		"\2\2\u0206\u0207\3\2\2\2\u0207a\3\2\2\2\u0208\u0206\3\2\2\2\u0209\u020a"+
-		"\5.\30\2\u020ac\3\2\2\2\u020b\u020e\7<\2\2\u020c\u020e\7=\2\2\u020d\u020b"+
-		"\3\2\2\2\u020d\u020c\3\2\2\2\u020ee\3\2\2\2\63gju\u0087\u008d\u0093\u009f"+
-		"\u00ac\u00b3\u00b5\u00c9\u00cf\u00d4\u00de\u00e9\u00f4\u00ff\u010a\u0115"+
-		"\u0120\u012b\u0136\u0141\u014b\u0152\u015e\u016f\u0177\u017a\u0185\u018e"+
-		"\u0193\u019b\u01a8\u01ac\u01b3\u01b7\u01c2\u01c7\u01ca\u01d5\u01da\u01de"+
-		"\u01e2\u01e9\u01f2\u01f7\u0206\u020d";
+		"\2\2\u01f8W\3\2\2\2\u01f9\u01fe\5\62\32\2\u01fa\u01fb\5\66\34\2\u01fb"+
+		"\u01fc\58\35\2\u01fc\u01fe\3\2\2\2\u01fd\u01f9\3\2\2\2\u01fd\u01fa\3\2"+
+		"\2\2\u01feY\3\2\2\2\u01ff\u0200\5\62\32\2\u0200[\3\2\2\2\u0201\u0202\5"+
+		"\62\32\2\u0202]\3\2\2\2\u0203\u0204\5.\30\2\u0204_\3\2\2\2\u0205\u020a"+
+		"\5b\62\2\u0206\u0207\7\20\2\2\u0207\u0209\5b\62\2\u0208\u0206\3\2\2\2"+
+		"\u0209\u020c\3\2\2\2\u020a\u0208\3\2\2\2\u020a\u020b\3\2\2\2\u020ba\3"+
+		"\2\2\2\u020c\u020a\3\2\2\2\u020d\u020e\5.\30\2\u020ec\3\2\2\2\u020f\u0212"+
+		"\7<\2\2\u0210\u0212\7=\2\2\u0211\u020f\3\2\2\2\u0211\u0210\3\2\2\2\u0212"+
+		"e\3\2\2\2\64gju\u0087\u008d\u0093\u009f\u00ac\u00b3\u00b5\u00c9\u00cf"+
+		"\u00d4\u00de\u00e9\u00f4\u00ff\u010a\u0115\u0120\u012b\u0136\u0141\u014b"+
+		"\u0152\u015e\u016f\u0177\u017a\u0185\u018e\u0193\u019b\u01a8\u01ac\u01b3"+
+		"\u01b7\u01c2\u01c7\u01ca\u01d5\u01da\u01de\u01e2\u01e9\u01f2\u01f7\u01fd"+
+		"\u020a\u0211";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

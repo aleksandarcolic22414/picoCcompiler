@@ -1,18 +1,13 @@
+#include <stdio.h>
+
 int main()
 {
-    int q = 10;
-    int w = 20;
-    int e = 30;
-    int r = 40;
-    int t = 50;
-    int y = 60;
-
+    int q = 10, w = 20, e = 30, r = 40, t = 50, y = 60;
     
-    int *a = &y;
-    int i;
-    for (i = 0; i < 6; ++i)
+    for (int i = 0, *a = &y; i < 6; ++i)
+    {
         printf("%d ", *(a + i));
-    
+    }
 
     return 0;
 }

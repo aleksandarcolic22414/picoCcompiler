@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 int strcpy(char *s1, char *s2)
 {
     while (*s1++ = *s2++)   
@@ -7,14 +10,14 @@ int strcpy(char *s1, char *s2)
 
 char **func()
 {
-    char **array = malloc(256);
+    char **array = (char **)malloc(256);
     char **h = array;
-    int i;
-    
-    for (i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) 
+    {
         *h = malloc(128);
         strcpy(*h++, "check");
     }
+
     return array;
 }
 
@@ -23,7 +26,9 @@ int main(int argc, int argv)
     char **s = func();
     int i = 10;
     while (i--)
+    {
         printf("%s\n", *s++);
+    }
 
     return 0;
 }

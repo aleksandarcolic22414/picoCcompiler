@@ -127,8 +127,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         
         return null;
     }
-    
-    
+
     
     /*  
         functionDefinition 
@@ -158,7 +157,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             fa.setMemoryClass(memclass);
         else {
             fa.setMemoryClass(MemoryClassEnum.POINTER);
-            PointerTools.switchStacks(pointerTo, fa.getPointerType());
+            PointerTools.switchStacks(fa.getPointerType(), pointerTo);
         }
         
         functions.put(name, fa);       /* Add function to collection */
@@ -718,11 +717,16 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             saved on stack with rest of registers with saveRegistersOnStack.
             Instead, just peek to see which is next free register and after
             function call move function return value to it. */
-        MemoryClassEnum type = MemoryClassEnum.INT;
-        /* If function is from GCC's lib, than func is null. */
+        MemoryClassEnum type;
+        
+        /* If function is from GCC's lib, than func is null. 
+            Also, we asume that functions from gcc's lib will always return
+            8 bytes. */
         FunctionsAnalyser func = functions.get(functionName);
         if (!Checker.externalFunctionCheck(functionName))
             type = func.getMemoryClass();
+        else
+            type = MemoryClassEnum.POINTER;
         
         String nextFreeTemp = NasmTools.showNextFreeTemp(type);
         String areg = NasmTools.registerToString(NasmTools.AREG, type);
@@ -781,7 +785,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
             
         return expr;
     }
+    
     /*
+        Result is always the same as last assignment expression.
+    
         expression
             :   assignmentExpression
             |   expression ',' assignmentExpression
@@ -1345,6 +1352,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         if ((res = visit(ctx.postfixExpression())) == null)   
             return null;
         res.comparisonCheck();
+        
         /* Check if it is variable */
         if (!Checker.checkPostInc(res, ctx))
             return null;
@@ -1402,7 +1410,13 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         return res;
     }
 
-    /*
+    /*  
+        For 'for' loop, first thing that needs to be done is 
+        initialization of new compound block (new scope).
+        Later, when compound statement is visited, it is checked if 'for' loop
+        invoked that compound statement and ignore initialization of a new block
+        if it is, because initialization is done here.
+    
         iterationStatement
             :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement ; #ForLoop
     */
@@ -1410,6 +1424,10 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     public ExpressionObject visitForLoop
     (picoCParser.ForLoopContext ctx) 
     {
+        /* Init new variables scope. */
+        Map<String, Variable> localVarMap = new HashMap<>();
+        curFuncAna.initNewCompoundContext(localVarMap);
+        
         ExpressionObject expr, condition;
         String jump; 
         String forStartLabel, forCheckLabel, forIncrementLabel, forEndLabel;
@@ -1419,6 +1437,7 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         forEndLabel = LabelsMaker.getNextForEndLabel();
         expr = condition = null;
         LabelsMaker.setCurrentIterationLabels(forIncrementLabel, forEndLabel);
+        
         /* Do first expression witch is "initialization" (it could be 
             any expression of course) */
         if (ctx.forInit() != null) {
@@ -1426,21 +1445,28 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
                 return null;
             expr.comparisonCheck();
         }
+        
         /* Jump to check condition */
         Writers.emitInstruction(Constants.JUMP_UNCODITIONAL, forCheckLabel);
+        
         /* Loop start */
         Writers.emitLabel(forStartLabel);
+        
         /* Visit 'for' body */
         if (ctx.statement() != null) 
             visit(ctx.statement());
+        
         /* Increment label */
         Writers.emitLabel(forIncrementLabel);
         if (ctx.forInc() != null)
             visit(ctx.forInc());
+        
         /* Check label */
         Writers.emitLabel(forCheckLabel);
+        
         /* Default jump */
-        jump = Constants.JUMP_UNCODITIONAL;        
+        jump = Constants.JUMP_UNCODITIONAL;
+        
         /* If comparison is not done, than result of visiting must be
             compared to 0. Something like for (i = 100; i; --i); */
         if (ctx.forCheck() != null) {
@@ -1450,9 +1476,14 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
                 condition.compareWithZero();
             jump = RelationHelper.getTrueJump();
         }
+        
         Writers.emitInstruction(jump, forStartLabel);
         Writers.emitLabel(forEndLabel);
         LabelsMaker.unsetCurrentIterationLabels();
+        
+        /* Clear current scope. */
+        curFuncAna.deleteCurrentCompoundContext();
+        
         return null;
     }    
 
@@ -1631,7 +1662,8 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
         In every compound statement new layer of local variables is inserted.
         That allows user to declare variables with same name within same
         function as long as they are in different compound statements.
-        
+        For loop has it's own initialization of new scope for variables.
+    
         compoundStatement
             :   '{' blockItemList? '}'
             ;
@@ -1639,15 +1671,20 @@ public class TranslationVisitor extends picoCBaseVisitor<ExpressionObject>
     @Override
     public ExpressionObject visitCompoundStatement(picoCParser.CompoundStatementContext ctx) 
     {
-        Map<String, Variable> localVarMap = new HashMap<>();
-        curFuncAna.initNewCompoundContext(localVarMap);
+        boolean forLoopParent = 
+                ctx.getParent().getParent().getRuleIndex() == 
+                picoCParser.RULE_iterationStatement;
         
-        if (ctx.getParent().getParent().getRuleIndex() == picoCParser.RULE_iterationStatement) {
-            // Not implemented yet. Scope for foor loop;
+        if (!forLoopParent) {
+            Map<String, Variable> localVarMap = new HashMap<>();
+            curFuncAna.initNewCompoundContext(localVarMap);
         }
-    
+        
         super.visitCompoundStatement(ctx); // visit children
-        curFuncAna.deleteCurrentCompoundContext();
+        
+        if (!forLoopParent) {
+            curFuncAna.deleteCurrentCompoundContext();
+        }
         
         return null;
     }

@@ -1,9 +1,10 @@
+#include <stdio.h>
+
 int main(int argc, char **argv)
 {
-    int i;
-    for (i = 0; i < argc; ++i) {
-        char *ch = *argv++;
-        for (; *ch; ++ch)
+    for (int i = 0; i < argc; ++i) 
+    {
+        for (char *ch = *argv++; *ch; ++ch)
             printf("%c", *ch);
         printf("\n");
     }

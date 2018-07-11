@@ -1,22 +1,30 @@
+#include <stdio.h>
+
 int main(int argc, char **argv)
 {
-    int i, j, k;
-    
-    for (i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) 
+    {
         printf("i = %d***********************\n", i);
-        j = 10;
-        if (i == 7) {
+        int j = 10;
+        if (i == 7) 
+        {
             printf("Preskace se i = 7\n");
             continue;
         }
-        while (j) {
-            if (--j == 5) {
+
+        while (j) 
+        {
+            if (--j == 5) 
+            {
                 printf("Preskace se j = 5\n");
                 continue;
-            } else if (j == 2) {
+            } 
+            else if (j == 2) 
+            {
                 printf("Izlaz iz while-a za j = 2\n");
                 break;
             }
+
             printf("j = %d%s", j, j ? " " : "\n");
         }
     }

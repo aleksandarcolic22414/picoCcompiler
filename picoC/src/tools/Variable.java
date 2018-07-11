@@ -79,6 +79,7 @@ public class Variable
         
         if (!curPointer.isEmpty())
             PointerTools.switchStacks(pointerTo, curPointer);
+        
         /* Insert array/s as pointer/s if array/s is/are declared */
         if (!curArray.isEmpty())
             PointerTools.insertArrays(pointerTo, curArray, type);
@@ -86,7 +87,6 @@ public class Variable
         /* Get size of variable's memory class */
         int hsize = NasmTools.getSize(typeSpecifier);  
         this.size = hsize;
-        
     }
 
     public boolean isArray() 

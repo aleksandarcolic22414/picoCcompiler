@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int main()
 {
     char A = 65;
@@ -16,9 +18,7 @@ int main()
     
     char **s = &f;
     
-
-    int i;
-    for (i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
         printf("%c\n", *(*s++));
 
     return 0;

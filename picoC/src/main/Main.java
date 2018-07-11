@@ -40,7 +40,7 @@ public class Main
     
     /* File names */
     public static String outputFileName = "test//out.s";
-    public static String inputFileName = "ulazi//testingScopes.c";
+    public static String inputFileName = "ulazi//program36.c";
     public static String rawFileName = null;
     
     /* Options flags */
@@ -56,14 +56,14 @@ public class Main
     {
         /*
         Bese:
-        */
+        /**/
             Main.scanArgs(args);
             Writers.init();
         /**/
         
         /*
         Sad:
-        
+        /*
             PATH_TO_INPUT_FILE.append(inputFileName);
             PATH_TO_OUTPUT_FILE.append(outputFileName);
             Writers.init();

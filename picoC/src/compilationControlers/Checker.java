@@ -625,9 +625,12 @@ public class Checker
      picoCParser.DeclWithInitContext ctx) 
     {
         if (left.getType() != right.getType()) {
+            /* This one could be extern error, so we must check if curFuncAna
+                is initialized. */
+            FunctionsAnalyser fa = TranslationVisitor.curFuncAna;
             CompilationControler.warningOcured(
                     ctx.getStart(),
-                        TranslationVisitor.curFuncAna.getFunctionName(),
+                        fa != null ? fa.getFunctionName() : null,
                             "Different type of variables in assign context");
         }
     }

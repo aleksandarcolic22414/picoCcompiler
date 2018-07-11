@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 void strcpy(char *s1, char *s2)
 {
     for (; *s1++ = *s2++ ; )
@@ -6,7 +9,7 @@ void strcpy(char *s1, char *s2)
 
 int main(int argc, char **argv)
 {
-    char *s = malloc(256);
+    char *s = (char *)malloc(256);
     char *h = "Aleksandar";
 
     strcpy(s, h);

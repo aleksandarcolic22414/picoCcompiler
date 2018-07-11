@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int matrix[5][5];
 
 void printMatrix(int matrix[][5]) 

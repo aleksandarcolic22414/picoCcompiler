@@ -38,10 +38,11 @@ char *strdup(char *s)
 
 int atoia(char *c)
 {
-    int i, n, sign;
+	int n, sign;
     while (isspace(*c)) // ignorisu se escape-znaci
         ++c;
-    sign = *c == '-' ? -1 : 1;  // uzmi predznak ako postoji
+    
+	sign = *c == '-' ? -1 : 1;  // uzmi predznak ako postoji
     if (*c == '-' || *c == '+')  // preskoci predznak ako postoji
         ++c;
 

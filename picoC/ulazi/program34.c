@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 char *func()
 {
     return malloc(256);

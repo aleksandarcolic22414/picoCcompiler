@@ -171,13 +171,16 @@ directDeclarator
     ;
 
 parameterList 
-    :   parameter (',' parameter)*  ;
+    :   parameter (',' parameter)*  
+    ;
 
 parameter 
-    :   typeSpecifier declarator  ;
+    :   typeSpecifier declarator  
+    ;
 
 functionBody 
-    :   compoundStatement  ;
+    :   compoundStatement  
+    ;
 
 statement 
     :   compoundStatement
@@ -208,10 +211,12 @@ blockItem
     ;
 
 expressionStatement 
-    :   expression? ';'  ;
+    :   expression? ';'  
+    ;
 
 selectionStatement
-    :   'if' '(' assignmentExpression ')' statement ('else' statement)? ;
+    :   'if' '(' assignmentExpression ')' statement ('else' statement)? 
+    ;
 
 iterationStatement
     :   'for' '(' forInit? ';' forCheck? ';' forInc? ')' statement  #ForLoop
@@ -220,11 +225,12 @@ iterationStatement
     ;
 
 forInit
-    :   expression 
+    :   expression
+    |   typeSpecifier initDeclarationList
     ;
 
 forCheck
-    :   assignmentExpression  
+    :   expression  
     ;
 
 forInc
@@ -236,7 +242,8 @@ whileCheck
     ;
 
 argumentList 
-    :   argument (',' argument)*  ;
+    :   argument (',' argument)*  
+    ;
 
 argument 
     :   assignmentExpression 

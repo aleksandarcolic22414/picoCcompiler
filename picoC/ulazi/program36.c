@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int **a = 1000;
 char cha = 'A';
 int *b = 100;

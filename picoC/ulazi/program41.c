@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 int cmp(char *a, char *b)
 {
     return *a - *b;
@@ -6,7 +9,7 @@ int cmp(char *a, char *b)
 void memcpy(void *a, void *b, int size)
 {
     while (size--)
-        *a++ = *b++;
+        *(char *)a++ = *(char *)b++;
 }
 
 void swapVal(void *a, void *b, int size)

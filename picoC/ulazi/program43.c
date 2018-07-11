@@ -1,8 +1,9 @@
+#include <stdio.h>
+
 int main()
 {
     
     int niz[3][3];
-    int i, j;
     *(*(niz + 0) + 0) = 1;
     *(*(niz + 0) + 1) = 2;
     *(*(niz + 0) + 2) = 3;
@@ -13,8 +14,8 @@ int main()
     *(*(niz + 2) + 1) = 8;
     *(*(niz + 2) + 2) = 9;    
 
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             printf("%d%s", *(*(niz + i) + j), j == 2 ? "\n" : " ");
         }
     }
