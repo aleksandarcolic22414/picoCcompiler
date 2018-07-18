@@ -27,11 +27,12 @@ public class Main
     public static final String CURRENT_DIRECTORY = System.getProperty("user.dir");
     
     /* Path to output file */
-    public static StringBuilder
-    PATH_TO_OUTPUT_FILE = new StringBuilder(CURRENT_DIRECTORY).append("//");
+    public static StringBuilder PATH_TO_OUTPUT_FILE = 
+            new StringBuilder(CURRENT_DIRECTORY).append("//");
+    
     /* Path to input file */
-    public static StringBuilder 
-    PATH_TO_INPUT_FILE = new StringBuilder(CURRENT_DIRECTORY).append("//");
+    public static StringBuilder PATH_TO_INPUT_FILE = 
+            new StringBuilder(CURRENT_DIRECTORY).append("//");
     
     /* Compilation commands */
     public static StringBuilder nasm  = new StringBuilder("nasm -f elf64 ");
@@ -40,7 +41,7 @@ public class Main
     
     /* File names */
     public static String outputFileName = "test//out.s";
-    public static String inputFileName = "ulazi//program36.c";
+    public static String inputFileName = "ulazi//quickSort.c";
     public static String rawFileName = null;
     
     /* Options flags */
@@ -82,7 +83,6 @@ public class Main
             
             walker.walk(listener, tree);
             visitor.visit(tree);
-            
         } catch (FileNotFoundException ex) {
             System.err.println("Error: " + inputFileName + ": No such file or directory");
         } catch (IOException ex) {
@@ -99,14 +99,18 @@ public class Main
         /* If -S option is specified than assemble and link are not done */
         if (isCompileOnly())
             return ;
+        
         try {
             File pathToDirectory = new File(CURRENT_DIRECTORY);
             Runtime runtime = Runtime.getRuntime();
+            
             /* Assemble by invoking nasm */
             Process p = runtime.exec(nasm.toString(), null, pathToDirectory);
             p.waitFor();
+            
             /* Link object files with gcc */
             p = runtime.exec(gcc.toString(), null, pathToDirectory);
+            
             /* Delete object and assembly files if needed */
             if (!isNoDelete()) {
                 p.waitFor();
@@ -123,7 +127,6 @@ public class Main
     private static void scanArgs(String[] args) 
     {
         int i = 0;
-        
         if (args.length == 0) {
             System.err.println("No input file specified.");
             System.out.println("Type --help for help");
@@ -163,6 +166,7 @@ public class Main
                     break;
             }
         }
+        
         Main.setOptions();
     }
 
@@ -182,7 +186,6 @@ public class Main
         /* rawFileName will be name of the input file without extension.
             If input file is "program.c", raw will be "program" */
         rawFileName = inputFileName.substring(0, inputFileName.lastIndexOf("."));
-        
         if (isCompileOnly()) {  // compile only
             if (isOutputFileSpecified()) {
                 PATH_TO_OUTPUT_FILE.append(outputFileName);  // only assembly like program.s
@@ -219,8 +222,7 @@ public class Main
                 clean.append(rawFileName);
                 clean.append(".s");  // clear object and assembly file
             }
-        }
-        
+        }   
     }
 
     /* Display compiler's options */

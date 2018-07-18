@@ -2,7 +2,6 @@ package tools;
 
 import antlr.picoCParser;
 import compilationControlers.Checker;
-import compilationControlers.CompilationControler;
 import compilationControlers.Writers;
 import constants.Constants;
 import constants.MemoryClassEnum;
@@ -17,9 +16,6 @@ public class ExpressionObject
 {
     /* Holds text representation of current evaluated expression */
     private String text = null;
-    
-    /* Internal informations */
-    private int flags = 0x0;
     
     /* Memory class of expression evaluated */
     private MemoryClassEnum type = MemoryClassEnum.VOID;
@@ -47,6 +43,9 @@ public class ExpressionObject
         If some variable is pointer to pointer to a char, than this
         list will contain head->MemoryClassEnum.POINTER->MemoryClassEnum.CHAR  */
     private LinkedList<Pointer> pointerTo = new LinkedList<>();
+    
+    /* Internal informations */
+    private int flags = 0x0;
     
     /* Position of specific information in flags */
     public static final int REGISTER =           0x1;
@@ -80,11 +79,13 @@ public class ExpressionObject
         this.type = type;
         flags |= info;
         setSize(type);
+        
         /* If it is stack variable, cast text and set stack displacement */
         if ((info & VAR_STACK) != 0) {
             this.text = castStackVar(ntext, type);
             stackDisp = ntext;
-        } 
+        }
+        
         PointerTools.copyPointerList(pointerTo, pointer);
     }
     
@@ -98,11 +99,13 @@ public class ExpressionObject
         this.type = type;
         flags |= info;
         setSize(type);
+        
         /* If it is stack variable, cast text and set stack displacement */
         if ((info & VAR_STACK) != 0) {
             this.text = castStackVar(ntext, type);
             stackDisp = ntext;
-        } 
+        }
+        
         insertPointerType(pointer);
     }
     
@@ -139,6 +142,7 @@ public class ExpressionObject
     {
         String nextFreeTemp, help;
         nextFreeTemp = NasmTools.getNextFreeTempStr(MemoryClassEnum.POINTER);
+        
         /* If variable is not currently declaring, than it needs to be moved
             to register in order to do stack calculations */
         help = "[" + this.stackDisp + "]";
@@ -168,7 +172,6 @@ public class ExpressionObject
     public void setType(MemoryClassEnum type) 
     {
         this.type = type;
-        /* Set proper size */
         setSize(type);
     }
 
@@ -213,6 +216,7 @@ public class ExpressionObject
     {
         if (!isCompared())
             return ;
+        
         /* If it is variable on stack or integer, move it to register */
         if (isStackVariable() || isInteger()) 
             putInRegister();
@@ -282,19 +286,22 @@ public class ExpressionObject
         this.stackDisp = stackDisp;
     }
 
-    /* Cast variable to specific size and return whether it is casted in */
+    /* Cast variable to specific size and return whether it is casted in. */
     public boolean castVariable(MemoryClassEnum type) 
     {
+        boolean castCheck = this.type != type;
+        
         /* Check if cast is needed */
-        if (this.type == type)
-            return false;
-        if (!this.isRegister())
-            this.putInRegister();
-        this.type = type;
-        int sizeOfVar = NasmTools.getSize(type);
-        this.size = sizeOfVar;
-        this.text = NasmTools.castVariable(text, sizeOfVar);
-        return true;
+        if (castCheck) {
+            if (!this.isRegister())
+                this.putInRegister();
+            
+            this.type = type;
+            this.size = NasmTools.getSize(type);
+            this.text = NasmTools.castVariable(this.text, this.size);
+        }
+        
+        return castCheck;
     }
 
     public void freeRegister() 
@@ -316,12 +323,14 @@ public class ExpressionObject
         String casted;
         if (left.isInteger() || right.isInteger())
             return 0;
-        /* If sizes of variables already match, than nothing is done */
+        
+        /* If sizes of variables already match, than nothing is done. */
         if (left.getType() == right.getType())
             return NasmTools.getSize(left.getType());
-        /* Check if variable types matches */
+        
+        /* Check if variable types matches. */
         Checker.checkVarMatch(left, right);
-        int maxSizeOfVars = left.size < right.size ? right.size : left.size;
+        int maxSizeOfVars = Integer.max(left.size, right.size);
         if (left.size == maxSizeOfVars) {  // right needs to be casted
             right.putInRegister();
             casted = NasmTools.castVariable(right.getText(), maxSizeOfVars);
@@ -333,6 +342,7 @@ public class ExpressionObject
             left.setText(casted);
             left.setType(right.getType());
         }
+        
         return maxSizeOfVars;
     }
     
@@ -351,6 +361,7 @@ public class ExpressionObject
                 break;
             default:
                 this.size = -1;
+                break;
         }
     }    
 
@@ -359,13 +370,17 @@ public class ExpressionObject
         if (left.isRegister()) {
             if (right.isRegister())
                 right.freeRegister();
+            
             return left;
-        } 
+        }
+        
         if (right.isRegister()) {
             if (left.isRegister())
                 left.freeRegister();
+            
             return right;
         }
+        
         return left;
     }
 
@@ -374,9 +389,9 @@ public class ExpressionObject
     {
         String reloadedReg, nextFreeTemp;
         int register;
-        
         if (isRegister())
             return false;
+        
         if (isArray() || isDereferenced()) {
             /* Do not use new register, but instead use current one */
             register = NasmTools.stringToRegister(stackDisp);
@@ -386,8 +401,8 @@ public class ExpressionObject
             this.setText(reloadedReg);
             return true;
         }
-        nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
         
+        nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
         Writers.emitInstruction("mov", nextFreeTemp, this.text);
         this.setToRegister();
         this.setText(nextFreeTemp);
@@ -406,6 +421,7 @@ public class ExpressionObject
     {
         if (isInteger())
             putInRegister();
+        
         Writers.emitInstruction("cmp", getText(), "0");
         RelationHelper.setRelation(picoCParser.NOT_EQUAL);
     }
@@ -448,7 +464,6 @@ public class ExpressionObject
     {
         String cast, newText;
         Pointer ptr;
-        
         if (!isDereferenced() && !isArray()) {
             putInRegister();
             this.stackDisp = this.text;     // rax for example...
@@ -456,9 +471,9 @@ public class ExpressionObject
             /* If variable is a pointer to a complex type like int (*)[10][5]
             which is multidimensional array, than it can't be dereferenced.
             In normal case, dereference it. */
-            if (!isArray())
+            if (!isArray()) {
                 Writers.emitInstruction("mov", this.stackDisp, this.text);
-            else {
+            } else {
                 /* If it is and array, see if it is like simple pointer
                    (Pointer to simple type. Like: int *). If it is not, no
                     casting or referencing is done. */
@@ -468,6 +483,7 @@ public class ExpressionObject
                 }
             }
         }
+        
         /* pop last pointer and calculate it's type and do proper cast */
         ptr = removePointerType();    
         cast = NasmTools.getCast(ptr.getType());
@@ -483,6 +499,7 @@ public class ExpressionObject
     {
         if (!isRegister())
             return;
+        
         setType(newType);
         int newSize = NasmTools.getSize(newType);
         this.text = NasmTools.castVariable(this.text, newSize);
@@ -498,7 +515,7 @@ public class ExpressionObject
         this.flags = ExpressionObject.VAR_STACK;
     }
 
-    /* Simply insert minus prefix if there isn't any, and if there is
+    /* Simply insert minus prefix if there isn't any, and if there is,
         remove it. */
     public ExpressionObject insertIntMinusPrefix() 
     {
@@ -506,6 +523,7 @@ public class ExpressionObject
             this.text = this.text.substring(1);
         else
             this.text = "-" + this.text;
+        
         return this;
     }
 
@@ -518,6 +536,7 @@ public class ExpressionObject
         Pointer ptr = pointerTo.pop();
         if (pointerTo.peek() == null || pointerTo.peek().getSizes().isEmpty())
             this.arrayType = null;
+        
         return ptr;
     }
 
@@ -528,15 +547,19 @@ public class ExpressionObject
     public void simpleSubscript(ExpressionObject expr) 
     {
         MemoryClassEnum typeofptr;
+        
         /* Increment size represents size of bytes that needs to be added
             to start of the source(array) for increment of 1. */
         String cast, sizeOfElement, disp;
+        
         /* Let's do calculation */
         /* First get size that needs to be multiplyed with element number */
         sizeOfElement = Integer.toString(PointerTools.getByteIncrement(this));
         typeofptr = getPointer().getType();
+        
         /* Get proper cast */
         cast = NasmTools.getCast(typeofptr);
+        
         /* If expression is integer, directly caluculate it's position on stack
             like cast [start + index * sizeofelement] */
         if (expr.isInteger()) {
@@ -549,9 +572,11 @@ public class ExpressionObject
             Writers.emitInstruction("add", this.text, expr.getText());
             disp = cast + " [" + this.text + "]";
         }
+        
         setText(disp);
         setType(typeofptr);
         setStackVariable();
+        
         /* Remove pointer type and clear taken register */
         removePointerType();
         if (expr.isRegister())
@@ -561,9 +586,11 @@ public class ExpressionObject
     public void complexSubscript(ExpressionObject expr) 
     {
         MemoryClassEnum typeofptr;
+        
         /* Increment size represents size of bytes that needs to be added
             to start of the source(array) for increment of 1. */
         String cast, incrementSize, disp;
+        
         /* Let's do calculation */
         /* First get size that needs to be multiplyed with element index */
         incrementSize = Integer.toString(PointerTools.getByteIncrement(this));
@@ -596,10 +623,10 @@ public class ExpressionObject
     public void putAddressInRegister() 
     {
         String nextFreeTemp, stackPos;
-        
         nextFreeTemp = NasmTools.getNextFreeTempStr(this.type);
         stackPos = "[" + this.stackDisp + "]";
-        /* If variable about to be subsripted is pointer, than address that
+        
+        /* If variable about to be subscripted is pointer, than address that
             that pointer points to needs to be load in register. 
             In case that variable is array and parameter than it is threater
             like pointer, so extra check for stack variable is needed.
@@ -629,14 +656,15 @@ public class ExpressionObject
     {
         if (!this.isRegister())
             this.putInRegister();
+        
         Writers.emitInstruction("not", this.text);
     }
 
     /* Function return object with bigger size of 2 */
     public static ExpressionObject returnBigger
-    (ExpressionObject expr2, ExpressionObject expr3) 
+    (ExpressionObject expr1, ExpressionObject expr2) 
     {
-        return expr2.size > expr3.size ? expr2 : expr3;
+        return expr1.size > expr2.size ? expr1 : expr2;
     }
 
     /* Function puts variable in A register */
@@ -644,6 +672,7 @@ public class ExpressionObject
     {
         if (this.isRegisterA())
             return;
+        
         String aReg = NasmTools.takeARegister(this.getType());;
         Writers.emitInstruction("mov", aReg, this.text);
         this.setText(aReg);

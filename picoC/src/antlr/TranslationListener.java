@@ -7,10 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import tools.LabelsMaker;
 import tools.Pointer;
 import tools.PointerTools;
-
 
 /**
  *
@@ -20,6 +18,7 @@ public class TranslationListener extends picoCBaseListener
 {
     picoCParser parser;
     TranslationVisitor visitor;
+    
     /* Map that contains informations about all functions
         that are beeing compiled. */
     public static Map<String, FunctionsAnalyser> mapFuncAna;
@@ -79,6 +78,7 @@ public class TranslationListener extends picoCBaseListener
         functionName = functionName.replaceAll("\\*+", "");
         if (mapFuncAna.containsKey(functionName))
             return ;
+        
         FunctionsAnalyser fa = new FunctionsAnalyser(functionName);
         mapFuncAna.put(functionName, fa);
         curFuncCtx = fa;
@@ -88,17 +88,21 @@ public class TranslationListener extends picoCBaseListener
     public void enterParameterList(picoCParser.ParameterListContext ctx) 
     {
         curFuncCtx.setParameterContext(true);
+        
         /* Get list of parameters */
         List<picoCParser.ParameterContext> parameterList = ctx.parameter();
+        
         /* Calculate displacement for parameters */
         int sizeOfParams, sizeOfVar, paramsNum, i;
         sizeOfParams = sizeOfVar = 0;
         paramsNum = parameterList.size();
         MemoryClassEnum type;
+        
         /* Iterate over list and calculate total size of parameters in bytes */
         for (i = 0; i < paramsNum; ++i) {
             /* Get type of var and convert it to bytes */
             int tokenType = parameterList.get(i).typeSpecifier().type.getType();
+            
             /* Variable is pointer if it has more than 1 child in declarator
                 context or has more than 1 child in directDeclarator context */
             boolean ptr = parameterList.get(i).declarator().getChildCount() > 1;
@@ -107,17 +111,22 @@ public class TranslationListener extends picoCBaseListener
                     .declarator()
                     .directDeclarator()
                     .getChildCount() > 1;
+            
             if (ptr)
                 type = MemoryClassEnum.POINTER;
             else
                 type = NasmTools.getTypeOfVar(tokenType);
+            
             sizeOfVar = NasmTools.getSize(type);
+            
             /* Add it to overall size */
             sizeOfParams += sizeOfVar;
         }
+        
         /* Set in function analyser */
         curFuncCtx.setNumberOfParameters(paramsNum);
         curFuncCtx.setSpaceForParams(sizeOfParams);
+        
         /* Clear lists */
         arrayInitializator.clear();
         pointerInitializator.clear();

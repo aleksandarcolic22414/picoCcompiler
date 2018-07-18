@@ -22,11 +22,12 @@ public class CompilationControler {
         int pos = token.getStartIndex();
         
         if (functionName == null) {
-            System.err.println
-            ("Error: line " + line + ": " + error + ";");
+            System.err.println(
+                    "Error: line " + line + ": " + 
+                    error + ";");
         } else {
-            System.err.println
-            ("Error in function " + functionName + 
+            System.err.println(
+                    "Error in function " + functionName + 
                     ": line " + line + ": " + error + ";");
         }
     }
@@ -39,11 +40,12 @@ public class CompilationControler {
         int pos = token.getStartIndex();
         
         if (functionName == null) {
-            System.err.println
-            ("Warning: line " + line + ": " + warning + ";");
+            System.err.println(
+                    "Warning: line " + line + ": " + 
+                    warning + ";");
         } else {
-            System.err.println
-            ("Warning in function " + functionName + 
+            System.err.println(
+                    "Warning in function " + functionName + 
                     ": line " + line + ": " + warning + ";");
         }
     }        

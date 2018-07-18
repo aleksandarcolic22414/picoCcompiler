@@ -73,10 +73,9 @@ int strlen(char *s)
 int main(int argc, char **argv)
 {
     int i, N;
-    N = 30;
-    char *s = malloc(1000);
+    N = 500;
+    char *s = malloc(N);
     scanf("%s", s);
-    printf("%s\n", s);
     quickSort(s, strlen(s), 1);
     printf("%s\n", s);
 
@@ -86,5 +85,4 @@ int main(int argc, char **argv)
 /*
     Ulaz:   Recenica za sortiranje
     Izlaz:  Sortirana recenica
-    
 */

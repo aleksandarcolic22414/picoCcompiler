@@ -11,18 +11,25 @@ public class Constants
         in order to separate pointer arithmetic from other types it has
         value of 1. */
     public static int SIZE_OF_VOID = 1;
+    
     /* Represents char size in bytes */
     public static final int SIZE_OF_CHAR = 1;
+    
     /* Represents int size in bytes */
     public static final int SIZE_OF_INT = 4;
+    
     /* Represents pointer size in bytes */
     public static final int SIZE_OF_POINTER = 8;
+    
     /* Represents value of byte in string */
     public static final String STRING_BYTE = "byte";
+    
     /* Represents value of word in string */
     public static final String STRING_WORD = "word";
+    
     /* Represents value of double word in string */
     public static final String STRING_DWORD = "dword";
+    
     /* Represents value of quad word in string */
     public static final String STRING_QWORD = "qword";
     
@@ -155,6 +162,7 @@ public class Constants
                                               + "\textern strtok\n"
                                               + "\textern strxfrm\n"
                                               ;
+    
     /* setup segments for further compilation + "\textern */
     public static final String ENTER_TEXT_SEGMENT = "\nsegment .text\n";
     public static final String ENTER_DATA_SEGMENT = "segment .data\n";

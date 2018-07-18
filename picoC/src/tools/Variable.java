@@ -66,7 +66,6 @@ public class Variable
         this.initialized = false;
         this.extern = extern;
         
-        
         if (!curArray.isEmpty()) {
             this.array = true;
             this.arrayType = type;

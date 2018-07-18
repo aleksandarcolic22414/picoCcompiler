@@ -20,7 +20,6 @@ public class Checker
 
     private static boolean varInitCheck = true;
     
-    
     public static boolean varInitCheck() 
     {
         return varInitCheck;
@@ -32,19 +31,22 @@ public class Checker
     }
     
     public static boolean functionCallCheck
-    (picoCParser.FuncCallContext ctx, List<picoCParser.ArgumentContext> argumentList) 
+    (picoCParser.FuncCallContext ctx, 
+     List<picoCParser.ArgumentContext> argumentList) 
     {
         int paramCount;
         FunctionsAnalyser funcAnalyser;
         String functionName = ctx.postfixExpression().getText();
         if (Checker.externalFunctionCheck(functionName))
             return true;
+        
         if ((funcAnalyser = TranslationVisitor.functions.get(functionName)) == null) {
             CompilationControler.errorOcured
                 (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                         "Function " + functionName + " doesn't exist");
             return false;
         }
+        
         /* Check if number of arguments matches number of parameters */
         if (argumentList != null) {
             if ((paramCount = funcAnalyser.getNumberOfParameters()) > argumentList.size()) {
@@ -54,6 +56,7 @@ public class Checker
                                 "Too few arguments in function call");
                 return false;
             }
+            
             if (paramCount < argumentList.size()) {
                 CompilationControler.errorOcured
                     (ctx.getStart(),
@@ -70,18 +73,23 @@ public class Checker
                 return false;
             }
         }
+        
         return true;
     }
+    
     /* This shoud check for all external functions.
         That could be some functions from gcc's standard library */
     public static boolean externalFunctionCheck(String functionName) 
     {
         if (Constants.GCC_LIB_CTYPE.contains(functionName) && IncludeSegment.isIncludedCtype())
             return true;
+        
         if (Constants.GCC_LIB_STRING.contains(functionName) && IncludeSegment.isIncludedString())
             return true;
+        
         if (Constants.GCC_LIB_STDIO.contains(functionName) && IncludeSegment.isIncludedStdio())
             return true;
+        
         if (Constants.GCC_LIB_STDLIB.contains(functionName) && IncludeSegment.isIncludedStdlib())
             return true;
         
@@ -99,21 +107,25 @@ public class Checker
                             error);
             return false;
         } 
+        
         return true;
     }
 
+    /* Since GCC doesn't keep track about return statements, 
+        warning won't be printed here. */
     public static void funcRetStatCheck(picoCParser.FunctionDefinitionContext ctx) 
     {
+        /*
         if (TranslationVisitor.curFuncAna.getMemoryClass() != MemoryClassEnum.VOID && 
                 !TranslationVisitor.curFuncAna.isHasReturn()) 
         {
-            CompilationControler.errorOcured
+            CompilationControler.warningOcured
                 (ctx.getStart(), 
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Missing return statement in function " + 
                                     TranslationVisitor.curFuncAna.getFunctionName());
         }
-        
+        */
     }
 
     public static boolean paramCheck(picoCParser.ParameterContext ctx, String name) 
@@ -125,6 +137,7 @@ public class Checker
                             "Two or more params with the same name: " + name);
             return false;    
         }
+        
         return true;
     }
 
@@ -138,6 +151,7 @@ public class Checker
                             "Void variable not alowed!");
             return false;
         }
+        
         return true;
     }
 
@@ -150,6 +164,7 @@ public class Checker
                             "Void variable not alowed!");
             return false;
         }
+        
         return true;
     }
     
@@ -162,6 +177,7 @@ public class Checker
                             "Void variable not alowed!");
             return false;
         }
+        
         return true;
     }
     
@@ -184,6 +200,7 @@ public class Checker
                             "Multiple declaration of " + name);
             return false;    
         }
+        
         return true;
     }
 
@@ -197,6 +214,7 @@ public class Checker
                             "Variable " + "'" + id + "'" + " not declared");
             return false;
         }
+        
         return true;
     }
 
@@ -211,6 +229,7 @@ public class Checker
             (ctx.getStart(), TranslationVisitor.curFuncAna.getFunctionName(),
                 "Variable " + "'" + id + "'"
                     + " is not declared");
+        
         return false;
     }
 
@@ -236,6 +255,7 @@ public class Checker
                             "Only variables can be pre-decremened");
             return false;
         }
+        
         return true;
     }
 
@@ -247,6 +267,7 @@ public class Checker
                             "Only variables can be pre-incremened");
             return false;
         }
+        
         return true;
     }
 
@@ -259,6 +280,7 @@ public class Checker
                             "Division by zero error occurs");
             return false;
         }
+        
         return true;
     }
 
@@ -270,6 +292,7 @@ public class Checker
                             "Only variables can be post-incremened");
             return false;
         }
+        
         return true;
     }
 
@@ -281,6 +304,7 @@ public class Checker
                     "Only variables can be post-decremened");
             return false;
         }
+        
         return true;
     }
 
@@ -297,6 +321,7 @@ public class Checker
                         "Address of non-variable type");
             return false;
         }
+        
         return true;
     }
 
@@ -310,6 +335,7 @@ public class Checker
                             "Variable " + "'" + id + "'" + " not declared");
             return false;
         }
+        
         return true;
     }
 
@@ -323,6 +349,7 @@ public class Checker
                             "Trying to dereference non-pointer type " + ctx.getText());
             return false;
         }
+        
         if (expr.getPointer().getType() == MemoryClassEnum.VOID) {
             CompilationControler.errorOcured(
                     ctx.getStart(), 
@@ -330,6 +357,7 @@ public class Checker
                             "Dereferencing void pointer " + ctx.getText());
             return false;
         }
+        
         return true;
     }
 
@@ -388,9 +416,12 @@ public class Checker
                                 "Wrong type of operands");
                 return false;
             }
+            
             if (operation == picoCParser.ASSIGN_ADD 
-                    || operation == picoCParser.ASSIGN_SUB)
+                    || operation == picoCParser.ASSIGN_SUB) {
                 return true;
+            }
+            
             CompilationControler.errorOcured(
                         ctx.getStart(), 
                             TranslationVisitor.curFuncAna.getFunctionName(),
@@ -424,6 +455,7 @@ public class Checker
                 return false;
             }
         }
+        
         return true;
     }
 
@@ -437,6 +469,7 @@ public class Checker
                             "Multiple declaration of " + name);
             return false;    
         }
+        
         return true;
     }
 
@@ -450,6 +483,7 @@ public class Checker
                             "Void variables not alowed!");
             return false;
         }
+        
         return true;
     }
 
@@ -464,6 +498,7 @@ public class Checker
                             "Initialization expression not constant");
             return false;
         }
+        
         return true;
     }
 
@@ -477,6 +512,7 @@ public class Checker
                             "Try to assign to non-variable type");
             return false;
         }
+        
         return true;
     }
 
@@ -490,6 +526,7 @@ public class Checker
                             "Returning void type in non-void function");
             return false;
         }
+        
         return true;
     }
 
@@ -503,6 +540,7 @@ public class Checker
                             "Trying to assign to an array type");
             return false;
         }
+        
         return true;
     }
 
@@ -516,6 +554,7 @@ public class Checker
                             "Subscripting non-array type");
             return false;
         }
+        
         return true;
     }
 
@@ -529,6 +568,7 @@ public class Checker
                             "Subscripting with non-integer type");
             return false;
         }
+        
         return true;
     }
 
@@ -539,9 +579,10 @@ public class Checker
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Wrong type of argument for '~' operation");
+                            "Wrong type argument to unary '~'");
             return false;
         }
+        
         return true;
     }
 
@@ -555,6 +596,7 @@ public class Checker
                             "Casting array type");
             return false;
         }
+        
         return true;
     }
 
@@ -566,9 +608,10 @@ public class Checker
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Trying to AND pointer type");
+                            "invalid operands to binary &");
             return false;
         }
+        
         return true;
     }
     
@@ -580,9 +623,10 @@ public class Checker
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Trying to XOR pointer type");
+                            "invalid operands to binary ^");
             return false;
         }
+        
         return true;
     }
 
@@ -594,9 +638,10 @@ public class Checker
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
-                            "Trying to OR pointer type");
+                            "invalid operands to binary |");
             return false;
         }
+        
         return true;
     }
 
@@ -604,20 +649,22 @@ public class Checker
     (ExpressionObject leftExpr, ExpressionObject rightExpr, 
     picoCParser.ShiftContext ctx) 
     {
+        boolean res = true;
         if (leftExpr.isPointer()) {
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Shifting pointer type");
-            return false;
+            res = false;
         } else if (rightExpr.isPointer()) {
             CompilationControler.errorOcured
                 (ctx.getStart(),
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Shifting with pointer type");
-            return false;
-        } else
-            return true;
+            res = false;
+        } 
+        
+        return res;
     }
 
     public static void checkInitWithAssign
@@ -636,7 +683,9 @@ public class Checker
     }
 
     public static boolean checkVarMatch
-    (picoCParser.ConditionalContext ctx, ExpressionObject expr2, ExpressionObject expr3) 
+    (picoCParser.ConditionalContext ctx, 
+     ExpressionObject expr2, 
+     ExpressionObject expr3) 
     {
         if (expr2.getType() != expr3.getType()) {
             CompilationControler.errorOcured
@@ -644,6 +693,7 @@ public class Checker
                     "Different types in conditional expression");
             return false;
         }
+        
         return true;
     }
 
@@ -655,8 +705,55 @@ public class Checker
                 (ctx.getStart(), 
                         TranslationVisitor.curFuncAna.getFunctionName(),
                             "Multiple declaration of " + name);
-            return false;    
+            return false;
         }
+        
+        return true;
+    }
+
+    public static boolean checkMulDivMod(
+            ExpressionObject leftExpr, 
+            ExpressionObject rightExpr, 
+            picoCParser.MulDivModContext ctx) 
+    {
+        if (leftExpr.isPointer() || rightExpr.isPointer())
+        {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Invalid operands for binary " + ctx.op.getText());
+            return false;
+        }
+        
+        return true;
+    }
+
+    public static boolean checkUnaryMinus
+    (ExpressionObject expr, picoCParser.MinusContext ctx) 
+    {
+        if (expr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Wrong type argument to unary minus");
+            return false;
+        }
+     
+        return true;
+    }
+
+    public static boolean checkUnaryPlus
+    (ExpressionObject expr, 
+     picoCParser.PlusContext ctx) 
+    {
+        if (expr.isPointer()) {
+            CompilationControler.errorOcured
+                (ctx.getStart(), 
+                        TranslationVisitor.curFuncAna.getFunctionName(),
+                            "Wrong type argument to unary plus");
+            return false;
+        }
+     
         return true;
     }
     

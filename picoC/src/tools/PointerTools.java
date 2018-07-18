@@ -15,7 +15,6 @@ import nasm.NasmTools;
  */
 public class PointerTools 
 {
-
     /* Functions inserts pointers from second list to first list.
         Second list represents sizes of the array which needs to be
         represented as pointer. In rest of the text word "sizes" is used to
@@ -38,14 +37,17 @@ public class PointerTools
         Pointer ptr;
         while (!arrays.isEmpty()) {
             newSizes = new LinkedList<>();
-            /* copy previous sizes */
+            
+            /* Copy previous sizes. */
             copyArrayList(newSizes, hSizes);
+            
             /* Get this pointer size which is last element in arrays and add
-                it to the hSizes */
+                it to the hSizes. */
             last = arrays.removeLast();
             hSizes.push(last);
             ptr = new Pointer(type, newSizes);
-            /* Insert new pointer */
+            
+            /* Insert new pointer. */
             PointerTools.insertPointer(pointer, ptr);
         }
     }
@@ -56,8 +58,8 @@ public class PointerTools
     {
         if (sizes == null || newSizes == null)
             return;
-        int len = newSizes.size();
         
+        int len = newSizes.size();
         for (int i = 0; i < len; ++i)
             sizes.addLast(newSizes.get(i));
     }
@@ -68,6 +70,7 @@ public class PointerTools
     {
         if (!pointer.isEmpty())
             ptr.setType(MemoryClassEnum.POINTER);
+        
         pointer.push(ptr);
     }
     
@@ -77,6 +80,7 @@ public class PointerTools
     {
         if (list1 == null || list2 == null)
             return;
+        
         list2.forEach((i) -> {
             list1.addLast(i);
         });
@@ -94,6 +98,7 @@ public class PointerTools
             ptr = new Pointer(type);
         else
             ptr = new Pointer(MemoryClassEnum.POINTER);
+        
         curPointer.push(ptr);
     }
 
@@ -104,6 +109,7 @@ public class PointerTools
     {
         if (source.isEmpty())
             return;
+        
         Pointer type = source.pop();
         switchStacks(destination, source);
         destination.push(type);
@@ -115,17 +121,19 @@ public class PointerTools
     {
         if (list1.isEmpty())
             return;
+        
         Integer type = list1.pop();
         switchArrays(list1, list2);
         list2.push(type);
     }
     
-    /* Function that inserts all elements from second list to first list */
+    /* Function that inserts all elements from second list to first list. */
     public static void copyPointerList
     (LinkedList<Pointer> list1, LinkedList<Pointer> list2) 
     {
         if (list1 == null || list2 == null)
             return;
+        
         list2.forEach((i) -> {
             list1.addLast(i);
         });
@@ -138,15 +146,16 @@ public class PointerTools
     {
         int size, times;
         MemoryClassEnum type;
+        
         /* If it is simple pointer, just calculate sizeof(type) in bytes
             that pointer point's to. */
         if (PointerTools.isSimplePointer(leftExpr))
              return NasmTools.getSize(leftExpr.getPointer().getType());
+        
         /* Determine which is proper type to calculate offset. */
         type = getTypeForIncrement(leftExpr);
         size = NasmTools.getSize(type);
         times = PointerTools.mulPointerSizes(leftExpr.getPointer());
-        
         return size*times;
     }
 
@@ -160,6 +169,7 @@ public class PointerTools
         
         for (Integer i : sizes)
             res *= i;
+        
         return res;
     }
 
@@ -179,11 +189,14 @@ public class PointerTools
         LinkedList<Pointer> ptrList;
         Pointer ptr;
         ptrList = expr.getPointerTo();
+        
         /* If there is only one type to point to, than it's simple pointer type  */
         if (ptrList.size() == 1)
             return true;
+        
         /* Let's pop current pointer and analyze next type of pointer.  */
         ptr = ptrList.pop();
+        
         /* If next type is simple pointer (but not array!), than this is simple
             pointer. Little note: If next type is array, than this is complex
             pointer.  */
@@ -191,6 +204,7 @@ public class PointerTools
             ptrList.push(ptr);
             return true;
         }
+        
         /* Put back type, and return false (complex pointer) */
         ptrList.push(ptr);
         return false;
@@ -204,26 +218,28 @@ public class PointerTools
     public static MemoryClassEnum getTypeForIncrement(ExpressionObject expr) 
     {
         MemoryClassEnum type;
-        LinkedList<Pointer> hlist;
-        Pointer ptr;
         int i, size;
+        
         /* If there is array type that is not null, it already hold's
             information that is needed */
         if ((type = expr.getArrayType()) != null)
             return type;
+        
         /* Let's dig into list */
-        hlist = expr.getPointerTo();
+        LinkedList<Pointer> hlist = expr.getPointerTo();
         size = hlist.size();
         for (i = 0; i < size; ++i) {
-            ptr = hlist.get(i);
+            Pointer ptr = hlist.get(i);
+            
             /* If there is simple pointer in the list, that means that
                 expr array is an array of pointers. */
             if (ptr.getSizes().isEmpty()) {
                 return MemoryClassEnum.POINTER;
             }   
         }
+        
         /* Last element in the list holds information about which type
-            are elements in expr array (if all other cases failed of course) */
+            are elements in expr array (if all other cases failed of course). */
         return hlist.getLast().getType();
     }
     
@@ -239,23 +255,27 @@ public class PointerTools
         LinkedList<Pointer> hlist;
         Pointer ptr;
         int i, size;
+        
         /* If there is array type that is not null, it already hold's
             information that is needed */
         if ((type = var.getArrayType()) != null)
             return type;
-        /* Let's dig into pointer list */
+        
+        /* Let's dig into pointer list... */
         hlist = var.getPointerTo();
         size = hlist.size();
         for (i = 0; i < size; ++i) {
             ptr = hlist.get(i);
+            
             /* If there is simple pointer in the list, that means that
                 var array is an array of pointers. */
             if (ptr.getSizes().isEmpty()) {
                 return MemoryClassEnum.POINTER;
             }   
         }
+        
         /* Last element in the list holds information about which type
-            are elements in var array (if all other cases failed of course) */
+            are elements in var array (if all other cases failed of course). */
         return hlist.getLast().getType();
     }
 }

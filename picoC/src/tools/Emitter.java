@@ -2,7 +2,6 @@
 package tools;
 
 import antlr.picoCParser;
-import compilationControlers.Checker;
 import compilationControlers.Writers;
 import constants.MemoryClassEnum;
 import nasm.NasmTools;
@@ -21,6 +20,7 @@ public class Emitter
     {
         String nextFreeTemp;
         ExpressionObject.castVariablesToMaxSize(leftExpr, rightExpr);
+        
         /* Chech whether leftExpr is register. If it's not then it needs to be
             moved to one and then multiplied */
         if (!leftExpr.isRegister()) {
@@ -34,11 +34,12 @@ public class Emitter
         } else {
             Writers.emitInstruction("imul", leftExpr.getText(), rightExpr.getText());
         }
+        
         return leftExpr;
     }
     
     /* This function represent set of steps needed for calculating
-        division or modulo expression */
+        division or modulo expression. */
     public static ExpressionObject divideOrModulo
     (ExpressionObject leftExpr, ExpressionObject rightExpr, int operation) 
     {
@@ -53,9 +54,10 @@ public class Emitter
                 Writers.emitInstruction("mov", nextFreeTemp, "edx");
                 Writers.emitInstruction("cdq");
                 Writers.emitInstruction("idiv", rightExpr.getText());
-                if (operation == picoCParser.MOD) /* If it's mod, move remainder to eax */ {
+                if (operation == picoCParser.MOD) { /* If it's mod, move remainder to eax */
                     Writers.emitInstruction("mov", "eax", "edx");
                 }
+                
                 Writers.emitInstruction("mov", "edx", nextFreeTemp);
                 NasmTools.free(nextFreeTemp);
             } else {
@@ -75,13 +77,16 @@ public class Emitter
                 fake = true;
                 fakelyTaken = NasmTools.get4ByteDRegister();
             }
+            
             /* Always true -> */
             if (NasmTools.isTakenRegisterAREG() && NasmTools.isTakenRegisterDREG()) {
                 s1 = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
                 Writers.emitInstruction("mov", s1, "eax");
+                
                 /* save eax value into s1 */
                 s2 = NasmTools.getNextFreeTempStr(MemoryClassEnum.INT);
                 Writers.emitInstruction("mov", s2, "edx");
+                
                 /* save edx value into s2 */
                 /* setting eax and edx for div */
                 Writers.emitInstruction("mov", "eax", leftExpr.getText());
@@ -98,14 +103,17 @@ public class Emitter
                 } else {
                     Writers.emitInstruction("idiv", rightExpr.getText());
                 }
+                
                 /* If it's div operation, move result (eax) to leftExpr, 
                         else, move remainder(edx) to leftExpr */
                 if (operation == picoCParser.DIV) {
                     Writers.emitInstruction("mov", leftExpr.getText(), "eax");
                 }
+                
                 if (operation == picoCParser.MOD) {
                     Writers.emitInstruction("mov", leftExpr.getText(), "edx");
                 }
+                
                 /* restoring values */
                 Writers.emitInstruction("mov", "eax", s1);
                 Writers.emitInstruction("mov", "edx", s2);
@@ -117,14 +125,15 @@ public class Emitter
             if (fake == true) {
                 NasmTools.free(fakelyTaken);
             }
-            
         }
+        
         return leftExpr;
     }
     
     public static void andExpressionEvaluation(String left, String right) 
     {
         String labelTrue, labelFalse, afterFalseLabel;
+        
         /* Get labels */
         labelTrue = LabelsMaker.getNextTrueLogicalLabel();
         labelFalse = LabelsMaker.getNextFalseLogicalLabel();
@@ -133,16 +142,20 @@ public class Emitter
         /* Emit compare with zero, and jump if it is true */
         Writers.emitInstruction("cmp", left, "0");
         Writers.emitInstruction("je", labelFalse);
+        
         /* Now compare right with 0 and jump if it is true */
         Writers.emitInstruction("cmp", right, "0");
         Writers.emitInstruction("je", labelFalse);
+        
         /* Emit true label and store 1 to left register, meaning evaluated: true */
         Writers.emitLabel(labelTrue);
         Writers.emitInstruction("mov", left, "1");
         Writers.emitInstruction("jmp", afterFalseLabel);
+        
         /* Emit false label, and store 0 to left register, meaning evaluated: false */
         Writers.emitLabel(labelFalse);
         Writers.emitInstruction("mov", left, "0");
+        
         /* Emit label for rest of the code */
         Writers.emitLabel(afterFalseLabel);
     }
@@ -150,6 +163,7 @@ public class Emitter
     public static void orExpressionEvaluation(String left, String right) 
     {
         String labelTrue, labelFalse, afterFalseLabel;
+        
         /* Get labels */
         labelTrue = LabelsMaker.getNextTrueLogicalLabel();
         labelFalse = LabelsMaker.getNextFalseLogicalLabel();
@@ -158,15 +172,19 @@ public class Emitter
         /* Emit compare with zero, and jump if it is false */
         Writers.emitInstruction("cmp", left, "0");
         Writers.emitInstruction("jne", labelTrue);
+        
         /* Now compare right with 0 and jump if it is true */
         Writers.emitInstruction("cmp", right, "0");
         Writers.emitInstruction("je", labelFalse);
+        
         /* Emit true label and store 1 to left register, meaning evaluated: true */
         Writers.emitLabel(labelTrue);
         Writers.emitInstruction("mov", left, "1");
         Writers.emitInstruction("jmp", afterFalseLabel);
+        
         /* Emit false label */
         Writers.emitLabel(labelFalse);
+        
         /* Actually, mov left 0 doesn't need to be done, because left will always
             be 0, if "OR" condition is evaluated false. But it is there for  
             easier debugging */
@@ -183,7 +201,6 @@ public class Emitter
     (ExpressionObject expr1, ExpressionObject expr2) 
     {
         MemoryClassEnum type = expr1.getType();
-        
         if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("mov", expr1.getText(), expr2.getText());
         } else {
@@ -200,7 +217,6 @@ public class Emitter
     (ExpressionObject expr1, ExpressionObject expr2) 
     {
         MemoryClassEnum type = expr1.getType();
-        
         if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("add", expr1.getText(), expr2.getText());
         } else {
@@ -217,7 +233,6 @@ public class Emitter
     (ExpressionObject expr1, ExpressionObject expr2) 
     {
         MemoryClassEnum type = expr1.getType();
-        
         if (expr2.isRegister() || expr2.isInteger()) {
             Writers.emitInstruction("sub", expr1.getText(), expr2.getText());
         } else {
@@ -237,6 +252,7 @@ public class Emitter
         expr1.putInRegister();
         if (expr2.isInteger())
             expr2.putInRegister();
+        
         /* Emitter multiply will return same value pased as first argument, 
             but in case that that change in a future, let's store it in var */
         expr1 = Emitter.multiply(expr1, expr2);   
@@ -254,6 +270,7 @@ public class Emitter
         expr1.putInRegister();
         if (expr2.isInteger())
             expr2.putInRegister();
+        
         /* Emitter divideOrModulo will return same value passed as first argument, 
             but in case that that could change in a future, let's store it in var */
         expr1 = Emitter.divideOrModulo(expr1, expr2, operation);
@@ -383,10 +400,10 @@ public class Emitter
             Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
             return;
         } 
+        
         /* In other cases left is pointer and right one is not. */
         memclass = leftExpr.getPointer().getType();
         size = PointerTools.getByteIncrement(leftExpr);
-        
         if (rightExpr.isInteger()) {    // if it is int, let java calculate
             value = Integer.parseInt(rightExpr.getText());
             value *= size;
@@ -399,6 +416,7 @@ public class Emitter
                 Writers.emitInstruction("imul", rightExpr.getText(), Integer.toString(size));
             }
         }
+        
         Writers.emitInstruction(operation, leftExpr.getText(), rightExpr.getText());
     }
 
@@ -426,7 +444,6 @@ public class Emitter
         MemoryClassEnum memclass;
         int size, value;
         op = NasmTools.getOperation(operation);
-        
         memclass = leftExpr.getPointer().getType();
         size = NasmTools.getSize(memclass);
         
@@ -447,9 +464,9 @@ public class Emitter
             shifting = NasmTools.getShiftForPointer(memclass);
             Writers.emitInstruction("shl", rightExpr.getText(), shifting);
         }
+        
         /* Emitting */
         Emitter.emitMoveToStack(leftExpr, rightExpr, op);
-        
     }
 
     private static void emitMoveToStack
@@ -514,6 +531,7 @@ public class Emitter
     {
         String temp, rightByte;
         temp = null;
+        
         /* leftExpr is in register! */
         if (rightExpr.isInteger()) {
             Writers.emitInstruction(instruction, leftExpr.getText(), rightExpr.getText());
@@ -525,6 +543,7 @@ public class Emitter
                 rightByte = NasmTools.castRegisterToChar(rightExpr.getText());
                 Writers.emitInstruction("mov", "cl", rightByte);
                 Writers.emitInstruction(instruction, leftExpr.getText(), "cl");
+                
                 /* Restoring c register */
                 Writers.emitInstruction("mov", "rcx", temp);
             } else {
@@ -533,6 +552,7 @@ public class Emitter
                 Writers.emitInstruction(instruction, leftExpr.getText(), "cl");
             }
         }
+        
         if (temp != null)
             NasmTools.free(temp);
     }

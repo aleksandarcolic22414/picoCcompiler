@@ -65,8 +65,9 @@ public class DataSegment
         if (var.isArray()) {
             Writers.emitData(name + ":\t times " 
                     + sizes + " " + inst + " " + value);
-        } else
+        } else {
             Writers.emitData(name + ":" + "\t" + inst + "\t" + value);
+        }
     }
     
     /* Returnes defining istruction for proper size of variable */

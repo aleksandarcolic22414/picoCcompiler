@@ -9,19 +9,21 @@ import constants.Constants;
  */
 public class RelationHelper 
 {
-    /* Variable represents whether comparison is done or not */
+    /* Variable represents whether comparison is done or not. */
     private static boolean comparisonDone = false;
-    /* Variable holds the information about last relation done */
+    
+    /* Variable holds the information about last relation that is done. */
     private static int lastRelation = picoCParser.EQUAL;
     
     /* Return whether comparison is done and set comparisonDone to false for
-        further checking */
+        further checking. */
     public static boolean isCompared() 
     {
         boolean comp = comparisonDone;
         comparisonDone = false;
         return comp;
     }
+    
     /* Set last relation to new relation */
     public static void setRelation(int newRelation) 
     {
@@ -48,8 +50,9 @@ public class RelationHelper
                 return Constants.JUMP_LESS;
             case picoCParser.LESS_EQUAL:
                 return Constants.JUMP_LESS_EQUALS;
+            default:
+                return null;
         }
-        return null;
     }
     
     public static String getFalseJump() 
@@ -67,8 +70,9 @@ public class RelationHelper
                 return Constants.JUMP_GREATER_EQUALS;
             case picoCParser.LESS_EQUAL:
                 return Constants.JUMP_GREATER;
+            default:
+                return null;
         }
-        return null;
     }
 
     public static void setComparisonUsed() 
